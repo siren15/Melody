@@ -59,13 +59,13 @@ class Levels(Scale):
             xp = levels.xp_to_next_level #xp that the user has towards next level, this counter resets every time a new level is acquired
 
         #level multiplier, it's gonna divide the xp needed towards the next level
-        if level_settings.multiplier == None:#if the server doesn't have multiplier set up
-            multiplier = 1#the default multiplier is set to 1
-        else:
-            multiplier = level_settings.multiplier#otherwise get the multiplier from db
+        #if level_settings.multiplier == None:#if the server doesn't have multiplier set up
+            #multiplier = 1#the default multiplier is set to 1
+        #else:
+            #multiplier = level_settings.multiplier#otherwise get the multiplier from db
 
         #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal) #count the xp to next level, now unused since it's better to have it all already calculated and ready to check in db
-        xp_to_next_level = level_stats.xptolevel/multiplier #the xp expected for next level
+        xp_to_next_level = level_stats.xptolevel#/multiplier #the xp expected for next level
 
         import random
         xp_to_give = random.randint(15, 25) #xp that's given to member, a random number between 15-25
@@ -154,11 +154,14 @@ class Levels(Scale):
 
         level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
 
-        multiplier = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
-        if multiplier.multiplier == None:
-            multiplier = 1
-        else:
-            multiplier = multiplier.multiplier
+        #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
+        #if lvl_set == None:
+            #await db.save(leveling_settings(guildid=ctx.guild.id))
+
+        #if lvl_set.multiplier == None:
+            #multiplier = 1
+        #else:
+            #multiplier = lvl_set.multiplier
 
         if member.top_role.color.value == 0:
             color = 0x0c73d3
@@ -166,7 +169,7 @@ class Levels(Scale):
             color = member.top_role.color
 
         embed = Embed(color=color,
-        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel/multiplier}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
+        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
 
