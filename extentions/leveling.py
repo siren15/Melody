@@ -59,35 +59,22 @@ class Levels(Scale):
         min = 15
         max = 25
         multiplier = 1 #boost multiplier
-        stats_db = dataset.connect('sqlite:///leveling_stats.db3')
+        stats_db = dataset.connect('sqlite:///leveling_stats.db3') #connect to db
         stats_db.begin()
-        level_stats = stats_db['leveling'].find_one(level=lvl)
+        level_stats = stats_db['leveling'].find_one(level=lvl) #find level stats
         decimal = level_stats['decimal']
         tot_xp_for_level = level_stats['totalxp']
 
-        #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal)
+        #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal) #count the xp, will change this to something better
         xp_to_next_level = level_stats['xptonextlevel']
 
         import random
-        xp_to_give = random.randint(15, 25)
-        new_total_xp = total_xp+xp_to_give
+        xp_to_give = random.randint(15, 25) #choose a random number between 15-25
+        new_total_xp = total_xp+xp_to_give 
         if levels.messages == None:  
             number_of_messages = 1
         else:
             number_of_messages = levels.messages + 1
-        
-        if new_total_xp >= tot_xp_for_level:
-            levels.level = lvl+1
-            levels.xp_to_next_level = 0
-            levels.total_xp = new_total_xp
-            levels.messages = number_of_messages
-            await db.save(levels)
-            
-            roles = await db.find_one(leveling_roles, {'guildid':message.guild.id, 'level':lvl+1})
-            if roles != None:
-                role = await message.guild.get_role(roles.roleid)
-                if (role != None) and (role not in message.author.roles):
-                    await message.author.add_role(role, '[bot]leveling role add')
 
         if (xp_to_next_level+xp) <= (xp+xp_to_give):
             levels.level = lvl+1
