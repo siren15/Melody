@@ -147,11 +147,12 @@ class Levels(Scale):
         if member == None:
             member = ctx.author
         db = await odm.connect()
-        levels = await db.find_one(leveling, {'guildid':ctx.guild.id, 'memberid':member.id})
-        level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
+        levels = await db.find_one(leveling, {'guildid':ctx.guild.id, 'memberid':member.id}) 
         if levels == None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
+
+        level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
 
         multiplier = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
         if multiplier.multiplier == None:
@@ -159,15 +160,13 @@ class Levels(Scale):
         else:
             multiplier = multiplier.multiplier
 
-        #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal)
-
         if member.top_role.color.value == 0:
             color = 0x0c73d3
         else:
             color = member.top_role.color
 
         embed = Embed(color=color,
-        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
+        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel/multiplier}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
 
