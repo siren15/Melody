@@ -3,7 +3,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.vscode
+*.db3-smh
+*.db3-wal
 # C extensions
 *.so
 

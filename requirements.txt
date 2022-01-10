@@ -1,0 +1,7 @@
+dis-snek
+requests
+pymongo
+odmantic
+motor
+Pillow
+dataset
