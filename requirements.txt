@@ -5,3 +5,4 @@ odmantic
 motor
 Pillow
 dataset
+dateutil
