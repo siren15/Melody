@@ -44,10 +44,12 @@ class Levels(Scale):
 
         #check what xp the user has
         levels = await db.find_one(leveling, {'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
-        level_stats = await db.find_one(levelingstats, {'lvl':levels.level}) #get level stats from db
+        
         if levels == None: #if the member is not logged in db
             await db.save(leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0)) #member get's logged to db with level and xp set to 0
             return
+
+        level_stats = await db.find_one(levelingstats, {'lvl':levels.level}) #get level stats from db
 
         total_xp = levels.total_xp #total xp the user has
         lvl = levels.level #the level the user has
