@@ -6,3 +6,4 @@ motor
 Pillow
 dataset
 python-dateutil
+dnspython
