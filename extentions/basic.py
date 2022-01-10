@@ -117,7 +117,7 @@ class Basic(Scale):
         embed.add_field(name="Library:", value="[dis-snek](https://dis-snek.readthedocs.io/)")
         embed.add_field(name="Servers:", value=len(self.bot.user.guilds))
         embed.add_field(name="Bot Latency:", value=f"{self.bot.ws.latency * 1000:.0f} ms")
-        embed.add_field(name='[GitHub](https://github.com/siren15/giffanybot)', value='‎')
+        embed.add_field(name='[GitHub](https://github.com/siren15/pinetree-dis-snek)', value='‎')
         embed.set_footer(text=".GIFfany-bot | Powered by Sneks")
         await ctx.send(embed=embed)
     

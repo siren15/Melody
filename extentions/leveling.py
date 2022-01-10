@@ -45,6 +45,7 @@ class Levels(Scale):
 
         #check what xp the user has
         levels = await db.find_one(leveling, {'guildid':message.guild.id, 'memberid':message.author.id})
+        level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
         if levels == None:
             await db.save(leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0))
             return
@@ -56,17 +57,14 @@ class Levels(Scale):
         else:
             xp = levels.xp_to_next_level #xp that the user has towards next level, this counter resets every time a new level is acquired
 
-        min = 15
-        max = 25
-        multiplier = 1 #boost multiplier
-        stats_db = dataset.connect('sqlite:///leveling_stats.db3') #connect to db
-        stats_db.begin()
-        level_stats = stats_db['leveling'].find_one(level=lvl) #find level stats
-        decimal = level_stats['decimal']
-        tot_xp_for_level = level_stats['totalxp']
+        multiplier = await db.find_one(leveling_settings, {'guildid':message.guild.id})
+        if multiplier.multiplier == None:
+            multiplier = 1
+        else:
+            multiplier = multiplier.multiplier
 
         #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal) #count the xp, will change this to something better
-        xp_to_next_level = level_stats['xptonextlevel']
+        xp_to_next_level = level_stats.xptolevel
 
         import random
         xp_to_give = random.randint(15, 25) #choose a random number between 15-25
@@ -76,7 +74,7 @@ class Levels(Scale):
         else:
             number_of_messages = levels.messages + 1
 
-        if (xp_to_next_level+xp) <= (xp+xp_to_give):
+        if xp_to_next_level <= (xp+xp_to_give):
             levels.level = lvl+1
             levels.xp_to_next_level = 0
             levels.total_xp = new_total_xp
@@ -150,31 +148,26 @@ class Levels(Scale):
             member = ctx.author
         db = await odm.connect()
         levels = await db.find_one(leveling, {'guildid':ctx.guild.id, 'memberid':member.id})
+        level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
         if levels == None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
 
-        min = 15
-        max = 25
-        multiplier = 1
-        lvl = levels.level
-        stats_db = dataset.connect('sqlite:///leveling_stats.db3')
-        stats_db.begin()
-        level_stats = stats_db['leveling'].find_one(level=lvl)
-        decimal = level_stats['decimal']
-
-        if levels.xp_to_next_level == None:
-            xp = 0
+        multiplier = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
+        if multiplier.multiplier == None:
+            multiplier = 1
         else:
-            xp = levels.xp_to_next_level
+            multiplier = multiplier.multiplier
+
         #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal)
-        xp_to_next_level = level_stats['xptonextlevel']
+
         if member.top_role.color.value == 0:
             color = 0x0c73d3
         else:
             color = member.top_role.color
+
         embed = Embed(color=color,
-        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{xp_to_next_level+xp}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
+        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
 

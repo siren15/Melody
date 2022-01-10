@@ -187,3 +187,8 @@ class reactionroles(Model):
 	requirementroleid: Optional[int64] = None
 	ignoredroleid: Optional[int64] = None
 	mode: Optional[int64] = None
+
+class levelingstats(Model):
+	lvl: Optional[int64] = None
+	xptolevel: Optional[int64] = None
+	totalxp: Optional[int64] = None
