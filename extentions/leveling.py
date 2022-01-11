@@ -218,7 +218,7 @@ class Levels(Scale):
                 else:
                     return lvl.memberid
 
-            member = await getmember(ctx, lvl)
+            #member = await getmember(ctx, lvl)
             if rank == 1:
                 ranks = '🏆 1'
             elif rank == 2:
@@ -227,7 +227,7 @@ class Levels(Scale):
                 ranks = '🥉 3'
             else:
                 ranks = rank
-            members.append(f'**{ranks}.** {member}\n')
+            members.append(f'**{ranks}.** <@{lvl.memberid}>\n')
             rank = rank+1
         lvls = [f'{lvl.level}\n' for lvl in lvl_order]
         tot_xp = [f'{xp.total_xp}\n' for xp in lvl_order]
