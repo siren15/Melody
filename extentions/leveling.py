@@ -210,10 +210,11 @@ class Levels(Scale):
         members = []
         for lvl in lvl_order:
             async def getmember(self, ctx, lvl):
-                for member in ctx.guild.members:
+                for member in ctx.message.guild.members:
                     if member.id == lvl.memberid:
                         return member.mention
-                    return lvl.memberid
+                    else:
+                        return lvl.memberid
             member = await getmember(self, ctx, lvl)
             members.append(f'{member}\n')
         lvls = [f'{lvl.level}\n' for lvl in lvl_order]
