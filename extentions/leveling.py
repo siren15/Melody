@@ -214,7 +214,7 @@ class Levels(Scale):
                 member = [m for m in ctx.guild.members if m.id == lvl.memberid]
                 if member != []:
                     for m in member:
-                        return m.mention
+                        return f'<@{m.id}>'
                 else:
                     return lvl.memberid
 
