@@ -190,7 +190,7 @@ class Levels(Scale):
             return fl
 
         def newpage(member, lvl, xp, guild, pages):
-            embed = Embed(description=f"__**List of all the tags for {guild.name}**__",
+            embed = Embed(description=f"__**Leveling leaderboard for {guild.name}**__",
             color=0x0c73d3)
             embed.add_field(name='Member', value=member, inline=True)
             embed.add_field(name='Level', value=lvl, inline=True)
