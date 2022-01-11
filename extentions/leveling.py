@@ -172,6 +172,96 @@ class Levels(Scale):
         description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
+    
+    @slash_command(name='leaderboard', description='check the servers levelling statistics', scopes=[435038183231848449, 149167686159564800])
+    async def leaderboard(self, ctx: InteractionContext):
+        await ctx.defer()
+        def chunks(l, n):
+            n = max(1, n)
+            return (l[i:i+n] for i in range(0, len(l), n))
+
+        def create_list(lst, n, s, e):
+            lst = list(chunks(lst, n))
+            for i in lst[s:e]:
+                lst = i
+            fl = ''
+            for n in lst:
+                fl = fl + n
+            return fl
+
+        def newpage(member, lvl, xp, guild, pages):
+            embed = Embed(description=f"__**List of all the tags for {guild.name}**__",
+            color=0x0c73d3)
+            embed.add_field(name='Member', value=member, inline=True)
+            embed.add_field(name='Level', value=lvl, inline=True)
+            embed.add_field(name='Total XP', value=xp, inline=True)
+            embed.set_footer(text=pages)
+            return embed
+        
+        def check(component: Button) -> bool:
+            return component.context.author == ctx.author
+
+        from odmantic import query
+        db = await odm.connect()
+        lvl_order = await db.find(leveling, {'guildid':ctx.guild_id}, sort=query.desc(leveling.level))
+        if lvl_order == None:
+            await ctx.send('Nobody has levels in this server yet')
+            return
+        members = []
+        for lvl in lvl_order:
+            async def getmember(self, ctx, lvl):
+                for member in ctx.guild.members:
+                    if member.id == lvl.memberid:
+                        return member.mention
+                    return lvl.memberid
+            member = await getmember(self, ctx, lvl)
+            members.append(f'{member}\n')
+        lvls = [f'{lvl.level}\n' for lvl in lvl_order]
+        tot_xp = [f'{xp.total_xp}\n' for xp in lvl_order]
+        
+        s = 0
+        e = 1
+        counter = 1
+
+        nc = list(chunks(members, 40))
+        reaction_buttons: list[ActionRow] = spread_to_rows(
+            Button(
+                style=ButtonStyles.GREY,
+                label="⬅️",
+                custom_id="⬅️"
+            ),
+            Button(
+                style=ButtonStyles.GREY,
+                label="➡️",
+                custom_id="➡️"
+            )
+        )
+        footer = f"Page:{counter}|{len(nc)}"
+        embedl = await ctx.send(embed=newpage(create_list(members, 40, s, e), create_list(lvls, 40, s, e), create_list(tot_xp, 40, s, e), ctx.guild, footer), components=reaction_buttons)
+
+        while True:
+            try:
+                reaction = await self.bot.wait_for_component(components=reaction_buttons, check=check, timeout=80)
+
+            except asyncio.TimeoutError:
+                reaction_buttons[0].components[0].disabled = True
+                reaction_buttons[0].components[1].disabled = True
+                await embedl.edit(components=reaction_buttons)
+                break
+
+            if (reaction.context.custom_id == '⬅️') and (counter > 1) and (ctx.author == reaction.context.author):
+                counter = counter - 1
+                s = s - 1
+                e = e - 1
+                footer = f"Page:{counter}|{len(nc)}"
+                await embedl.edit(embed=newpage(create_list(members, 40, s, e), create_list(lvls, 40, s, e), create_list(tot_xp, 40, s, e), ctx.guild, footer))
+
+            if (reaction.context.custom_id == '➡️') and (counter < len(nc)) and (ctx.author == reaction.context.author):
+                counter = counter + 1
+                s = s + 1
+                e = e + 1
+                footer = f"Page:{counter}|{len(nc)}"
+                await embedl.edit(embed=newpage(create_list(members, 40, s, e), create_list(lvls, 40, s, e), create_list(tot_xp, 40, s, e), ctx.guild, footer))
 
 def setup(bot):
     Levels(bot)
