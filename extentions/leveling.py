@@ -207,16 +207,27 @@ class Levels(Scale):
         if lvl_order == None:
             await ctx.send('Nobody has levels in this server yet')
             return
+        rank = 1
         members = []
         for lvl in lvl_order:
-            async def getmember(self, ctx, lvl):
-                for member in ctx.message.guild.members:
-                    if member.id == lvl.memberid:
-                        return member.mention
-                    else:
-                        return lvl.memberid
-            member = await getmember(self, ctx, lvl)
-            members.append(f'{member}\n')
+            async def getmember(ctx, lvl):
+                member = await ctx.guild.get_member(lvl.memberid)
+                if member != None:
+                    return member.mention
+                else:
+                    return lvl.memberid
+
+            member = await getmember(ctx, lvl)
+            if rank == 1:
+                ranks = '🏆 1'
+            elif rank == 2:
+                ranks = '🥈 2'
+            elif rank == 3:
+                ranks == '🥉 3'
+            else:
+                ranks = rank
+            members.append(f'**{ranks}.** {member}\n')
+            rank = rank+1
         lvls = [f'{lvl.level}\n' for lvl in lvl_order]
         tot_xp = [f'{xp.total_xp}\n' for xp in lvl_order]
         
