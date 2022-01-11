@@ -236,7 +236,7 @@ class Levels(Scale):
         e = 1
         counter = 1
 
-        nc = list(chunks(members, 40))
+        nc = list(chunks(members, 20))
         reaction_buttons: list[ActionRow] = spread_to_rows(
             Button(
                 style=ButtonStyles.GREY,
@@ -250,7 +250,7 @@ class Levels(Scale):
             )
         )
         footer = f"Page:{counter}|{len(nc)}"
-        embedl = await ctx.send(embed=newpage(create_list(members, 40, s, e), create_list(lvls, 40, s, e), create_list(tot_xp, 40, s, e), ctx.guild, footer), components=reaction_buttons)
+        embedl = await ctx.send(embed=newpage(create_list(members, 20, s, e), create_list(lvls, 20, s, e), create_list(tot_xp, 20, s, e), ctx.guild, footer), components=reaction_buttons)
 
         while True:
             try:
@@ -267,14 +267,14 @@ class Levels(Scale):
                 s = s - 1
                 e = e - 1
                 footer = f"Page:{counter}|{len(nc)}"
-                await embedl.edit(embed=newpage(create_list(members, 40, s, e), create_list(lvls, 40, s, e), create_list(tot_xp, 40, s, e), ctx.guild, footer))
+                await embedl.edit(embed=newpage(create_list(members, 20, s, e), create_list(lvls, 20, s, e), create_list(tot_xp, 20, s, e), ctx.guild, footer))
 
             if (reaction.context.custom_id == '➡️') and (counter < len(nc)) and (ctx.author == reaction.context.author):
                 counter = counter + 1
                 s = s + 1
                 e = e + 1
                 footer = f"Page:{counter}|{len(nc)}"
-                await embedl.edit(embed=newpage(create_list(members, 40, s, e), create_list(lvls, 40, s, e), create_list(tot_xp, 40, s, e), ctx.guild, footer))
+                await embedl.edit(embed=newpage(create_list(members, 20, s, e), create_list(lvls, 20, s, e), create_list(tot_xp, 20, s, e), ctx.guild, footer))
 
 def setup(bot):
     Levels(bot)
