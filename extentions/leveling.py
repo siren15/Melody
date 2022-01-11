@@ -211,9 +211,10 @@ class Levels(Scale):
         members = []
         for lvl in lvl_order:
             async def getmember(ctx, lvl):
-                member = await ctx.guild.get_member(lvl.memberid)
-                if member != None:
-                    return member.mention
+                member = [m for m in ctx.guild.members if m.id == lvl.memberid]
+                if member != []:
+                    for m in member:
+                        return m.mention
                 else:
                     return lvl.memberid
 
