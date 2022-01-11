@@ -224,7 +224,7 @@ class Levels(Scale):
             elif rank == 2:
                 ranks = '🥈 2'
             elif rank == 3:
-                ranks == '🥉 3'
+                ranks = '🥉 3'
             else:
                 ranks = rank
             members.append(f'**{ranks}.** {member}\n')
