@@ -170,7 +170,9 @@ class Levels(Scale):
             return percent
 
         percent = getPercent(levels.xp_to_next_level,level_stats.xptolevel)
-        if percent <= 10:
+        if percent <= 5:
+            boxes = '□□□□□□□□□□'
+        elif percent <= 10:
             boxes = '■□□□□□□□□□'
         elif percent <= 20:
             boxes = '■■□□□□□□□□'
@@ -187,6 +189,8 @@ class Levels(Scale):
         elif percent <= 80:
             boxes = '■■■■■■■■□□'
         elif percent <= 90:
+            boxes = '■■■■■■■■■□'
+        elif percent <= 95:
             boxes = '■■■■■■■■■□'
         elif percent <= 100:
             boxes = '■■■■■■■■■■'
