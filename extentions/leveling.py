@@ -7,7 +7,7 @@ import math
 
 from datetime import datetime, timezone, timedelta
 from dateutil.relativedelta import relativedelta
-from dis_snek.models.discord_objects.embed import Embed
+from dis_snek.models.discord_objects.embed import Embed, EmbedField
 from dis_snek.models.discord_objects.channel import ChannelHistory
 from dis_snek.models.discord import DiscordObject
 from dis_snek.models.scale import Scale
@@ -124,7 +124,7 @@ class Levels(Scale):
     
     @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles", scopes=[435038183231848449, 149167686159564800])
     @role()
-    async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):
+    async def leveling_remove_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):
         await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
         if (perms == True):
@@ -140,7 +140,7 @@ class Levels(Scale):
                 await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} removed from level {check.level}'))
                 await db.delete(check)
 
-    @slash_command(name='rank', description='check your levelling statistics', scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='rank', description='check your leveling statistics', scopes=[435038183231848449, 149167686159564800])
     @member()
     async def rank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
         await ctx.defer()
@@ -173,52 +173,39 @@ class Levels(Scale):
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
     
-    @slash_command(name='leaderboard', description='check the servers levelling statistics', scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='leaderboard', description='check the servers leveling leaderboard', scopes=[435038183231848449, 149167686159564800])
     async def leaderboard(self, ctx: InteractionContext):
-        await ctx.defer()
+        from dis_snek.models.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
+        
+        def mlis(lst, s, e):
+            nc = list(chunks(lst, 20))
+            mc = ''
+            for testlist in nc[s:e]:
+                for m in testlist:
+                    mc = mc + m
+            return mc
 
-        def create_list(lst, n, s, e):
-            lst = list(chunks(lst, n))
-            for i in lst[s:e]:
-                lst = i
-            fl = ''
-            for n in lst:
-                fl = fl + n
-            return fl
-
-        def newpage(member, lvl, xp, guild, pages):
-            embed = Embed(description=f"__**Leveling leaderboard for {guild.name}**__",
+        def newpage(title, member, lvl, xp):
+            embed = Embed(title=title,
             color=0x0c73d3)
             embed.add_field(name='Member', value=member, inline=True)
             embed.add_field(name='Level', value=lvl, inline=True)
             embed.add_field(name='Total XP', value=xp, inline=True)
-            embed.set_footer(text=pages)
             return embed
-        
-        def check(component: Button) -> bool:
-            return component.context.author == ctx.author
 
-        from odmantic import query
+        await ctx.defer()
+        
         db = await odm.connect()
-        lvl_order = await db.find(leveling, {'guildid':ctx.guild_id}, sort=query.desc(leveling.level))
+        lvl_order = await db.find(leveling, {'guildid':149167686159564800}, sort=(leveling.level.desc(), leveling.total_xp.desc()))
         if lvl_order == None:
             await ctx.send('Nobody has levels in this server yet')
             return
         rank = 1
         members = []
         for lvl in lvl_order:
-            async def getmember(ctx, lvl):
-                member = [m for m in ctx.guild.members if m.id == lvl.memberid]
-                if member != []:
-                    for m in member:
-                        return m.mention
-                else:
-                    return lvl.memberid
-
-            #member = await getmember(ctx, lvl)
             if rank == 1:
                 ranks = '🏆 1'
             elif rank == 2:
@@ -232,49 +219,25 @@ class Levels(Scale):
         lvls = [f'{lvl.level}\n' for lvl in lvl_order]
         tot_xp = [f'{xp.total_xp}\n' for xp in lvl_order]
         
-        s = 0
-        e = 1
-        counter = 1
-
+        s = -1
+        e = 0
+        embedcount = 1
         nc = list(chunks(members, 20))
-        reaction_buttons: list[ActionRow] = spread_to_rows(
-            Button(
-                style=ButtonStyles.GREY,
-                label="⬅️",
-                custom_id="⬅️"
-            ),
-            Button(
-                style=ButtonStyles.GREY,
-                label="➡️",
-                custom_id="➡️"
-            )
-        )
-        footer = f"Page:{counter}|{len(nc)}"
-        embedl = await ctx.send(embed=newpage(create_list(members, 20, s, e), create_list(lvls, 20, s, e), create_list(tot_xp, 20, s, e), ctx.guild, footer), components=reaction_buttons)
-
-        while True:
-            try:
-                reaction = await self.bot.wait_for_component(components=reaction_buttons, check=check, timeout=80)
-
-            except asyncio.TimeoutError:
-                reaction_buttons[0].components[0].disabled = True
-                reaction_buttons[0].components[1].disabled = True
-                await embedl.edit(components=reaction_buttons)
-                break
-
-            if (reaction.context.custom_id == '⬅️') and (counter > 1) and (ctx.author == reaction.context.author):
-                counter = counter - 1
-                s = s - 1
-                e = e - 1
-                footer = f"Page:{counter}|{len(nc)}"
-                await embedl.edit(embed=newpage(create_list(members, 20, s, e), create_list(lvls, 20, s, e), create_list(tot_xp, 20, s, e), ctx.guild, footer))
-
-            if (reaction.context.custom_id == '➡️') and (counter < len(nc)) and (ctx.author == reaction.context.author):
-                counter = counter + 1
-                s = s + 1
-                e = e + 1
-                footer = f"Page:{counter}|{len(nc)}"
-                await embedl.edit(embed=newpage(create_list(members, 20, s, e), create_list(lvls, 20, s, e), create_list(tot_xp, 20, s, e), ctx.guild, footer))
-
+        
+        embeds = []
+        while embedcount <= len(nc):
+            s = s+1
+            e = e+1
+            embeds.append(newpage(f'Leveling leaderboard for {ctx.guild.name}', mlis(members, s, e), mlis(lvls, s, e), mlis(tot_xp, s, e)))
+            embedcount = embedcount+1
+            
+        paginator = Paginator(
+            client=self.bot, 
+            pages=embeds,
+            timeout_interval=80,
+            show_select_menu=True,
+            wrong_user_message='Stop finding yourself! ...Since this leaderboard was not generated for you')
+        await paginator.send(ctx)
+        
 def setup(bot):
     Levels(bot)
