@@ -147,7 +147,7 @@ class Levels(Scale):
         if member == None:
             member = ctx.author
         db = await odm.connect()
-        levels = await db.find_one(leveling, {'guildid':ctx.guild.id, 'memberid':member.id}) 
+        levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':member.id}) 
         if levels == None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
@@ -162,6 +162,34 @@ class Levels(Scale):
             #multiplier = 1
         #else:
             #multiplier = lvl_set.multiplier
+        
+        def getPercent(first, second, integer = False):
+            percent = first / second * 100
+            if integer:
+                return int(percent)
+            return percent
+
+        percent = getPercent(levels.xp_to_next_level,level_stats.xptolevel)
+        if percent <= 10:
+            boxes = '■□□□□□□□□□'
+        elif percent <= 20:
+            boxes = '■■□□□□□□□□'
+        elif percent <= 30:
+            boxes = '■■■□□□□□□□'
+        elif percent <= 40:
+            boxes = '■■■■□□□□□□'
+        elif percent <= 50:
+            boxes = '■■■■■□□□□□'
+        elif percent <= 60:
+            boxes = '■■■■■■□□□□'
+        elif percent <= 70:
+            boxes = '■■■■■■■□□□'
+        elif percent <= 80:
+            boxes = '■■■■■■■■□□'
+        elif percent <= 90:
+            boxes = '■■■■■■■■■□'
+        elif percent <= 100:
+            boxes = '■■■■■■■■■■'
 
         if member.top_role.color.value == 0:
             color = 0x0c73d3
@@ -169,7 +197,7 @@ class Levels(Scale):
             color = member.top_role.color
 
         embed = Embed(color=color,
-        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
+        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n{boxes}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
     
@@ -199,7 +227,7 @@ class Levels(Scale):
         await ctx.defer()
         
         db = await odm.connect()
-        lvl_order = await db.find(leveling, {'guildid':149167686159564800}, sort=(leveling.level.desc(), leveling.total_xp.desc()))
+        lvl_order = await db.find(leveling, {'guildid':ctx.guild_id}, sort=(leveling.level.desc(), leveling.total_xp.desc()))
         if lvl_order == None:
             await ctx.send('Nobody has levels in this server yet')
             return
