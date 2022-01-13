@@ -1,9 +1,8 @@
-dis-snek
+git+https://github.com/Discord-Snake-Pit/Dis-Snek
 requests
 pymongo
 odmantic
 motor
 Pillow
-dataset
 python-dateutil
 dnspython

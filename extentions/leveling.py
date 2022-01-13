@@ -32,17 +32,18 @@ class Levels(Scale):
         if message.author.bot:
             return
         #if (iscogactive(message.guild, 'leveling') == True) and (is_event_active(message.guild, 'leveling')):
-        db = await odm.connect() #connect to database
-        level_settings = await db.find_one(leveling_settings, {'guildid':message.guild.id})
-        if level_settings != None:
-            if message.channel.id in level_settings.no_xp_channel:
-                return
+        
+        #level_settings = await db.find_one(leveling_settings, {'guildid':message.guild.id})
+        #if level_settings != None:
+            #if message.channel.id in level_settings.no_xp_channel:
+                #return
 
         #check if enough time has passed since last message
         if message.author.id in wait_mem:
             return
 
         #check what xp the user has
+        db = await odm.connect() #connect to database
         levels = await db.find_one(leveling, {'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
         
         if levels == None: #if the member is not logged in db
@@ -204,6 +205,65 @@ class Levels(Scale):
         description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n{boxes}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
+    
+    @slash_command(name='testrank', description='check your leveling statistics', scopes=[435038183231848449, 149167686159564800])
+    @member()
+    async def testrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
+        await ctx.defer()
+        if member == None:
+            member = ctx.author
+        db = await odm.connect()
+        levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':member.id}) 
+        if levels == None:
+            await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
+            return
+
+        level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
+
+        #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
+        #if lvl_set == None:
+            #await db.save(leveling_settings(guildid=ctx.guild.id))
+
+        #if lvl_set.multiplier == None:
+            #multiplier = 1
+        #else:
+            #multiplier = lvl_set.multiplier
+        
+        def getPercent(first, second):
+            return first / second * 100
+        percent = getPercent(levels.xp_to_next_level,level_stats.xptolevel)
+        def findx(percentage):
+            return 715/(100/percentage)
+
+        if member.guild_avatar != None:
+            avatarurl = f'{member.guild_avatar.url}.png'
+        else:
+            avatarurl = f'{member.avatar.url}.png'
+        pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230))
+
+        IW, IH = (1100, 500)
+
+        background = Image.open('lvl_card_background.png')
+        shade = Image.open('lvl_card_background_shade.png')
+        background.alpha_composite(shade, dest=(0, 0), source=(0, 0))
+        background.alpha_composite(pfp, dest=(68, 143), source=(0, 0))
+
+        progressbar_fill = Image.open('pb.png').resize((int(findx(int(percent))), 47))
+        background.alpha_composite(progressbar_fill, dest=(323, 146), source=(0, 0))
+
+        avatar_frame = Image.open('lvl_card_frames.png')
+        background.alpha_composite(avatar_frame, dest=(0, 75), source=(0, 0))
+
+        font = ImageFont.truetype('font.ttf', 55)
+        I1 = ImageDraw.Draw(background)
+        lvlmsg = f'Level: {levels.level}\nXP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}'
+        I1.text((312,201), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        name = f'{member.username}'
+        tw, th = I1.textsize(name, font)
+        I1.text(((IW-tw)/2,(IH-th)/7), name, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        background.save(f'levelcard_{member.id}.png')
+        await ctx.send(file=f'levelcard_{member.id}.png')
+        os.remove(f'levelcard_{member.id}.png')
     
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard', scopes=[435038183231848449, 149167686159564800])
     async def leaderboard(self, ctx: InteractionContext):
