@@ -1,4 +1,4 @@
-git+https://github.com/Discord-Snake-Pit/Dis-Snek
+dis-snek
 requests
 pymongo
 odmantic

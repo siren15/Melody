@@ -20,8 +20,6 @@ from .src.customchecks import *
 from dis_snek.models.discord_objects.components import ActionRow, Button, spread_to_rows
 from dis_snek.models.enums import ButtonStyles
 
-wait_mem = []
-
 class Levels(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
@@ -37,13 +35,13 @@ class Levels(Scale):
         #if level_settings != None:
             #if message.channel.id in level_settings.no_xp_channel:
                 #return
-
+        db = await odm.connect() #connect to database
         #check if enough time has passed since last message
-        if message.author.id in wait_mem:
+        wait_mem = await db.find_one(levelwait, {'guildid':message.guild.id, 'user':message.author.id})
+        if wait_mem != None:
             return
 
         #check what xp the user has
-        db = await odm.connect() #connect to database
         levels = await db.find_one(leveling, {'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
         
         if levels == None: #if the member is not logged in db
@@ -94,9 +92,10 @@ class Levels(Scale):
             levels.messages = number_of_messages    #and number of messages
             await db.save(levels)
 
-        wait_mem.append(message.author.id)  #member gets put into the wait list
-        await asyncio.sleep(60)             #the commands gonna wait for 60 seconds
-        wait_mem.remove(message.author.id)  #member gets removed from wait list
+        await db.save(levelwait(guildid=message.guild.id, user=message.author.id)) #member gets put into the wait list
+        await asyncio.sleep(60) #the commands gonna wait for 60 seconds
+        level_wait = await db.find_one(levelwait, {'guildid':message.guild.id, 'user':message.author.id}) #find member in the wait list
+        await db.delete(level_wait) #member gets removed from wait list
     
     @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles", scopes=[435038183231848449, 149167686159564800])
     @role()
@@ -206,7 +205,7 @@ class Levels(Scale):
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
     
-    @slash_command(name='testrank', description='check your leveling statistics', scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='testrank', description='check your leveling statistics', scopes=[435038183231848449])
     @member()
     async def testrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
         await ctx.defer()

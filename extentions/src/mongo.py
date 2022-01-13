@@ -192,3 +192,7 @@ class levelingstats(Model):
 	lvl: Optional[int64] = None
 	xptolevel: Optional[int64] = None
 	totalxp: Optional[int64] = None
+
+class levelwait(Model):
+	guildid: Optional[int64] = None
+	user: Optional[int64] = None
