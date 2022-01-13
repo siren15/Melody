@@ -254,7 +254,7 @@ class Levels(Scale):
         avatar_frame = Image.open('lvl_card_frames.png')
         background.alpha_composite(avatar_frame, dest=(0, 75), source=(0, 0))
 
-        font = ImageFont.truetype('font.ttf', 60)
+        font = ImageFont.truetype('NotoSans-Regular.ttf', 60)
         I1 = ImageDraw.Draw(background)
         lvlmsg = f'LVL: {levels.level} XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
         I1.text((312,201), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
