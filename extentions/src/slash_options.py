@@ -6,6 +6,16 @@ def user():
         return slash_option(name="user", description="Select a user", opt_type=OptionTypes.USER, required=True)(func)
     return wrapper
 
+def bantime():
+    def wrapper(func):
+        return slash_option(name="bantime", description="[optional]tempban time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionTypes.STRING, required=False)(func)
+    return wrapper
+
+def deletedays():
+    def wrapper(func):
+        return slash_option(name="delete_message_days", description="[optional]How many days worth of messages to remove, max 7", opt_type=OptionTypes.INTEGER, required=False)(func)
+    return wrapper
+
 def member():
     def wrapper(func):
         return slash_option(name="member", description="Select a member", opt_type=OptionTypes.USER, required=False)(func)
