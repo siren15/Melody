@@ -37,65 +37,63 @@ class Levels(Scale):
                 #return
         db = await odm.connect() #connect to database
         #check if enough time has passed since last message
-        wait_mem = await db.find_one(levelwait, {'guildid':message.guild.id, 'user':message.author.id})
-        if wait_mem != None:
-            return
-
-        #check what xp the user has
-        levels = await db.find_one(leveling, {'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
-        
-        if levels == None: #if the member is not logged in db
-            await db.save(leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0)) #member get's logged to db with level and xp set to 0
-            return
-
-        level_stats = await db.find_one(levelingstats, {'lvl':levels.level}) #get level stats from db
-
-        total_xp = levels.total_xp #total xp the user has
-        lvl = levels.level #the level the user has
-        if levels.xp_to_next_level == None:#if the xp to next level is not logged, due to migration from mee6
-            xp = 0 #xp is set to 0
-        else:
-            xp = levels.xp_to_next_level #xp that the user has towards next level, this counter resets every time a new level is acquired
-
-        #level multiplier, it's gonna divide the xp needed towards the next level
-        #if level_settings.multiplier == None:#if the server doesn't have multiplier set up
-            #multiplier = 1#the default multiplier is set to 1
-        #else:
-            #multiplier = level_settings.multiplier#otherwise get the multiplier from db
-
-        #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal) #count the xp to next level, now unused since it's better to have it all already calculated and ready to check in db
-        xp_to_next_level = level_stats.xptolevel#/multiplier #the xp expected for next level
-
-        import random
-        xp_to_give = random.randint(15, 25) #xp that's given to member, a random number between 15-25
-        new_total_xp = total_xp+xp_to_give #the new total xp, old total xp + xp to give
-        if levels.messages == None:  #if no messages logged in db
-            number_of_messages = 1 #number of xp messages is 1 for the current message
-        else:
-            number_of_messages = levels.messages + 1 #otherwise the number of xp messages is logged no. of messages + 1 for the current message
-
-        if xp_to_next_level <= (xp+xp_to_give): # if the members xp towards the next level equals or is higher than xp expected for next level, member levels up
-            levels.level = lvl+1 #members level gets updated
-            levels.xp_to_next_level = 0 #members xp towards next level gets reset to 0
-            levels.total_xp = new_total_xp #total xp gets updated
-            levels.messages = number_of_messages #no. of messages that made xp get updated
-            await db.save(levels)
+        wait_mem = await db.find_one(levelwait, {'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$gt':datetime.utcnow()}})
+        if wait_mem == None:
+            #check what xp the user has
+            levels = await db.find_one(leveling, {'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
             
-            roles = await db.find_one(leveling_roles, {'guildid':message.guild.id, 'level':lvl+1})#get the role reward for the level if it exists
-            if roles != None:#if it's not none
-                role = await message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
-                if (role != None) and (role not in message.author.roles):#if it exists and the member doesn't have it
-                    await message.author.add_role(role, '[bot]leveling role add')#give it to member
-        else:                                       # if the members xp towards the next level equals or is not higher than xp expected for next level
-            levels.xp_to_next_level = xp+xp_to_give #members xp towards the next level gets updated
-            levels.total_xp = new_total_xp          #with total xp
-            levels.messages = number_of_messages    #and number of messages
-            await db.save(levels)
+            if levels == None: #if the member is not logged in db
+                await db.save(leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0)) #member get's logged to db with level and xp set to 0
+                return
 
-        await db.save(levelwait(guildid=message.guild.id, user=message.author.id)) #member gets put into the wait list
-        await asyncio.sleep(60) #the commands gonna wait for 60 seconds
-        level_wait = await db.find_one(levelwait, {'guildid':message.guild.id, 'user':message.author.id}) #find member in the wait list
-        await db.delete(level_wait) #member gets removed from wait list
+            level_stats = await db.find_one(levelingstats, {'lvl':levels.level}) #get level stats from db
+
+            total_xp = levels.total_xp #total xp the user has
+            lvl = levels.level #the level the user has
+            if levels.xp_to_next_level == None:#if the xp to next level is not logged, due to migration from mee6
+                xp = 0 #xp is set to 0
+            else:
+                xp = levels.xp_to_next_level #xp that the user has towards next level, this counter resets every time a new level is acquired
+
+            #level multiplier, it's gonna divide the xp needed towards the next level
+            #if level_settings.multiplier == None:#if the server doesn't have multiplier set up
+                #multiplier = 1#the default multiplier is set to 1
+            #else:
+                #multiplier = level_settings.multiplier#otherwise get the multiplier from db
+
+            #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal) #count the xp to next level, now unused since it's better to have it all already calculated and ready to check in db
+            xp_to_next_level = level_stats.xptolevel#/multiplier #the xp expected for next level
+
+            import random
+            xp_to_give = random.randint(15, 25) #xp that's given to member, a random number between 15-25
+            new_total_xp = total_xp+xp_to_give #the new total xp, old total xp + xp to give
+            if levels.messages == None:  #if no messages logged in db
+                number_of_messages = 1 #number of xp messages is 1 for the current message
+            else:
+                number_of_messages = levels.messages + 1 #otherwise the number of xp messages is logged no. of messages + 1 for the current message
+
+            if xp_to_next_level <= (xp+xp_to_give): # if the members xp towards the next level equals or is higher than xp expected for next level, member levels up
+                levels.level = lvl+1 #members level gets updated
+                levels.xp_to_next_level = 0 #members xp towards next level gets reset to 0
+                levels.total_xp = new_total_xp #total xp gets updated
+                levels.messages = number_of_messages #no. of messages that made xp get updated
+                await db.save(levels)
+                
+                roles = await db.find_one(leveling_roles, {'guildid':message.guild.id, 'level':lvl+1})#get the role reward for the level if it exists
+                if roles != None:#if it's not none
+                    role = await message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
+                    if (role != None) and (role not in message.author.roles):#if it exists and the member doesn't have it
+                        await message.author.add_role(role, '[bot]leveling role add')#give it to member
+            else:                                       # if the members xp towards the next level equals or is not higher than xp expected for next level
+                levels.xp_to_next_level = xp+xp_to_give #members xp towards the next level gets updated
+                levels.total_xp = new_total_xp          #with total xp
+                levels.messages = number_of_messages    #and number of messages
+                await db.save(levels)
+
+            await db.save(levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60)))) #member gets put into the wait list
+            await asyncio.sleep(60) #the commands gonna wait for 60 seconds
+            level_wait = await db.find_one(levelwait, {'guildid':message.guild.id, 'user':message.author.id}) #find member in the wait list
+            await db.delete(level_wait) #member gets removed from wait list
     
     @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles", scopes=[435038183231848449, 149167686159564800])
     @role()

@@ -196,3 +196,5 @@ class levelingstats(Model):
 class levelwait(Model):
 	guildid: Optional[int64] = None
 	user: Optional[int64] = None
+	starttime: Optional[datetime] = None
+	endtime: Optional[datetime] = None
