@@ -93,7 +93,8 @@ class Levels(Scale):
             await db.save(levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60)))) #member gets put into the wait list
             await asyncio.sleep(60) #the commands gonna wait for 60 seconds
             level_wait = await db.find(levelwait, {'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$lte':datetime.utcnow()}}) #find member in the wait list
-            await db.delete(level_wait) #member gets removed from wait list
+            for instance in level_wait:
+                await db.delete(instance) #member gets removed from wait list
     
     @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles", scopes=[435038183231848449, 149167686159564800])
     @role()
