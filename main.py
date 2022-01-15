@@ -17,7 +17,7 @@ async def unban_task():
     endtimes = await db.find(tempbans, {'endtime':{'$lte':datetime.now()}})
     for m in endtimes:
         try:
-            guild = await bot.fetch_guild(m.guildid)
+            guild = await bot.get_guild(m.guildid)
         except NotFound:
             print(f"[automod]|[unban_task]{m.guildid} not found in the guild list")
             await db.delete(m)
