@@ -487,7 +487,7 @@ class Moderation(Scale):
             try:
                 embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild} for:** {reason}",
                           color=0x0c73d3)
-                await member.send(embed=embed)
+                await user.send(embed=embed)
             except:
                 embed = Embed(description=f"Couldn't dm {user.mention}, warn logged | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                           color=0x0c73d3)
