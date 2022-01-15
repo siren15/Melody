@@ -86,7 +86,7 @@ async def on_ready():
     print(f"[Logged in]: {bot.user}")
     while True:
         await unban_task()
-        asyncio.sleep(60)
+        await asyncio.sleep(60)
         continue
 
 for filename in os.listdir('./extentions'):
