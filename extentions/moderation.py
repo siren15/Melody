@@ -492,10 +492,11 @@ class Moderation(Scale):
                 embed = Embed(description=f"Couldn't dm {user.mention}, warn logged | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                           color=0x0c73d3)
                 await ctx.send(embed=embed)
-            
-            embed = Embed(description=f"{user.mention} warned | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                          color=0x0c73d3)
-            await ctx.send(embed=embed)
+                return
+            else:
+                embed = Embed(description=f"{user.mention} warned | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                            color=0x0c73d3)
+                await ctx.send(embed=embed)
     
     @slash_command(name='warn', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to remove warns from users", scopes=[435038183231848449, 149167686159564800])
     @user()
