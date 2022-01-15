@@ -483,7 +483,7 @@ class Moderation(Scale):
             await user.add_role(role, reason)
 
             daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Mute", day=daytime, reason=reason))
+            await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Warn", day=daytime, reason=reason))
             try:
                 embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild} for:** {reason}",
                           color=0x0c73d3)
