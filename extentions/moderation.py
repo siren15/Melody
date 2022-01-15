@@ -571,8 +571,7 @@ class Moderation(Scale):
                 return embed
             
             db = await odm.connect()
-            warnaction = re.compile(f"^warn$", re.IGNORECASE)
-            warnings = await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction})
+            warnings = await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'})
             if warnings == None:
                 embed = Embed(description=f"There are no warnings for {user}.",
                           colour=0x0c73d3)
