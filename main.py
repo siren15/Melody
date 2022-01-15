@@ -1,4 +1,5 @@
 import os
+import asyncio
 
 from dis_snek import slash_command, InteractionContext, slash_option, OptionTypes
 from dis_snek.client import Snake
@@ -9,6 +10,26 @@ from dis_snek.models.discord_objects.embed import Embed
 
 intents = Intents.DEFAULT
 intents.GUILD_MEMBERS
+
+async def unban_task():
+    print('unban task working')
+    db = await odm.connect()
+    endtimes = await db.find(tempbans, {'endtime':{'$lte':datetime.now()}})
+    for m in endtimes:
+        try:
+            guild = await bot.fetch_guild(m.guildid)
+        except NotFound:
+            print(f"[automod]|[unban_task]{m.guildid} not found in the guild list")
+            await db.delete(m)
+            return
+        try:
+            await guild.get_ban(m.user)
+        except NotFound:
+            print(f"[automod]|[unban_task]{m.user} not found in the ban list")
+            await db.delete(m)
+            return
+        await guild.unban(m.user, '[automod]|[unban_task] ban time expired')
+        await db.delete(m)
 
 class CustomSnake(Snake):
     async def on_command_error(self, ctx: InteractionContext, error:Exception):
@@ -63,6 +84,10 @@ bot = CustomSnake(intents=intents, sync_interactions=True, delete_unused_applica
 @listen()
 async def on_ready():
     print(f"[Logged in]: {bot.user}")
+    while True:
+        await unban_task()
+        asyncio.sleep(60)
+        continue
 
 for filename in os.listdir('./extentions'):
     if filename.endswith('.py'):

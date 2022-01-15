@@ -81,3 +81,16 @@ async def is_user_blacklisted_e(message):
     elif users.userid == None:
         return True
     return True
+
+from dis_snek.http_requests.members import MemberRequests
+from dis_snek.models.discord_objects.user import Member
+
+class custommember(Member):
+
+    async def edit_roles(self, roles: List["Snowflake_Type"]):
+        """
+        Change the user's roles.
+        Args:
+            roles: The new roles to apply.
+        """
+        return await self._client.http.modify_guild_member(self._guild_id, self.id, nickname=roles)

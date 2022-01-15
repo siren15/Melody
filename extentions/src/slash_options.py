@@ -11,6 +11,21 @@ def bantime():
         return slash_option(name="bantime", description="[optional]tempban time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionTypes.STRING, required=False)(func)
     return wrapper
 
+def mutetime():
+    def wrapper(func):
+        return slash_option(name="mutetime", description="mute time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
+
+def warnid():
+    def wrapper(func):
+        return slash_option(name="warnid", description="Warning ID [case sensitive]", opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
+
+def amount():
+    def wrapper(func):
+        return slash_option(name="amount", description="amount of messages to delete", opt_type=OptionTypes.INTEGER, required=True)(func)
+    return wrapper
+
 def deletedays():
     def wrapper(func):
         return slash_option(name="delete_message_days", description="[optional]How many days worth of messages to remove, max 7", opt_type=OptionTypes.INTEGER, required=False)(func)
