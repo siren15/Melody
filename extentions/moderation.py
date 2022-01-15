@@ -651,6 +651,8 @@ class Moderation(Scale):
                 e = e+1
                 embeds.append(newpage(f'Strikes for {user}', mlis(allstrikes, s, e)))
                 embedcount = embedcount+1
+            
+            print(embeds)
                 
             paginator = Paginator(
                 client=self.bot, 
