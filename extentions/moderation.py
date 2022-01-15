@@ -568,8 +568,6 @@ class Moderation(Scale):
                     description=warns,
                     color=0x0c73d3)
                 return embed
-
-            await ctx.defer()
             
             db = await odm.connect()
             warnaction = re.compile(f"^warn$", re.IGNORECASE)
@@ -628,8 +626,6 @@ class Moderation(Scale):
                     description=warns,
                     color=0x0c73d3)
                 return embed
-
-            await ctx.defer()
             
             db = await odm.connect()
             all_strikes = await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id})
@@ -651,8 +647,6 @@ class Moderation(Scale):
                 e = e+1
                 embeds.append(newpage(f'Strikes for {user}', mlis(allstrikes, s, e)))
                 embedcount = embedcount+1
-            
-            print(embeds)
                 
             paginator = Paginator(
                 client=self.bot, 
