@@ -12,7 +12,6 @@ intents = Intents.DEFAULT
 intents.GUILD_MEMBERS
 
 async def unban_task():
-    print('unban task working')
     db = await odm.connect()
     endtimes = await db.find(tempbans, {'endtime':{'$lte':datetime.now()}})
     for m in endtimes:
@@ -86,7 +85,7 @@ async def on_ready():
     print(f"[Logged in]: {bot.user}")
     while True:
         await unban_task()
-        await asyncio.sleep(60)
+        await asyncio.sleep(3600)
         continue
 
 for filename in os.listdir('./extentions'):
