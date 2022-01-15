@@ -572,12 +572,12 @@ class Moderation(Scale):
             
             db = await odm.connect()
             warnings = await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'})
-            if warnings == None:
+            warns = [f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n" for warn in warnings]
+            if warns == []:
                 embed = Embed(description=f"There are no warnings for {user}.",
                           colour=0x0c73d3)
                 await ctx.send(embed=embed)
                 return
-            warns = [f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n" for warn in warnings]
             
             s = -1
             e = 0
@@ -629,13 +629,13 @@ class Moderation(Scale):
             
             db = await odm.connect()
             all_strikes = await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id})
-            if all_strikes == None:
+            allstrikes = [f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n" for s in all_strikes]
+            if allstrikes == []:
                 embed = Embed(description=f"There are no strikes for {user}.",
                           colour=0x0c73d3)
                 await ctx.send(embed=embed)
                 return
-            allstrikes = [f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n" for s in all_strikes]
-            
+
             s = -1
             e = 0
             embedcount = 1
