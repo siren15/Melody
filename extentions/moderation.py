@@ -485,7 +485,7 @@ class Moderation(Scale):
             daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
             await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Warn", day=daytime, reason=reason))
             try:
-                embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild} for:** {reason}",
+                embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild.name} for:** {reason}",
                           color=0x0c73d3)
                 await user.send(embed=embed)
             except:
@@ -655,5 +655,15 @@ class Moderation(Scale):
                 show_select_menu=True)
             await paginator.send(ctx)
     
+    @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users", scopes=[435038183231848449, 149167686159564800])
+    @user()
+    @reason()
+    async def limbo_add(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
+        await ctx.defer()
+        perms = await has_perms(ctx.author, Permissions.BAN_MEMBERS)
+        if (perms == True):
+            db = await odm.connect()
+            
+
 def setup(bot):
     Moderation(bot)
