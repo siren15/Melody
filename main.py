@@ -8,8 +8,7 @@ from dis_snek.models.listener import listen
 from extentions.src.customchecks import *
 from dis_snek.models.discord_objects.embed import Embed
 
-intents = Intents.DEFAULT
-intents.GUILD_MEMBERS
+intents = Intents.ALL
 
 async def unban_task():
     db = await odm.connect()
@@ -78,7 +77,7 @@ class CustomSnake(Snake):
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
-bot = CustomSnake(intents=intents, sync_interactions=True, delete_unused_application_cmds=True, default_prefix='p.')
+bot = CustomSnake(intents=intents, sync_interactions=True, delete_unused_application_cmds=True, default_prefix='p.', fetch_members=True)
 
 @listen()
 async def on_ready():
