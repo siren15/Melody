@@ -678,17 +678,18 @@ class Moderation(Scale):
                 await ctx.send("You can't limbo users with kick perms", ephemeral=True)
                 return
             
-            if ctx.author.top_role == user.top_role:
-                embed = Embed(description=f":x: You can't limbo people with the same role as you!",
-                            color=0xDD2222)
-                await ctx.send(embed=embed)
-                return
+            if user.roles:
+                if ctx.author.top_role == user.top_role:
+                    embed = Embed(description=f":x: You can't limbo people with the same role as you!",
+                                color=0xDD2222)
+                    await ctx.send(embed=embed)
+                    return
 
-            if ctx.author.top_role.position < user.top_role.position:
-                embed = Embed(description=f":x: You can't limbo people with roles higher than yours!",
-                            color=0xDD2222)
-                await ctx.send(embed=embed)
-                return
+                if ctx.author.top_role.position < user.top_role.position:
+                    embed = Embed(description=f":x: You can't limbo people with roles higher than yours!",
+                                color=0xDD2222)
+                    await ctx.send(embed=embed)
+                    return
             db = await odm.connect()
             limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':user.id})
             if limboed != None:
@@ -701,7 +702,10 @@ class Moderation(Scale):
                 for role in limbo_role:
                     limborole = role
             user_roles = [role for role in user.roles if role.name != '@everyone']
-            await db.save(limbo(guildid=ctx.guild_id, userid=user.id, roles=user_roles, reason=reason))
+            ur = ''
+            for r in user_roles:
+                ur = ur+f"{r.id},"
+            await db.save(limbo(guildid=ctx.guild_id, userid=user.id, roles=ur, reason=reason))
             for user_role in user_roles:
                 await user.remove_role(user_role)
             await user.add_role(limborole)
@@ -738,11 +742,13 @@ class Moderation(Scale):
                 return
 
             limborole = [role for role in user.roles if role.name == 'Limbo']
+            for limborole in limborole:
+                limborole = limborole
 
             user_limbo_data = await db.find_one(limbo, {"guildid":ctx.guild_id, "userid":user.id})
-            user_roles = user_limbo_data.roles
-            for user_role in user_roles:
-                await user.add_role(user_role)
+            roles = [await ctx.guild.get_role(int(id_)) for id_ in user_limbo_data.roles.split(",") if len(id_)]
+            for r in roles:
+                await user.add_role(r)
             await user.remove_role(limborole)
 
             await db.delete(user_limbo_data)
@@ -750,6 +756,22 @@ class Moderation(Scale):
             embed = Embed(description=f"{user.mention} let out of limbo | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                           color=0x0c73d3)
             await ctx.send(embed=embed)
+    
+    @listen()
+    async def on_message_create(self, event):
+        message = event.message
+        if message.guild.id == 149167686159564800:
+            db = await odm.connect()
+            channel = await db.find_one(logs, {'guild_id':message.guild.id})
+            if channel != None:
+                log_channel = message.guild.get_channel(int(channel.channel_id))
+
+                if message.channel.id == 736680179253903491:
+                    embed = Embed(title="Limbo log", timestamp=datetime.utcnow(), color=0x0c73d3)
+                    embed.set_thumbnail(url=f'{message.author.avatar.url}')
+                    embed.add_field(name=f"{message.author}", value=f"{message.content}", inline=False)
+                    embed.set_footer(text=f'User ID: {message.author.id}')
+                    await log_channel.send(embed=embed)
 
 
 def setup(bot):

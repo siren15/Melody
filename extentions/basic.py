@@ -116,9 +116,9 @@ class Basic(Scale):
         embed.add_field(name="Highest role:", value=toprole, inline=False)
         embed.add_field(name="Library:", value="[dis-snek](https://dis-snek.readthedocs.io/)")
         embed.add_field(name="Servers:", value=len(self.bot.user.guilds))
-        embed.add_field(name="Bot Latency:", value=f"{self.bot.ws.latency * 1000:.0f} ms")
-        embed.add_field(name='[GitHub](https://github.com/siren15/pinetree-dis-snek)', value='‎')
-        embed.set_footer(text=".GIFfany-bot | Powered by Sneks")
+        #embed.add_field(name="Bot Latency:", value=f"{self.bot.ws.latency * 1000:.0f} ms")
+        embed.add_field(name='GitHub: https://github.com/siren15/pinetree-dis-snek', value='‎')
+        embed.set_footer(text="pinetree | Powered by Sneks")
         await ctx.send(embed=embed)
     
     @slash_command(name='avatar', description="Show's you your avatar, or members, if provided", scopes=[435038183231848449, 149167686159564800])
@@ -134,7 +134,7 @@ class Basic(Scale):
     @slash_command(name='ping', description="Ping! Pong!", scopes=[435038183231848449, 149167686159564800])
     async def ping(self, ctx:InteractionContext):
         await ctx.defer()
-        await ctx.send(f"Pong! \nBot's latency: {self.bot.ws.latency * 1000:.0f} ms")
+        await ctx.send(f"Pong! \nBot's latency: {self.bot.ws.latency * 1000} ms")
     
     @slash_command(name='embed', sub_cmd_name='create' , sub_cmd_description='[admin]Create embeds', description="[admin]Create and edit embeds", scopes=[435038183231848449, 149167686159564800])
     @embed_title()
