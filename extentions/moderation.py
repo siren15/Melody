@@ -662,8 +662,95 @@ class Moderation(Scale):
         await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.BAN_MEMBERS)
         if (perms == True):
-            db = await odm.connect()
+            if user == None:
+                await ctx.send('You have to include a user', ephemeral=True)
+                return
+            if reason == None:
+                await ctx.send('You have to include a reason', ephemeral=True)
+                return
+            if await user_has_perms(user, Permissions.ADMINISTRATOR) == True:
+                await ctx.send("You can't limbo an admin", ephemeral=True)
+                return
+            elif await user_has_perms(user, Permissions.BAN_MEMBERS) == True:
+                await ctx.send("You can't limbo users with ban perms", ephemeral=True)
+                return
+            elif await user_has_perms(user, Permissions.KICK_MEMBERS) == True:
+                await ctx.send("You can't limbo users with kick perms", ephemeral=True)
+                return
             
+            if ctx.author.top_role == user.top_role:
+                embed = Embed(description=f":x: You can't limbo people with the same role as you!",
+                            color=0xDD2222)
+                await ctx.send(embed=embed)
+                return
+
+            if ctx.author.top_role.position < user.top_role.position:
+                embed = Embed(description=f":x: You can't limbo people with roles higher than yours!",
+                            color=0xDD2222)
+                await ctx.send(embed=embed)
+                return
+            db = await odm.connect()
+            limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':user.id})
+            if limboed != None:
+                await ctx.send(f'{user.mention} is already in limbo', ephemeral=True)
+                return
+            limbo_role = [role for role in ctx.guild.roles if role.name == 'Limbo']
+            if limbo_role == []:
+                limborole = await ctx.guild.create_role(name='Limbo', reason='[automod]|[limbo]created new limbo role as limbo role did not exist yet')
+            else:
+                for role in limbo_role:
+                    limborole = role
+            user_roles = [role for role in user.roles if role.name != '@everyone']
+            await db.save(limbo(guildid=ctx.guild_id, userid=user.id, roles=user_roles, reason=reason))
+            for user_role in user_roles:
+                await user.remove_role(user_role)
+            await user.add_role(limborole)
+            embed = Embed(description=f"{user.mention} put in limbo | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                          color=0x0c73d3)
+            await ctx.send(embed=embed)
+            while True:
+                warnid = random_string_generator()
+                warnid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':warnid})
+                if warnid_db == None:
+                    break
+                else:
+                    continue
+            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+            await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Limbo", day=daytime, reason=reason))
+    
+    @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo", scopes=[435038183231848449, 149167686159564800])
+    @user()
+    @reason()
+    async def limbo_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
+        await ctx.defer()
+        perms = await has_perms(ctx.author, Permissions.BAN_MEMBERS)
+        if (perms == True):
+            if user == None:
+                await ctx.send('You have to include a user', ephemeral=True)
+                return
+            if reason == None:
+                await ctx.send('You have to include a reason', ephemeral=True)
+                return
+            db = await odm.connect()
+            limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':user.id})
+            if limboed == None:
+                await ctx.send(f'{user.mention} is not in limbo', ephemeral=True)
+                return
+
+            limborole = [role for role in user.roles if role.name == 'Limbo']
+
+            user_limbo_data = await db.find_one(limbo, {"guildid":ctx.guild_id, "userid":user.id})
+            user_roles = user_limbo_data.roles
+            for user_role in user_roles:
+                await user.add_role(user_role)
+            await user.remove_role(limborole)
+
+            await db.delete(user_limbo_data)
+
+            embed = Embed(description=f"{user.mention} let out of limbo | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                          color=0x0c73d3)
+            await ctx.send(embed=embed)
+
 
 def setup(bot):
     Moderation(bot)

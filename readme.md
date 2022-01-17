@@ -37,9 +37,9 @@
 * [✔️] - create leveling roles
 * [✔️] - leaderboard
 * [✔️] - rank card (will be updated to fancy image generated one on next dis-snek update)
-### [ ] - limbo
-* [ ] - limbo add
-* [ ] - limbo remove
+### [✔️] - limbo
+* [✔️] - limbo add
+* [✔️] - limbo remove
 ### [ ] - roles
 * [ ] - reaction roles (partial implementation, not gonna touch until next dis-snek release)
     [ ] - add

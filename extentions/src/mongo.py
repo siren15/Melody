@@ -106,9 +106,10 @@ class leveling_roles(Model):
 	level: Optional[int64] = None
 
 class limbo(Model):
-	guild_id: Optional[int64] = None
-	user_id: Optional[int64] = None
-	roles_ids: Optional[str] = None
+	guildid: Optional[int64] = None
+	userid: Optional[int64] = None
+	roles: Optional[str] = None
+	reason: Optional[str] = None
 
 class logs(Model):
 	guild_id: Optional[int64] = None
