@@ -231,7 +231,7 @@ class Moderation(Scale):
                                     timestamp=datetime.utcnow())
                     embed.set_thumbnail(url=user.avatar.url)
                     await ctx.send(embed=embed)
-                await ctx.guild.ban(DiscordObject(id=int(user.id)), reason=reason, delete_message_days=deletedays)
+                await ctx.guild.ban(DiscordObject(id=int(user.id), client=self.bot), reason=reason, delete_message_days=deletedays)
     
     @slash_command(name='unban', description="[MOD]allows me to unban users from the server", scopes=[435038183231848449, 149167686159564800])
     @user()
@@ -258,7 +258,7 @@ class Moderation(Scale):
             else:
                 await ctx.guild.unban(user, reason)
                 embed = Embed(description=f"{user} **was unbanned by {ctx.author.mention}** | {reason} \n**User ID:** {user.id}",
-                                    colour=0x0c73d3,
+                                    color=0x0c73d3,
                                     timestamp=datetime.utcnow())
                 embed.set_thumbnail(url=user.avatar.url)
                 await ctx.send(embed=embed)
@@ -575,7 +575,7 @@ class Moderation(Scale):
             warns = [f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n" for warn in warnings]
             if warns == []:
                 embed = Embed(description=f"There are no warnings for {user}.",
-                          colour=0x0c73d3)
+                          color=0x0c73d3)
                 await ctx.send(embed=embed)
                 return
             
@@ -632,7 +632,7 @@ class Moderation(Scale):
             allstrikes = [f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n" for s in all_strikes]
             if allstrikes == []:
                 embed = Embed(description=f"There are no strikes for {user}.",
-                          colour=0x0c73d3)
+                          color=0x0c73d3)
                 await ctx.send(embed=embed)
                 return
 
