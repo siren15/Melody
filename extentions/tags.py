@@ -3,13 +3,11 @@ import asyncio
 
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timezone
-from dis_snek.models.command import check
-from dis_snek.models.discord_objects.components import ActionRow, Button, spread_to_rows
-from dis_snek.models.enums import ButtonStyles
-from dis_snek.models.scale import Scale
-from dis_snek import Snake, slash_command, InteractionContext, slash_option, OptionTypes
-from dis_snek.models.discord_objects.message import Message
-from dis_snek.models.discord_objects.embed import Embed
+from dis_snek.models.discord.components import ActionRow, Button, spread_to_rows
+from dis_snek.models.discord.enums import ButtonStyles
+from dis_snek.models.snek.scale import Scale
+from dis_snek import Snake, slash_command, InteractionContext,  OptionTypes
+from dis_snek.models.discord.embed import Embed
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
@@ -30,7 +28,7 @@ class Tags(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
     
-    @slash_command(name='t', description="allow's me to recall tags", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='t', description="allow's me to recall tags")
     @tagname()
     async def t(self, ctx:InteractionContext, tagname:str):
         await ctx.defer()
@@ -54,7 +52,7 @@ class Tags(Scale):
                 tags.no_of_times_used = uses + 1
                 await db.save(tags)
 
-    @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
     @tagname()
     async def tag(self, ctx:InteractionContext, tagname:str):
         await ctx.defer()
@@ -78,7 +76,7 @@ class Tags(Scale):
                 tags.no_of_times_used = uses + 1
                 await db.save(tags)
 
-    @slash_command(name='tag', sub_cmd_name='create', sub_cmd_description="allow's me to store tags", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='create', sub_cmd_description="allow's me to store tags")
     @tagname()
     @content()
     async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None):
@@ -122,7 +120,7 @@ class Tags(Scale):
                             color=0xDD2222)
                 await ctx.send(embed=embed, ephemeral=True)
     
-    @slash_command(name='tag', sub_cmd_name='delete', sub_cmd_description="allow's me to delete tags that you own", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='delete', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
     async def tag_delete(self, ctx:InteractionContext, tagname:str=None):
         await ctx.defer()
@@ -157,7 +155,7 @@ class Tags(Scale):
                 await ctx.send(embed=embed)
                 await db.delete(tag_to_delete)
     
-    @slash_command(name='tag', sub_cmd_name='admindelete', sub_cmd_description="[ADMIN ONLY]allow's me to delete any tag", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='admindelete', sub_cmd_description="[ADMIN ONLY]allow's me to delete any tag")
     @tagname()
     async def tag_admin_delete(self, ctx:InteractionContext, tagname:str=None):
         await ctx.defer()
@@ -192,7 +190,7 @@ class Tags(Scale):
                 await ctx.send(embed=embed)
                 await db.delete(tag_to_delete)
 
-    @slash_command(name='tag', sub_cmd_name='edit', sub_cmd_description="allow's me to delete tags that you own", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='edit', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
     @content()
     async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None):
@@ -229,7 +227,7 @@ class Tags(Scale):
                             color=0x0c73d3)
                 await ctx.send(embed=embed)
     
-    @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
     @tagname()
     async def tag_info(self, ctx:InteractionContext, tagname:str=None):
         await ctx.defer()
@@ -285,12 +283,12 @@ class Tags(Scale):
             embed.add_field(name="Content", value=tag_to_view.content)
             await ctx.send(embed=embed)
     
-    @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
     async def tag_list(self, ctx:InteractionContext):
         await ctx.defer()
         hasrole = await has_role(ctx)
         if hasrole == True:
-            from dis_snek.models.paginators import Paginator
+            from dis_snek.ext.paginators import Paginator
             def chunks(l, n):
                 n = max(1, n)
                 return (l[i:i+n] for i in range(0, len(l), n))
@@ -341,7 +339,7 @@ class Tags(Scale):
             await paginator.send(ctx)
                 
     
-    @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
     @tagname()
     async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
         await ctx.defer()
@@ -372,7 +370,7 @@ class Tags(Scale):
                             color=0xDD2222)
                 await ctx.send(embed=embed, ephemeral=True)
 
-    @slash_command(name='tag', sub_cmd_name='gift', sub_cmd_description="gift your tags", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='tag', sub_cmd_name='gift', sub_cmd_description="gift your tags")
     @tagname()
     @member()
     async def tag_gift(self, ctx:InteractionContext, tagname:str=None, member:OptionTypes.USER=None):

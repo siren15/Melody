@@ -1,26 +1,21 @@
-import asyncio
 import math
-from pyexpat.errors import messages
-import time
 import re
 import random
 
 from dateutil.relativedelta import *
-from random import choice
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from dis_snek.models.discord_objects.embed import Embed, EmbedField
-from dis_snek.models.discord_objects.channel import ChannelHistory
 from dis_snek.models.discord import DiscordObject
-from dis_snek.models.scale import Scale
-from dis_snek.models.enums import Permissions
-from dis_snek.models.listener import listen
-from dis_snek import Snake, slash_command, InteractionContext, slash_option, OptionTypes, slash_permission
+from dis_snek.models.discord.embed import Embed
+from dis_snek.models.snek.scale import Scale
+from dis_snek.models.discord.enums import Permissions
+from dis_snek.models.snek.listener import listen
+from dis_snek import Snake, slash_command, InteractionContext,  OptionTypes
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
-from dis_snek.models.discord_objects.components import ActionRow, Button, spread_to_rows
-from dis_snek.models.enums import ButtonStyles
+from dis_snek.client.errors import NotFound
+
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -65,7 +60,11 @@ class Moderation(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
     
-    @slash_command(name='delete', description="[MOD]allows me to delete messages", scopes=[435038183231848449, 149167686159564800])
+    @listen()
+    async def on_ready(self):
+        self.unban_task.start()
+    
+    @slash_command(name='delete', description="[MOD]allows me to delete messages")
     @amount()
     @reason()
     async def delete_messages(self, ctx:InteractionContext, amount:int=0, reason:str='No reason given'):
@@ -84,7 +83,7 @@ class Moderation(Scale):
             embed.set_footer(text=f"Auctioned by: {ctx.author}|{ctx.author.id}")
             await ctx.send(embed=embed)
     
-    @slash_command(name='userpurge', description="[MOD]allows me to purge users messages", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='userpurge', description="[MOD]allows me to purge users messages")
     @user()
     @amount()
     @reason()
@@ -125,7 +124,7 @@ class Moderation(Scale):
             embed.set_footer(text=f"Auctioned by: {ctx.author}|{ctx.author.id}")
             await ctx.send(embed=embed)
     
-    @slash_command(name='ban', description="[MOD]allows me to ban users from the server", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='ban', description="[MOD]allows me to ban users from the server")
     @user()
     @bantime()
     @deletedays()
@@ -182,7 +181,7 @@ class Moderation(Scale):
                     embed.set_thumbnail(url=user.avatar.url)
                     await ctx.send(embed=embed)
                 else:
-                    tempbanned = await db.find_one({"user":user.id, "guildid":ctx.guild_id})
+                    tempbanned = await db.find_one(tempbans, {"user":user.id, "guildid":ctx.guild_id})
                     if tempbanned != None:
                         await db.delete(tempbanned)
                     
@@ -220,8 +219,8 @@ class Moderation(Scale):
                         await ctx.send(embed=embed)
                         return
                     
-                    if seconds < 10:
-                        await ctx.send("Ban time can't be shorter than 10 seconds")
+                    if (seconds < 3600) or (seconds > 94672800):
+                        await ctx.send("Ban time can't be shorter than 1 hour and longer than 3 years")
                     
                     await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Temp Ban", day=daytime, reason=reason))
                     await db.save(tempbans(guildid=ctx.guild_id, user=user.id, starttime=datetime.now(), endtime=endtime, banreason=reason))
@@ -233,7 +232,7 @@ class Moderation(Scale):
                     await ctx.send(embed=embed)
                 await ctx.guild.ban(DiscordObject(id=int(user.id), client=self.bot), reason=reason, delete_message_days=deletedays)
     
-    @slash_command(name='unban', description="[MOD]allows me to unban users from the server", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='unban', description="[MOD]allows me to unban users from the server")
     @user()
     @reason()
     async def unban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
@@ -273,7 +272,7 @@ class Moderation(Scale):
                 daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
                 await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Unban", day=daytime, reason=reason))
 
-    @slash_command(name='kick', description="[MOD]allows me to kick users from the server", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='kick', description="[MOD]allows me to kick users from the server")
     @user()
     @reason()
     async def kick(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
@@ -324,7 +323,7 @@ class Moderation(Scale):
             embed.set_thumbnail(url=user.avatar.url)
             await ctx.send(embed=embed)
     
-    @slash_command(name='mute', description="[MOD]allows me to mute users", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='mute', description="[MOD]allows me to mute users")
     @user()
     @mutetime()
     @reason()
@@ -414,7 +413,7 @@ class Moderation(Scale):
             embed.set_thumbnail(url=user.avatar.url)
             await ctx.send(embed=embed)
     
-    @slash_command(name='unmute', description="[MOD]allows me to unmute users", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='unmute', description="[MOD]allows me to unmute users")
     @user()
     @reason()
     async def unmute(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
@@ -431,7 +430,7 @@ class Moderation(Scale):
             embed.set_thumbnail(url=user.avatar.url)
             await ctx.send(embed=embed)
     
-    @slash_command(name='warn', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to warn users", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='warn', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to warn users")
     @user()
     @reason()
     async def warn(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
@@ -498,7 +497,7 @@ class Moderation(Scale):
                             color=0x0c73d3)
                 await ctx.send(embed=embed)
     
-    @slash_command(name='warn', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to remove warns from users", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='warn', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to remove warns from users")
     @user()
     @warnid()
     @reason()
@@ -541,7 +540,7 @@ class Moderation(Scale):
                           color=0x0c73d3)
             await ctx.send(embed=embed)
     
-    @slash_command(name='warnings', description="[MOD]shows you a users warn list", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='warnings', description="[MOD]shows you a users warn list")
     @user()
     async def warn_list(self, ctx:InteractionContext, user:OptionTypes.USER=None):
         await ctx.defer()
@@ -550,7 +549,7 @@ class Moderation(Scale):
             if user == None:
                 await ctx.send('You have to include a user', ephemeral=True)
                 return
-            from dis_snek.models.paginators import Paginator
+            from dis_snek.ext.paginators import Paginator
             def chunks(l, n):
                 n = max(1, n)
                 return (l[i:i+n] for i in range(0, len(l), n))
@@ -598,7 +597,7 @@ class Moderation(Scale):
                 show_select_menu=True)
             await paginator.send(ctx)
     
-    @slash_command(name='strikes', description="[MOD]shows you a users strike list", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='strikes', description="[MOD]shows you a users strike list")
     @user()
     async def strikes_list(self, ctx:InteractionContext, user:OptionTypes.USER=None):
         await ctx.defer()
@@ -607,7 +606,7 @@ class Moderation(Scale):
             if user == None:
                 await ctx.send('You have to include a user', ephemeral=True)
                 return
-            from dis_snek.models.paginators import Paginator
+            from dis_snek.ext.paginators import Paginator
             def chunks(l, n):
                 n = max(1, n)
                 return (l[i:i+n] for i in range(0, len(l), n))
@@ -655,7 +654,7 @@ class Moderation(Scale):
                 show_select_menu=True)
             await paginator.send(ctx)
     
-    @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users")
     @user()
     @reason()
     async def limbo_add(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
@@ -722,7 +721,7 @@ class Moderation(Scale):
             daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
             await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Limbo", day=daytime, reason=reason))
     
-    @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo")
     @user()
     @reason()
     async def limbo_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
@@ -773,6 +772,28 @@ class Moderation(Scale):
                     embed.set_footer(text=f'User ID: {message.author.id}')
                     await log_channel.send(embed=embed)
 
+    from dis_snek.ext.tasks.task import Task
+    from dis_snek.ext.tasks.triggers import IntervalTrigger
+
+    @Task.create(IntervalTrigger(seconds=60))
+    async def unban_task(self):
+        db = await odm.connect()
+        endtimes = await db.find(tempbans, {'endtime':{'$lte':datetime.now()}})
+        for m in endtimes:
+            try:
+                guild = await self.bot.get_guild(m.guildid)
+            except NotFound:
+                print(f"[automod]|[unban_task]{m.guildid} not found in the guild list")
+                await db.delete(m)
+                return
+            try:
+                await guild.get_ban(m.user)
+            except NotFound:
+                print(f"[automod]|[unban_task]{m.user} not found in the ban list")
+                await db.delete(m)
+                return
+            await guild.unban(m.user, '[automod]|[unban_task] ban time expired')
+            await db.delete(m)
 
 def setup(bot):
     Moderation(bot)

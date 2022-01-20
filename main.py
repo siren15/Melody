@@ -1,33 +1,15 @@
 import os
 import asyncio
 
-from dis_snek import slash_command, InteractionContext, slash_option, OptionTypes
+from dis_snek import InteractionContext
 from dis_snek.client import Snake
-from dis_snek.models.enums import Intents
-from dis_snek.models.listener import listen
+from dis_snek.models.discord.enums import Intents
+from dis_snek.models.snek.listener import listen
 from extentions.src.customchecks import *
-from dis_snek.models.discord_objects.embed import Embed
+from dis_snek.models.discord.embed import Embed
+from dis_snek.client.errors import NotFound
 
 intents = Intents.ALL
-
-async def unban_task():
-    db = await odm.connect()
-    endtimes = await db.find(tempbans, {'endtime':{'$lte':datetime.now()}})
-    for m in endtimes:
-        try:
-            guild = await bot.get_guild(m.guildid)
-        except NotFound:
-            print(f"[automod]|[unban_task]{m.guildid} not found in the guild list")
-            await db.delete(m)
-            return
-        try:
-            await guild.get_ban(m.user)
-        except NotFound:
-            print(f"[automod]|[unban_task]{m.user} not found in the ban list")
-            await db.delete(m)
-            return
-        await guild.unban(m.user, '[automod]|[unban_task] ban time expired')
-        await db.delete(m)
 
 class CustomSnake(Snake):
     async def on_command_error(self, ctx: InteractionContext, error:Exception):
@@ -36,7 +18,7 @@ class CustomSnake(Snake):
                           color=0xdd2e44)
             await ctx.send(embed=embed, ephemeral=True)
         
-        if isinstance(error, MissingRole):
+        elif isinstance(error, MissingRole):
             db = await odm.connect()
             regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
             roleid = await db.find_one(hasrole, {"guildid":ctx.guild.id, "command":regx})
@@ -46,34 +28,38 @@ class CustomSnake(Snake):
                               color=0xDD2222)
                 await ctx.send(embed=embed, ephemeral=True)
         
-        if isinstance(error, RoleNotFound):
+        elif isinstance(error, RoleNotFound):
             embed = Embed(description=f":x: Couldn't find that role",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
-        if isinstance(error, UserNotFound):
+        elif isinstance(error, UserNotFound):
             embed = Embed(description=f":x: User not found",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
-        if isinstance(error, CommandOnCooldown):
+        elif isinstance(error, CommandOnCooldown):
             embed = Embed(
                 description=f":x: Command **{ctx.command.name}** on cooldown, try again later.",
                 color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
-        if isinstance(error, ExtensionNotActivatedInGuild):
+        elif isinstance(error, ExtensionNotActivatedInGuild):
             embed = Embed(description=f":x: Module for this command is not activated in the guild.",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
-        if isinstance(error, CommandNotActivatedInGuild):
+        elif isinstance(error, CommandNotActivatedInGuild):
             embed = Embed(description=f":x: Command is not activated in the guild.",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
         
-        if isinstance(error, UserInBlacklist):
+        elif isinstance(error, UserInBlacklist):
             embed = Embed(description=f":x: {ctx.author.mention} You are blacklisted from using some commands",
+                          color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
+        else:
+            embed = Embed(description=f":x: An error occured while trying to execute {ctx.invoked_name} command: {error}",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
@@ -82,10 +68,19 @@ bot = CustomSnake(intents=intents, sync_interactions=True, delete_unused_applica
 @listen()
 async def on_ready():
     print(f"[Logged in]: {bot.user}")
-    while True:
-        await unban_task()
-        await asyncio.sleep(3600)
-        continue
+    guild = await bot.get_guild(435038183231848449)
+    channel = guild.get_channel(932661537729024132)
+    await channel.send(f'[Logged in]: {bot.user}')
+
+@listen()
+async def on_guild_join(event):
+    db = await odm.connect()
+    checkserver = await db.find_one(prefixes, {'guildid':event.guild.id})
+    if checkserver == None:
+        await db.save(prefixes(guildid=event.guild.id, prefix='p.'))
+        guild = await bot.get_guild(435038183231848449)
+        channel = guild.get_channel(932661537729024132)
+        await channel.send(f'I was added to {event.guild.name}|{event.guild.id}')
 
 for filename in os.listdir('./extentions'):
     if filename.endswith('.py'):

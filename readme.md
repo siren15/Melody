@@ -19,9 +19,9 @@
 * [✔️] - tag info
 * [✔️] - claim
 * [✔️] - tag list
-### [ ] - moderation
+### [✔️] - moderation
 * [✔️] - ban/tempban
-* [partial implementation] - unban task (needs to be an actual task instead of being called on ready event)
+* [✔️] - unban task
 * [✔️] - unban
 * [✔️] - kick
 * [✔️] - mute
@@ -61,7 +61,7 @@
     [ ] - add/remove
     [ ] - 1 for all
     [ ] - all for 1
-[ ] - logging
+### [ ] - logging
 * [ ] - deleted messages
 * [ ] - edited messages
 * [ ] - changed nickname
@@ -80,3 +80,4 @@
 * [ ] - giveaway list
 ### Long-term/unimportant
 * [ ] - currency/games
+* [ ] - monster catching

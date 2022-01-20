@@ -1,15 +1,13 @@
 import random
 import asyncio
 
-from datetime import datetime, timezone
-from dateutil.relativedelta import relativedelta
-from dis_snek.models.discord_objects.embed import Embed
-from dis_snek.models.discord_objects.message import Message
-from dis_snek.models.listener import listen
-from dis_snek.models.events.discord import *
-from dis_snek.models.scale import Scale
-from dis_snek.models.enums import Permissions
-from dis_snek import Snake, slash_command, InteractionContext, slash_option, OptionTypes
+from dis_snek.models.discord.embed import Embed
+from dis_snek.models.discord.message import Message
+from dis_snek.models.snek.listener import listen
+from dis_snek.api.events.discord import *
+from dis_snek.models.snek.scale import Scale
+from dis_snek.models.discord.enums import Permissions
+from dis_snek import Snake, slash_command, InteractionContext
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
@@ -25,7 +23,7 @@ class ReactionRoles(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
 
-    @slash_command(name='reactionrole', sub_cmd_name='create' , sub_cmd_description='[admin]Create a reactionrole', description="[admin]Create and edit reactionroles", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='reactionrole', sub_cmd_name='create' , sub_cmd_description='[admin]Create a reactionrole', description="[admin]Create and edit reactionroles")
     async def reaction_role_create(self, ctx:InteractionContext):
         await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)

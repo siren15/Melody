@@ -2,8 +2,8 @@
 import logging
 import datetime
 
-from dis_snek.models.discord_objects.embed import Embed
-from dis_snek.models.scale import Scale
+from dis_snek.models.discord.embed import Embed
+from dis_snek.models.snek.scale import Scale
 from dis_snek import slash_command, InteractionContext
 
 
@@ -50,7 +50,7 @@ class Uptime(Scale):
         logger.addHandler(stream_handler)
         return logger
 
-    @slash_command(name='uptime', description='Shows you for how long has the bot been online', scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='uptime', description='Shows you for how long has the bot been online')
     async def uptime(self, ctx:InteractionContext):
         uptime = datetime.datetime.utcnow() - self.bot_start_time
 

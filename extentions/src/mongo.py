@@ -42,13 +42,10 @@ class banned_words(Model):
 
 class colourme(Model):
 	guildid: Optional[int64] = None
-	reqname: Optional[str] = None
-	reqid: Optional[int64] = None
-	ignorename: Optional[str] = None
-	ignoreid: Optional[int64] = None
-	name: Optional[str] = None
-	rolename: Optional[str] = None
-	roleid: Optional[int64] = None
+	colourme_name: Optional[str] = None
+	colourme_role_id: Optional[int64] = None
+	requirement_role_id: Optional[str] = None
+	ignore_role_id: Optional[str] = None
 
 class giveaways(Model):
 	giveawaynum: Optional[str] = None

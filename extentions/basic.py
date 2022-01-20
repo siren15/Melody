@@ -2,10 +2,9 @@ import re
 
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
-from dis_snek.models.discord_objects.embed import Embed
-from dis_snek.models.discord import DiscordObject
-from dis_snek.models.scale import Scale
-from dis_snek.models.enums import Permissions
+from dis_snek.models.discord.embed import Embed
+from dis_snek.models.snek.scale import Scale
+from dis_snek.models.discord.enums import Permissions
 from dis_snek import Snake, slash_command, InteractionContext, slash_option, OptionTypes
 from .src.mongo import *
 from .src.slash_options import *
@@ -16,7 +15,7 @@ class Basic(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
 
-    @slash_command("echo", description="echo your messages", scopes=[435038183231848449, 149167686159564800])
+    @slash_command("echo", description="echo your messages")
     @text()
     @channel()
     async def echo(self, ctx: InteractionContext, text: str, channel:OptionTypes.CHANNEL=None):
@@ -28,7 +27,7 @@ class Basic(Scale):
             message = await ctx.send(f'{ctx.author.mention} message `{text}` in {channel.mention} echoed!', ephemeral=True)
             #await channel.delete_message(message, 'message for echo command')
     
-    @slash_command(name='userinfo', description="let's me see info about server members", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='userinfo', description="let's me see info about server members")
     @member()
     async def userinfo(self, ctx:InteractionContext, member:OptionTypes.USER=None):
         await ctx.defer()
@@ -69,7 +68,7 @@ class Basic(Scale):
         embed.add_field(name="Highest role:", value=toprole, inline=False)
         await ctx.send(embed=embed)
     
-    @slash_command(name='botinfo', description="let's me see info about the bot", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='botinfo', description="let's me see info about the bot")
     async def botinfo(self, ctx: InteractionContext):
         await ctx.defer()
         def getmember(ctx):
@@ -121,7 +120,7 @@ class Basic(Scale):
         embed.set_footer(text="pinetree | Powered by Sneks")
         await ctx.send(embed=embed)
     
-    @slash_command(name='avatar', description="Show's you your avatar, or members, if provided", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='avatar', description="Show's you your avatar, or members, if provided")
     @member()
     async def avatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
         await ctx.defer()
@@ -131,12 +130,12 @@ class Basic(Scale):
         embed.set_image(url=member.avatar.url)
         await ctx.send(embed=embed)
     
-    @slash_command(name='ping', description="Ping! Pong!", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='ping', description="Ping! Pong!")
     async def ping(self, ctx:InteractionContext):
         await ctx.defer()
         await ctx.send(f"Pong! \nBot's latency: {self.bot.ws.latency * 1000} ms")
     
-    @slash_command(name='embed', sub_cmd_name='create' , sub_cmd_description='[admin]Create embeds', description="[admin]Create and edit embeds", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='embed', sub_cmd_name='create' , sub_cmd_description='[admin]Create embeds', description="[admin]Create and edit embeds")
     @embed_title()
     @embed_text()
     async def embed(self, ctx:InteractionContext, embed_title:str=None, embed_text:str=None):

@@ -1,4 +1,4 @@
-from dis_snek.errors import *
+from dis_snek.client.errors import *
 from .mongo import *
 import re
 

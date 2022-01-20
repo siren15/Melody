@@ -1,5 +1,4 @@
 from dis_snek import slash_option, OptionTypes
-from dis_snek.models.discord_objects.user import Member
 
 def user():
     def wrapper(func):
@@ -19,6 +18,11 @@ def mutetime():
 def warnid():
     def wrapper(func):
         return slash_option(name="warnid", description="Warning ID [case sensitive]", opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
+
+def colourme_name():
+    def wrapper(func):
+        return slash_option(name="colourme_name", description="name of the colourme", opt_type=OptionTypes.STRING, required=True)(func)
     return wrapper
 
 def amount():

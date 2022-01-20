@@ -1,24 +1,17 @@
 import asyncio
-import re
-from PIL import Image, ImageOps, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import os
 import requests
-import math
 
-from datetime import datetime, timezone, timedelta
-from dateutil.relativedelta import relativedelta
-from dis_snek.models.discord_objects.embed import Embed, EmbedField
-from dis_snek.models.discord_objects.channel import ChannelHistory
-from dis_snek.models.discord import DiscordObject
-from dis_snek.models.scale import Scale
-from dis_snek.models.enums import Permissions
-from dis_snek.models.listener import listen
-from dis_snek import Snake, slash_command, InteractionContext, slash_option, OptionTypes
+from datetime import datetime, timedelta
+from dis_snek.models.discord.embed import Embed
+from dis_snek.models.snek.scale import Scale
+from dis_snek.models.discord.enums import Permissions
+from dis_snek.models.snek.listener import listen
+from dis_snek import Snake, slash_command, InteractionContext, OptionTypes
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
-from dis_snek.models.discord_objects.components import ActionRow, Button, spread_to_rows
-from dis_snek.models.enums import ButtonStyles
 
 class Levels(Scale):
     def __init__(self, bot: Snake):
@@ -96,7 +89,7 @@ class Levels(Scale):
             for instance in level_wait:
                 await db.delete(instance) #member gets removed from wait list
     
-    @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles")
     @role()
     @role_level()
     async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None, role_level:str=None):
@@ -121,7 +114,7 @@ class Levels(Scale):
             else:
                 await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is already assigned to level {check.level}'))
     
-    @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles")
     @role()
     async def leveling_remove_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):
         await ctx.defer()
@@ -139,9 +132,9 @@ class Levels(Scale):
                 await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} removed from level {check.level}'))
                 await db.delete(check)
 
-    @slash_command(name='rank', description='check your leveling statistics', scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='oldrank', description='check your leveling statistics')
     @member()
-    async def rank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
+    async def oldrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
         await ctx.defer()
         if member == None:
             member = ctx.author
@@ -204,9 +197,9 @@ class Levels(Scale):
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
     
-    @slash_command(name='testrank', description='check your leveling statistics', scopes=[435038183231848449])
+    @slash_command(name='rank', description='check your leveling statistics')
     @member()
-    async def testrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
+    async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
         await ctx.defer()
         if member == None:
             member = ctx.author
@@ -263,9 +256,9 @@ class Levels(Scale):
         await ctx.send(file=f'levelcard_{member.id}.png')
         os.remove(f'levelcard_{member.id}.png')
     
-    @slash_command(name='leaderboard', description='check the servers leveling leaderboard', scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
-        from dis_snek.models.paginators import Paginator
+        from dis_snek.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
