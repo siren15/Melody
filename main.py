@@ -59,7 +59,7 @@ class CustomSnake(Snake):
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
         else:
-            embed = Embed(description=f":x: An error occured while trying to execute {ctx.invoked_name} command: {error}",
+            embed = Embed(description=f":x: An error occured while trying to execute `{ctx.invoked_name}` command: ```{error}```",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
