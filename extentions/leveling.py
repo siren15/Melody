@@ -230,20 +230,20 @@ class Levels(Scale):
             avatarurl = f'{member.guild_avatar.url}.png'
         else:
             avatarurl = f'{member.avatar.url}.png'
-        pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230))
+        pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230)).convert("RGBA")
 
         IW, IH = (1100, 500)
 
-        background = Image.open('lvl_card_background.png')
-        shade = Image.open('lvl_card_background_shade.png')
-        background.alpha_composite(shade, dest=(0, 0), source=(0, 0))
-        background.alpha_composite(pfp, dest=(68, 143), source=(0, 0))
+        background = Image.open(requests.get('https://i.imgur.com/wQsqg2H.png', stream=True).raw).convert("RGBA")
+        shade = Image.open(requests.get('https://i.imgur.com/8sGr8So.png', stream=True).raw).convert("RGBA")
+        background.paste(shade, (0, 0), shade)
+        background.paste(pfp, (68, 143), pfp)
 
-        progressbar_fill = Image.open('pb.png').resize((int(findx(int(percent))), 47))
-        background.alpha_composite(progressbar_fill, dest=(323, 146), source=(0, 0))
+        progressbar_fill = Image.open(requests.get('https://i.imgur.com/HE0XtlF.png', stream=True).raw).resize((int(findx(int(percent))), 47)).convert("RGBA")
+        background.paste(progressbar_fill, (323, 146), progressbar_fill)
 
-        avatar_frame = Image.open('lvl_card_frames.png')
-        background.alpha_composite(avatar_frame, dest=(0, 75), source=(0, 0))
+        avatar_frame = Image.open(requests.get('https://i.imgur.com/6iKS56q.png', stream=True).raw).convert("RGBA")
+        background.paste(avatar_frame, (0, 75), avatar_frame)
 
         font = ImageFont.truetype('NotoSans-Regular.ttf', 50)
         I1 = ImageDraw.Draw(background)
