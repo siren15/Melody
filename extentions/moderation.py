@@ -221,6 +221,7 @@ class Moderation(Scale):
                     
                     if (seconds < 3600) or (seconds > 94672800):
                         await ctx.send("Ban time can't be shorter than 1 hour and longer than 3 years")
+                        return
                     
                     await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Temp Ban", day=daytime, reason=reason))
                     await db.save(tempbans(guildid=ctx.guild_id, user=user.id, starttime=datetime.now(), endtime=endtime, banreason=reason))
