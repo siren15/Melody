@@ -249,7 +249,7 @@ class Levels(Scale):
         I1 = ImageDraw.Draw(background)
         lvlmsg = f'LVL: {levels.level} XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
         I1.text((312,201), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
-        name = f'{member.username}'
+        name = f'{member.display_name}'
         tw, th = I1.textsize(name, font)
         I1.text(((IW-tw)/2.1,(IH-th)/11), name, font=ImageFont.truetype('NotoSans-Regular.ttf', 70), stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
         background.save(f'levelcard_{member.id}.png')
