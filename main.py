@@ -34,7 +34,7 @@ class CustomSnake(Snake):
             await ctx.send(embed=embed, ephemeral=True)
 
         elif isinstance(error, UserNotFound):
-            embed = Embed(description=f":x: User not found",
+            embed = Embed(description=f":x: User is not a member of this server ",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
@@ -45,17 +45,17 @@ class CustomSnake(Snake):
             await ctx.send(embed=embed, ephemeral=True)
 
         elif isinstance(error, ExtensionNotActivatedInGuild):
-            embed = Embed(description=f":x: Module for this command is not activated in the guild.",
+            embed = Embed(description=f":x: Module for this command is not activated in the server.",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
         elif isinstance(error, CommandNotActivatedInGuild):
-            embed = Embed(description=f":x: Command is not activated in the guild.",
+            embed = Embed(description=f":x: Command is not activated in the server.",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
         
         elif isinstance(error, UserInBlacklist):
-            embed = Embed(description=f":x: {ctx.author.mention} You are blacklisted from using some commands",
+            embed = Embed(description=f":x: {ctx.author.mention} You are not allowed to use this command",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
         else:
