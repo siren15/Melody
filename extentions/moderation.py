@@ -97,15 +97,17 @@ class Moderation(Scale):
             elif user is ctx.author:
                 await ctx.send("You can't purge yourself", ephemeral=True)
                 return
-            if await user_has_perms(user, Permissions.ADMINISTRATOR) == True:
-                await ctx.send("You can't purge an admin", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.BAN_MEMBERS) == True:
-                await ctx.send("You can't purge users with ban perms", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.MANAGE_MESSAGES) == True:
-                await ctx.send("You can't purge users with manage messages perms", ephemeral=True)
-                return
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                    await ctx.send("You can't purge an admin", ephemeral=True)
+                    return
+                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                    await ctx.send("You can't purge users with ban perms", ephemeral=True)
+                    return
+                elif await member.has_permission(Permissions.MANAGE_MESSAGES) == True:
+                    await ctx.send("You can't purge users with manage messages perms", ephemeral=True)
+                    return
             if (amount <= 0) or (amount >= 300):
                 embed = Embed(description=f":x: Amount can't be less than 1 or more than 300",
                             color=0xDD2222)
@@ -139,27 +141,25 @@ class Moderation(Scale):
             elif user is ctx.author:
                 await ctx.send("You can't ban yourself", ephemeral=True)
                 return
-
-            if await user_has_perms(user, Permissions.ADMINISTRATOR) == True:
-                await ctx.send("You can't ban an admin", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.BAN_MEMBERS) == True:
-                await ctx.send("You can't ban users with ban perms", ephemeral=True)
-                return
-            
             try:
                 await ctx.guild.get_ban(user)
             except NotFound:
                 db = await odm.connect()
                 member = await ctx.guild.get_member(user.id)
-                if user == member:
-                    if ctx.author.top_role == member.top_role:
+                if user.id == member.id:
+                    if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                        await ctx.send("You can't ban an admin", ephemeral=True)
+                        return
+                    elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                        await ctx.send("You can't ban users with ban perms", ephemeral=True)
+                        return
+                    elif ctx.author.top_role == member.top_role:
                         embed = Embed(description=f":x: You can't ban people with the same role as you!",
                                     color=0xDD2222)
                         await ctx.send(embed=embed)
                         return
 
-                    if ctx.author.top_role.position < member.top_role.position:
+                    elif ctx.author.top_role.position < member.top_role.position:
                         embed = Embed(description=f":x: You can't ban people with roles higher than yours!",
                                     color=0xDD2222)
                         await ctx.send(embed=embed)
@@ -280,49 +280,53 @@ class Moderation(Scale):
         await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.KICK_MEMBERS)
         if (perms == True):
-            if user == None:
-                await ctx.send('You have to include a user', ephemeral=True)
-                return
-            elif user is ctx.author:
-                await ctx.send("You can't kick yourself", ephemeral=True)
-                return
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                if user == None:
+                    await ctx.send('You have to include a user', ephemeral=True)
+                    return
+                elif user is ctx.author:
+                    await ctx.send("You can't kick yourself", ephemeral=True)
+                    return
 
-            if await user_has_perms(user, Permissions.ADMINISTRATOR) == True:
-                await ctx.send("You can't kick an admin", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.BAN_MEMBERS) == True:
-                await ctx.send("You can't kick users with ban perms", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.KICK_MEMBERS) == True:
-                await ctx.send("You can't kick users with kick perms", ephemeral=True)
-                return
-            db = await odm.connect()
-            if ctx.author.top_role == user.top_role:
-                embed = Embed(description=f":x: You can't kick people with the same role as you!",
-                            color=0xDD2222)
-                await ctx.send(embed=embed)
-                return
+                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                    await ctx.send("You can't kick an admin", ephemeral=True)
+                    return
+                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                    await ctx.send("You can't kick users with ban perms", ephemeral=True)
+                    return
+                elif await member.has_permission(Permissions.KICK_MEMBERS) == True:
+                    await ctx.send("You can't kick users with kick perms", ephemeral=True)
+                    return
+                db = await odm.connect()
+                if ctx.author.top_role == member.top_role:
+                    embed = Embed(description=f":x: You can't kick people with the same role as you!",
+                                color=0xDD2222)
+                    await ctx.send(embed=embed)
+                    return
 
-            if ctx.author.top_role.position < user.top_role.position:
-                embed = Embed(description=f":x: You can't kick people with roles higher than yours!",
-                            color=0xDD2222)
+                if ctx.author.top_role.position < member.top_role.position:
+                    embed = Embed(description=f":x: You can't kick people with roles higher than yours!",
+                                color=0xDD2222)
+                    await ctx.send(embed=embed)
+                    return
+                while True:
+                    kickid = random_string_generator()
+                    kickid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':kickid})
+                    if kickid_db == None:
+                        break
+                    else:
+                        continue
+                daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                await db.save(strikes(strikeid=kickid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Kick", day=daytime, reason=reason))
+                await ctx.guild.kick(user, reason)
+                embed = Embed(description=f"{user} **was kicked** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                            color=0x0c73d3,
+                            timestamp=datetime.utcnow())
+                embed.set_thumbnail(url=user.avatar.url)
                 await ctx.send(embed=embed)
-                return
-            while True:
-                kickid = random_string_generator()
-                kickid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':kickid})
-                if kickid_db == None:
-                    break
-                else:
-                    continue
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            await db.save(strikes(strikeid=kickid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Kick", day=daytime, reason=reason))
-            await ctx.guild.kick(user, reason)
-            embed = Embed(description=f"{user} **was kicked** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                          color=0x0c73d3,
-                          timestamp=datetime.utcnow())
-            embed.set_thumbnail(url=user.avatar.url)
-            await ctx.send(embed=embed)
+            else:
+                raise UserNotFound()
     
     @slash_command(name='mute', description="[MOD]allows me to mute users")
     @user()
@@ -332,87 +336,91 @@ class Moderation(Scale):
         await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.MUTE_MEMBERS)
         if (perms == True):
+            
             if user == None:
-                await ctx.send('You have to include a user', ephemeral=True)
+                await ctx.send('You have to include a member', ephemeral=True)
                 return
             elif user is ctx.author:
                 await ctx.send("You can't mute yourself", ephemeral=True)
                 return
-
-            if await user_has_perms(user, Permissions.ADMINISTRATOR) == True:
-                await ctx.send("You can't mute an admin", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.BAN_MEMBERS) == True:
-                await ctx.send("You can't mute users with ban perms", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.KICK_MEMBERS) == True:
-                await ctx.send("You can't mute users with kick perms", ephemeral=True)
-                return
-            
-            if ctx.author.top_role == user.top_role:
-                embed = Embed(description=f":x: You can't mute people with the same role as you!",
-                            color=0xDD2222)
-                await ctx.send(embed=embed)
-                return
-
-            if ctx.author.top_role.position < user.top_role.position:
-                embed = Embed(description=f":x: You can't mute people with roles higher than yours!",
-                            color=0xDD2222)
-                await ctx.send(embed=embed)
-                return
-            
-            mute_time = [int(i) for i in mutetime.lower().split() if i.isdigit()]
-            if mute_time == []:
-                embed = Embed(description=f":x: Mute time formatting not correct. Try again. \n\n[Examples: `10 S`, `10 M`, `10 H`, `10 D`]",
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                    await ctx.send("You can't mute an admin", ephemeral=True)
+                    return
+                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                    await ctx.send("You can't mute users with ban perms", ephemeral=True)
+                    return
+                elif await member.has_permission(Permissions.KICK_MEMBERS) == True:
+                    await ctx.send("You can't mute users with kick perms", ephemeral=True)
+                    return
+                
+                if ctx.author.top_role == member.top_role:
+                    embed = Embed(description=f":x: You can't mute people with the same role as you!",
                                 color=0xDD2222)
-                await ctx.send(embed=embed)
-            else:
-                for num in mute_time:
-                    time = num
-                mute_time_type = [str(type) for type in mutetime.lower().split() if not type.isdigit()]
-                for time_type in mute_time_type:
-                    type = time_type
+                    await ctx.send(embed=embed)
+                    return
 
-            if type in d:
-                seconds = time * 86400
-                endtime = datetime.now() + timedelta(days=int(time))
-
-            elif type in h:
-                seconds = time * 3600
-                endtime = datetime.now() + timedelta(hours=int(time))
-
-            elif type in m:
-                seconds = time * 60
-                endtime = datetime.now() + timedelta(minutes=int(time))
-
-            elif type in s:
-                seconds = time
-                endtime = datetime.now() + timedelta(seconds=int(time))
-
-            else:
-                embed = Embed(description=f":x: Time type not supported. You can use: {d}, {h}, {m}, {s}",
-                            color=0xDD2222)
-                await ctx.send(embed=embed)
-                return
-            
-            if (seconds < 10) or (seconds > 2419200):
-                await ctx.send("Mute time can't be shorter than 10 seconds and longer than 28 days.", ephemeral=True)
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            db = await odm.connect()
-            while True:
-                muteid = random_string_generator()
-                muteid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':muteid})
-                if muteid_db == None:
-                    break
+                if ctx.author.top_role.position < member.top_role.position:
+                    embed = Embed(description=f":x: You can't mute people with roles higher than yours!",
+                                color=0xDD2222)
+                    await ctx.send(embed=embed)
+                    return
+                
+                mute_time = [int(i) for i in mutetime.lower().split() if i.isdigit()]
+                if mute_time == []:
+                    embed = Embed(description=f":x: Mute time formatting not correct. Try again. \n\n[Examples: `10 S`, `10 M`, `10 H`, `10 D`]",
+                                    color=0xDD2222)
+                    await ctx.send(embed=embed)
                 else:
-                    continue
-            await db.save(strikes(strikeid=muteid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Mute", day=daytime, reason=reason))
-            await user.timeout(endtime, reason)
-            embed = Embed(description=f"{user} **was muted** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
-                            color=0x0c73d3,
-                            timestamp=datetime.utcnow())
-            embed.set_thumbnail(url=user.avatar.url)
-            await ctx.send(embed=embed)
+                    for num in mute_time:
+                        time = num
+                    mute_time_type = [str(type) for type in mutetime.lower().split() if not type.isdigit()]
+                    for time_type in mute_time_type:
+                        type = time_type
+
+                if type in d:
+                    seconds = time * 86400
+                    endtime = datetime.now() + timedelta(days=int(time))
+
+                elif type in h:
+                    seconds = time * 3600
+                    endtime = datetime.now() + timedelta(hours=int(time))
+
+                elif type in m:
+                    seconds = time * 60
+                    endtime = datetime.now() + timedelta(minutes=int(time))
+
+                elif type in s:
+                    seconds = time
+                    endtime = datetime.now() + timedelta(seconds=int(time))
+
+                else:
+                    embed = Embed(description=f":x: Time type not supported. You can use: {d}, {h}, {m}, {s}",
+                                color=0xDD2222)
+                    await ctx.send(embed=embed)
+                    return
+                
+                if (seconds < 10) or (seconds > 2419200):
+                    await ctx.send("Mute time can't be shorter than 10 seconds and longer than 28 days.", ephemeral=True)
+                daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                db = await odm.connect()
+                while True:
+                    muteid = random_string_generator()
+                    muteid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':muteid})
+                    if muteid_db == None:
+                        break
+                    else:
+                        continue
+                await db.save(strikes(strikeid=muteid, guildid=ctx.guild_id, user=member.id, moderator=ctx.author.id, action="Mute", day=daytime, reason=reason))
+                await member.timeout(endtime, reason)
+                embed = Embed(description=f"{member} **was muted** | {reason} \n**User ID:** {member.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
+                                color=0x0c73d3,
+                                timestamp=datetime.utcnow())
+                embed.set_thumbnail(url=member.avatar.url)
+                await ctx.send(embed=embed)
+            else:
+                raise UserNotFound()
     
     @slash_command(name='unmute', description="[MOD]allows me to unmute users")
     @user()
@@ -424,23 +432,21 @@ class Moderation(Scale):
             if user == None:
                 await ctx.send('You have to include a user', ephemeral=True)
                 return
-            await user.timeout(datetime.now(), '[UNMUTE] '+reason)
-            embed = Embed(description=f"{user} **was unmuted** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                            color=0x0c73d3,
-                            timestamp=datetime.utcnow())
-            embed.set_thumbnail(url=user.avatar.url)
-            await ctx.send(embed=embed)
-    
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                await member.timeout(datetime.now(), '[UNMUTE] '+reason)
+                embed = Embed(description=f"{user} **was unmuted** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                                color=0x0c73d3,
+                                timestamp=datetime.utcnow())
+                embed.set_thumbnail(url=user.avatar.url)
+                await ctx.send(embed=embed)
+            else:
+                raise UserNotFound()
+        
     @slash_command(name='warn', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to warn users")
     @user()
     @reason()
     async def warn(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
-        async def ismember(ctx, user):
-            for member in ctx.guild.members:
-                if member == user:
-                    return True
-            return False
-
         await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.MUTE_MEMBERS)
         if (perms == True):
@@ -450,53 +456,54 @@ class Moderation(Scale):
             elif user is ctx.author:
                 await ctx.send("You can't warn yourself", ephemeral=True)
                 return
-            elif await ismember(ctx, user) == False:
-                await ctx.send("User has to be a member of the server", ephemeral=True)
-                return
             elif reason == None:
                 await ctx.send("You have to include a reason", ephemeral=True)
                 return
-            db = await odm.connect()
-            while True:
-                warnid = random_string_generator()
-                warnid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':warnid})
-                if warnid_db == None:
-                    break
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                db = await odm.connect()
+                while True:
+                    warnid = random_string_generator()
+                    warnid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':warnid})
+                    if warnid_db == None:
+                        break
+                    else:
+                        continue
+                
+                warnaction = re.compile(f"^warn$", re.IGNORECASE)
+                warnings = await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction})
+                if warnings == None:
+                    warnrolename = 'Warning-1'
                 else:
-                    continue
-            
-            warnaction = re.compile(f"^warn$", re.IGNORECASE)
-            warnings = await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction})
-            if warnings == None:
-                warnrolename = 'Warning-1'
-            else:
-                warncount = [warning.strikeid for warning in warnings]
-                warnrolename = f'Warning-{len(warncount)+1}'
-            
-            warn_role = [role for role in ctx.guild.roles if role.name == warnrolename]
-            if warn_role == []:
-                role = await ctx.guild.create_role(name=warnrolename, reason='[automod]|[warn]created new warnrole as warnrole with this number did not exist yet')
-            else:
-                for role in warn_role:
-                    role = role
-            
-            await user.add_role(role, reason)
+                    warncount = [warning.strikeid for warning in warnings]
+                    warnrolename = f'Warning-{len(warncount)+1}'
+                
+                warn_role = [role for role in ctx.guild.roles if role.name == warnrolename]
+                if warn_role == []:
+                    role = await ctx.guild.create_role(name=warnrolename, reason='[automod]|[warn]created new warnrole as warnrole with this number did not exist yet')
+                else:
+                    for role in warn_role:
+                        role = role
+                
+                await user.add_role(role, reason)
 
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Warn", day=daytime, reason=reason))
-            try:
-                embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild.name} for:** {reason}",
-                          color=0x0c73d3)
-                await user.send(embed=embed)
-            except:
-                embed = Embed(description=f"Couldn't dm {user.mention}, warn logged | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                          color=0x0c73d3)
-                await ctx.send(embed=embed)
-                return
-            else:
-                embed = Embed(description=f"{user.mention} warned | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Warn", day=daytime, reason=reason))
+                try:
+                    embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild.name} for:** {reason}",
                             color=0x0c73d3)
-                await ctx.send(embed=embed)
+                    await user.send(embed=embed)
+                except:
+                    embed = Embed(description=f"Couldn't dm {user.mention}, warn logged | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                            color=0x0c73d3)
+                    await ctx.send(embed=embed)
+                    return
+                else:
+                    embed = Embed(description=f"{user.mention} warned | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                                color=0x0c73d3)
+                    await ctx.send(embed=embed)
+            else:
+                raise UserNotFound()
     
     @slash_command(name='warn', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to remove warns from users")
     @user()
@@ -506,40 +513,35 @@ class Moderation(Scale):
         await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.BAN_MEMBERS)
         if (perms == True):
-            async def ismember(ctx, user):
-                for member in ctx.guild.members:
-                    if member == user:
-                        return True
-                return False
-
             if user == None:
                 await ctx.send('You have to include a user', ephemeral=True)
                 return
             elif user is ctx.author:
                 await ctx.send("You can't remove a warn from yourself", ephemeral=True)
                 return
-            elif await ismember(ctx, user) == False:
-                await ctx.send("User has to be a member of the server", ephemeral=True)
-                return
             elif reason == None:
                 await ctx.send("You have to include a reason", ephemeral=True)
                 return
-            db = await odm.connect()
-            warnaction = re.compile(f"^warn$", re.IGNORECASE)
-            warning = await db.find_one(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction, 'strikeid':warnid})
-            if warning == None:
-                return await ctx.send(f'Warning not found for {user}', ephemeral=True)
-            
-            warncount = [warn.strikeid for warn in await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction})]
-            warnrolename = f'Warning-{len(warncount)}'
-            warn_role = [role for role in ctx.guild.roles if role.name == warnrolename]
-            for role in warn_role:
-                role=role
-            await user.remove_role(role, reason)
-            await db.delete(warning)
-            embed = Embed(description=f"warn removed from {user.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                          color=0x0c73d3)
-            await ctx.send(embed=embed)
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                db = await odm.connect()
+                warnaction = re.compile(f"^warn$", re.IGNORECASE)
+                warning = await db.find_one(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction, 'strikeid':warnid})
+                if warning == None:
+                    return await ctx.send(f'Warning not found for {user}', ephemeral=True)
+                
+                warncount = [warn.strikeid for warn in await db.find(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction})]
+                warnrolename = f'Warning-{len(warncount)}'
+                warn_role = [role for role in ctx.guild.roles if role.name == warnrolename]
+                for role in warn_role:
+                    role=role
+                await user.remove_role(role, reason)
+                await db.delete(warning)
+                embed = Embed(description=f"warn removed from {user.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                            color=0x0c73d3)
+                await ctx.send(embed=embed)
+            else:
+                raise UserNotFound()
     
     @slash_command(name='warnings', description="[MOD]shows you a users warn list")
     @user()
@@ -668,59 +670,63 @@ class Moderation(Scale):
             if reason == None:
                 await ctx.send('You have to include a reason', ephemeral=True)
                 return
-            if await user_has_perms(user, Permissions.ADMINISTRATOR) == True:
-                await ctx.send("You can't limbo an admin", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.BAN_MEMBERS) == True:
-                await ctx.send("You can't limbo users with ban perms", ephemeral=True)
-                return
-            elif await user_has_perms(user, Permissions.KICK_MEMBERS) == True:
-                await ctx.send("You can't limbo users with kick perms", ephemeral=True)
-                return
-            
-            if user.roles:
-                if ctx.author.top_role == user.top_role:
-                    embed = Embed(description=f":x: You can't limbo people with the same role as you!",
-                                color=0xDD2222)
-                    await ctx.send(embed=embed)
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                    await ctx.send("You can't limbo an admin", ephemeral=True)
                     return
+                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                    await ctx.send("You can't limbo users with ban perms", ephemeral=True)
+                    return
+                elif await member.has_permission(Permissions.KICK_MEMBERS) == True:
+                    await ctx.send("You can't limbo users with kick perms", ephemeral=True)
+                    return
+                
+                if member.roles:
+                    if ctx.author.top_role == member.top_role:
+                        embed = Embed(description=f":x: You can't limbo people with the same role as you!",
+                                    color=0xDD2222)
+                        await ctx.send(embed=embed)
+                        return
 
-                if ctx.author.top_role.position < user.top_role.position:
-                    embed = Embed(description=f":x: You can't limbo people with roles higher than yours!",
-                                color=0xDD2222)
-                    await ctx.send(embed=embed)
+                    if ctx.author.top_role.position < member.top_role.position:
+                        embed = Embed(description=f":x: You can't limbo people with roles higher than yours!",
+                                    color=0xDD2222)
+                        await ctx.send(embed=embed)
+                        return
+                db = await odm.connect()
+                limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':member.id})
+                if limboed != None:
+                    await ctx.send(f'{member.mention} is already in limbo', ephemeral=True)
                     return
-            db = await odm.connect()
-            limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':user.id})
-            if limboed != None:
-                await ctx.send(f'{user.mention} is already in limbo', ephemeral=True)
-                return
-            limbo_role = [role for role in ctx.guild.roles if role.name == 'Limbo']
-            if limbo_role == []:
-                limborole = await ctx.guild.create_role(name='Limbo', reason='[automod]|[limbo]created new limbo role as limbo role did not exist yet')
-            else:
-                for role in limbo_role:
-                    limborole = role
-            user_roles = [role for role in user.roles if role.name != '@everyone']
-            ur = ''
-            for r in user_roles:
-                ur = ur+f"{r.id},"
-            await db.save(limbo(guildid=ctx.guild_id, userid=user.id, roles=ur, reason=reason))
-            for user_role in user_roles:
-                await user.remove_role(user_role)
-            await user.add_role(limborole)
-            embed = Embed(description=f"{user.mention} put in limbo | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                          color=0x0c73d3)
-            await ctx.send(embed=embed)
-            while True:
-                warnid = random_string_generator()
-                warnid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':warnid})
-                if warnid_db == None:
-                    break
+                limbo_role = [role for role in ctx.guild.roles if role.name == 'Limbo']
+                if limbo_role == []:
+                    limborole = await ctx.guild.create_role(name='Limbo', reason='[automod]|[limbo]created new limbo role as limbo role did not exist yet')
                 else:
-                    continue
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Limbo", day=daytime, reason=reason))
+                    for role in limbo_role:
+                        limborole = role
+                user_roles = [role for role in member.roles if role.name != '@everyone']
+                ur = ''
+                for r in user_roles:
+                    ur = ur+f"{r.id},"
+                await db.save(limbo(guildid=ctx.guild_id, userid=member.id, roles=ur, reason=reason))
+                for user_role in user_roles:
+                    await member.remove_role(user_role)
+                await member.add_role(limborole)
+                embed = Embed(description=f"{member.mention} put in limbo | {reason} \n**User ID:** {member.id} \n**Actioned by:** {ctx.author.mention}",
+                            color=0x0c73d3)
+                await ctx.send(embed=embed)
+                while True:
+                    warnid = random_string_generator()
+                    warnid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':warnid})
+                    if warnid_db == None:
+                        break
+                    else:
+                        continue
+                daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                await db.save(strikes(strikeid=warnid, guildid=ctx.guild_id, user=member.id, moderator=ctx.author.id, action="Limbo", day=daytime, reason=reason))
+            else:
+                raise UserNotFound()
     
     @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo")
     @user()
@@ -735,27 +741,31 @@ class Moderation(Scale):
             if reason == None:
                 await ctx.send('You have to include a reason', ephemeral=True)
                 return
-            db = await odm.connect()
-            limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':user.id})
-            if limboed == None:
-                await ctx.send(f'{user.mention} is not in limbo', ephemeral=True)
-                return
+            member = await ctx.guild.get_member(user.id)
+            if user.id == member.id:
+                db = await odm.connect()
+                limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':member.id})
+                if limboed == None:
+                    await ctx.send(f'{member.mention} is not in limbo', ephemeral=True)
+                    return
 
-            limborole = [role for role in user.roles if role.name == 'Limbo']
-            for limborole in limborole:
-                limborole = limborole
+                limborole = [role for role in member.roles if role.name == 'Limbo']
+                for limborole in limborole:
+                    limborole = limborole
 
-            user_limbo_data = await db.find_one(limbo, {"guildid":ctx.guild_id, "userid":user.id})
-            roles = [await ctx.guild.get_role(int(id_)) for id_ in user_limbo_data.roles.split(",") if len(id_)]
-            for r in roles:
-                await user.add_role(r)
-            await user.remove_role(limborole)
+                user_limbo_data = await db.find_one(limbo, {"guildid":ctx.guild_id, "userid":member.id})
+                roles = [await ctx.guild.get_role(int(id_)) for id_ in user_limbo_data.roles.split(",") if len(id_)]
+                for r in roles:
+                    await member.add_role(r)
+                await member.remove_role(limborole)
 
-            await db.delete(user_limbo_data)
+                await db.delete(user_limbo_data)
 
-            embed = Embed(description=f"{user.mention} let out of limbo | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                          color=0x0c73d3)
-            await ctx.send(embed=embed)
+                embed = Embed(description=f"{member.mention} let out of limbo | {reason} \n**User ID:** {member.id} \n**Actioned by:** {ctx.author.mention}",
+                            color=0x0c73d3)
+                await ctx.send(embed=embed)
+            else:
+                raise UserNotFound
     
     @listen()
     async def on_message_create(self, event):
