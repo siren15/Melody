@@ -318,7 +318,6 @@ class Levels(Scale):
             client=self.bot, 
             pages=embeds,
             timeout_interval=80,
-            show_select_menu=True,
             wrong_user_message='Stop finding yourself! ...Since this leaderboard was not generated for you')
         await paginator.send(ctx)
         
