@@ -314,12 +314,7 @@ class Levels(Scale):
             embeds.append(newpage(f'Leveling leaderboard for {ctx.guild.name}', mlis(members, s, e), mlis(lvls, s, e), mlis(tot_xp, s, e)))
             embedcount = embedcount+1
             
-        paginator = Paginator(
-            client=self.bot, 
-            pages=embeds,
-            timeout_interval=80,
-            show_select_menu=False,
-            wrong_user_message='Stop finding yourself! ...Since this leaderboard was not generated for you')
+        paginator = Paginator.create_from_embeds(self.bot, embeds, 80)
         await paginator.send(ctx)
         
 def setup(bot):
