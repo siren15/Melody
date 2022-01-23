@@ -597,7 +597,7 @@ class Moderation(Scale):
                 client=self.bot, 
                 pages=embeds,
                 timeout_interval=80,
-                show_select_menu=True)
+                show_select_menu=False)
             await paginator.send(ctx)
     
     @slash_command(name='strikes', description="[MOD]shows you a users strike list")
@@ -654,7 +654,7 @@ class Moderation(Scale):
                 client=self.bot, 
                 pages=embeds,
                 timeout_interval=80,
-                show_select_menu=True)
+                show_select_menu=False)
             await paginator.send(ctx)
     
     @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users")

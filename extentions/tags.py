@@ -334,7 +334,7 @@ class Tags(Scale):
                 client=self.bot, 
                 pages=embeds,
                 timeout_interval=80,
-                show_select_menu=True,
+                show_select_menu=False,
                 wrong_user_message="You're not the one destined for this list.")
             await paginator.send(ctx)
                 

@@ -258,7 +258,7 @@ class Levels(Scale):
     
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
-        from dis_snek.ext.paginators import Paginator
+        from .src.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
