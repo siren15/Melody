@@ -241,22 +241,22 @@ class Levels(Scale):
         avatar_frame = Image.open(requests.get('https://i.imgur.com/6iKS56q.png', stream=True).raw).convert("RGBA")
         background.paste(avatar_frame, (0, 75), avatar_frame)
 
-        font = ImageFont.truetype('NotoSans-Regular.ttf', 50)
+        font = ImageFont.truetype('Everson-Mono-Bold.ttf', 56)
         
         I1 = ImageDraw.Draw(background)
-        lvlmsg = f'LVL: {levels.level} XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
+        lvlmsg = f'LVL:{levels.level}|XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
         I1.text((312,201), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
 
-        namefont = ImageFont.truetype('NotoSans-Regular.ttf', 70)
+        namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 80)
         name = f'{member.display_name}'
         tw, th = I1.textsize(name, namefont)
         position = ((IW-tw)/2,(IH-th)/12)
         if len(member.display_name) >= 15:
-            namefont = ImageFont.truetype('NotoSans-Regular.ttf', 60)
+            namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 70)
             tw, th = I1.textsize(name, namefont)
             position = ((IW-tw)/2,(IH-th)/11.5)
         elif len(member.display_name) >= 25:
-            namefont = ImageFont.truetype('NotoSans-Regular.ttf', 50)
+            namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 60)
             tw, th = I1.textsize(name, namefont)
             position = ((IW-tw)/2,(IH-th)/10)
 
