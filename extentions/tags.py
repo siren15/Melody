@@ -3,11 +3,7 @@ import asyncio
 
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timezone
-from dis_snek.models.discord.components import ActionRow, Button, spread_to_rows
-from dis_snek.models.discord.enums import ButtonStyles
-from dis_snek.models.snek.scale import Scale
-from dis_snek import Snake, slash_command, InteractionContext,  OptionTypes
-from dis_snek.models.discord.embed import Embed
+from dis_snek import Snake, Scale, slash_command, InteractionContext, OptionTypes, Embed, Button, ButtonStyles, ActionRow, spread_to_rows
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *

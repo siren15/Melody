@@ -4,11 +4,7 @@ import os
 import requests
 
 from datetime import datetime, timedelta
-from dis_snek.models.discord.embed import Embed
-from dis_snek.models.snek.scale import Scale
-from dis_snek.models.discord.enums import Permissions
-from dis_snek.models.snek.listener import listen
-from dis_snek import Snake, slash_command, InteractionContext, OptionTypes
+from dis_snek import Snake, Scale, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
@@ -246,12 +242,25 @@ class Levels(Scale):
         background.paste(avatar_frame, (0, 75), avatar_frame)
 
         font = ImageFont.truetype('NotoSans-Regular.ttf', 50)
+        
         I1 = ImageDraw.Draw(background)
         lvlmsg = f'LVL: {levels.level} XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
         I1.text((312,201), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+
+        namefont = ImageFont.truetype('NotoSans-Regular.ttf', 70)
         name = f'{member.display_name}'
-        tw, th = I1.textsize(name, font)
-        I1.text(((IW-tw)/2.1,(IH-th)/11), name, font=ImageFont.truetype('NotoSans-Regular.ttf', 70), stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        tw, th = I1.textsize(name, namefont)
+        position = ((IW-tw)/2,(IH-th)/12)
+        if len(member.display_name) >= 15:
+            namefont = ImageFont.truetype('NotoSans-Regular.ttf', 60)
+            tw, th = I1.textsize(name, namefont)
+            position = ((IW-tw)/2,(IH-th)/11.5)
+        elif len(member.display_name) >= 25:
+            namefont = ImageFont.truetype('NotoSans-Regular.ttf', 50)
+            tw, th = I1.textsize(name, namefont)
+            position = ((IW-tw)/2,(IH-th)/10)
+
+        I1.text(position, name, font=namefont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
         background.save(f'levelcard_{member.id}.png')
         await ctx.send(file=f'levelcard_{member.id}.png')
         os.remove(f'levelcard_{member.id}.png')

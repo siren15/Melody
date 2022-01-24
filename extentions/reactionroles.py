@@ -1,13 +1,8 @@
 import random
 import asyncio
 
-from dis_snek.models.discord.embed import Embed
-from dis_snek.models.discord.message import Message
-from dis_snek.models.snek.listener import listen
 from dis_snek.api.events.discord import *
-from dis_snek.models.snek.scale import Scale
-from dis_snek.models.discord.enums import Permissions
-from dis_snek import Snake, slash_command, InteractionContext
+from dis_snek import Snake, Scale, Permissions, listen, Message, Embed, slash_command, InteractionContext
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *

@@ -1,12 +1,8 @@
 import os
 import asyncio
 
-from dis_snek import InteractionContext
-from dis_snek.client import Snake
-from dis_snek.models.discord.enums import Intents
-from dis_snek.models.snek.listener import listen
+from dis_snek import Snake, Intents, listen, Embed, InteractionContext
 from extentions.src.customchecks import *
-from dis_snek.models.discord.embed import Embed
 from dis_snek.client.errors import NotFound
 
 intents = Intents.ALL

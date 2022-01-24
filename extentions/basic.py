@@ -1,11 +1,6 @@
-import re
-
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
-from dis_snek.models.discord.embed import Embed
-from dis_snek.models.snek.scale import Scale
-from dis_snek.models.discord.enums import Permissions
-from dis_snek import Snake, slash_command, InteractionContext, slash_option, OptionTypes
+from dis_snek import Snake, Scale, Permissions, Embed, slash_command, InteractionContext, OptionTypes
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *

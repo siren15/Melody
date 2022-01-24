@@ -2,9 +2,7 @@
 import logging
 import datetime
 
-from dis_snek.models.discord.embed import Embed
-from dis_snek.models.snek.scale import Scale
-from dis_snek import slash_command, InteractionContext
+from dis_snek import Scale, slash_command, InteractionContext, Embed
 
 
 class Uptime(Scale):
