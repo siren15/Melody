@@ -93,13 +93,13 @@ class Moderation(Scale):
                 return
             member = await ctx.guild.get_member(user.id)
             if user.id == member.id:
-                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                if member.has_permission(Permissions.ADMINISTRATOR) == True:
                     await ctx.send("You can't purge an admin", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                elif member.has_permission(Permissions.BAN_MEMBERS) == True:
                     await ctx.send("You can't purge users with ban perms", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.MANAGE_MESSAGES) == True:
+                elif member.has_permission(Permissions.MANAGE_MESSAGES) == True:
                     await ctx.send("You can't purge users with manage messages perms", ephemeral=True)
                     return
             if (amount <= 0) or (amount >= 300):
@@ -141,10 +141,10 @@ class Moderation(Scale):
                 db = await odm.connect()
                 member = await ctx.guild.get_member(user.id)
                 if user.id == member.id:
-                    if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                    if member.has_permission(Permissions.ADMINISTRATOR) == True:
                         await ctx.send("You can't ban an admin", ephemeral=True)
                         return
-                    elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                    elif member.has_permission(Permissions.BAN_MEMBERS) == True:
                         await ctx.send("You can't ban users with ban perms", ephemeral=True)
                         return
                     elif ctx.author.top_role == member.top_role:
@@ -283,13 +283,13 @@ class Moderation(Scale):
                     await ctx.send("You can't kick yourself", ephemeral=True)
                     return
 
-                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                if member.has_permission(Permissions.ADMINISTRATOR) == True:
                     await ctx.send("You can't kick an admin", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                elif member.has_permission(Permissions.BAN_MEMBERS) == True:
                     await ctx.send("You can't kick users with ban perms", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.KICK_MEMBERS) == True:
+                elif member.has_permission(Permissions.KICK_MEMBERS) == True:
                     await ctx.send("You can't kick users with kick perms", ephemeral=True)
                     return
                 db = await odm.connect()
@@ -339,13 +339,14 @@ class Moderation(Scale):
                 return
             member = await ctx.guild.get_member(user.id)
             if user.id == member.id:
-                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                
+                if member.has_permission(Permissions.ADMINISTRATOR) == True:
                     await ctx.send("You can't mute an admin", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                elif member.has_permission(Permissions.BAN_MEMBERS) == True:
                     await ctx.send("You can't mute users with ban perms", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.KICK_MEMBERS) == True:
+                elif member.has_permission(Permissions.KICK_MEMBERS) == True:
                     await ctx.send("You can't mute users with kick perms", ephemeral=True)
                     return
                 
@@ -666,13 +667,13 @@ class Moderation(Scale):
                 return
             member = await ctx.guild.get_member(user.id)
             if user.id == member.id:
-                if await member.has_permission(Permissions.ADMINISTRATOR) == True:
+                if member.has_permission(Permissions.ADMINISTRATOR) == True:
                     await ctx.send("You can't limbo an admin", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.BAN_MEMBERS) == True:
+                elif member.has_permission(Permissions.BAN_MEMBERS) == True:
                     await ctx.send("You can't limbo users with ban perms", ephemeral=True)
                     return
-                elif await member.has_permission(Permissions.KICK_MEMBERS) == True:
+                elif member.has_permission(Permissions.KICK_MEMBERS) == True:
                     await ctx.send("You can't limbo users with kick perms", ephemeral=True)
                     return
                 
