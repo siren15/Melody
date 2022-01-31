@@ -52,9 +52,14 @@ class Basic(Scale):
         jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
         join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
 
+        if member.guild_avatar != None:
+            avatarurl = f'{member.guild_avatar.url}.png'
+        else:
+            avatarurl = f'{member.avatar.url}.png'
+
         embed = Embed(color=color,
                       title=f"User Info - {member}")
-        embed.set_thumbnail(url=member.avatar.url)
+        embed.set_thumbnail(url=avatarurl)
         embed.add_field(name="ID(snowflake):", value=member.id, inline=False)
         embed.add_field(name="Nickname:", value=member.display_name, inline=False)
         embed.add_field(name="Created account on:", value=member.created_at.strftime("%a, %#d %B %Y, %I:%M %p UTC")+f" [{creation_time}]", inline=False)
@@ -98,9 +103,14 @@ class Basic(Scale):
         jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
         join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
 
+        if member.guild_avatar != None:
+            avatarurl = f'{member.guild_avatar.url}.png'
+        else:
+            avatarurl = f'{member.avatar.url}.png'
+
         embed = Embed(color=color,
                       title=f"Bot Info - {member}")
-        embed.set_thumbnail(url=member.avatar.url)
+        embed.set_thumbnail(url=avatarurl)
         #embed.set_author(name=member, icon_url=member.avatar.url)
         embed.add_field(name="ID(snowflake):", value=member.id, inline=False)
         embed.add_field(name="Nickname:", value=member.display_name, inline=False)
@@ -121,8 +131,30 @@ class Basic(Scale):
         await ctx.defer()
         if member == None:
             member = ctx.author
-        embed = Embed(color=0x0c73d3)
-        embed.set_image(url=member.avatar.url)
+        
+        if member.guild_avatar != None:
+            avatarurl = member.guild_avatar.url
+        else:
+            avatarurl = member.avatar.url
+        
+        embed = Embed(description=member.display_name, color=0x0c73d3)
+        embed.set_image(url=avatarurl)
+        await ctx.send(embed=embed)
+
+    @slash_command(name='useravatar', description="Show's you your avatar, or users, if provided")
+    @member()
+    async def useravatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
+        await ctx.defer()
+        if member == None:
+            member = ctx.author
+        
+        if member.guild_avatar != None:
+            avatarurl = member.guild_avatar.url
+        else:
+            avatarurl = member.avatar.url
+        
+        embed = Embed(description=member.display_name, color=0x0c73d3)
+        embed.set_image(url=avatarurl)
         await ctx.send(embed=embed)
     
     @slash_command(name='ping', description="Ping! Pong!")
