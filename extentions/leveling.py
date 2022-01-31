@@ -110,6 +110,69 @@ class Levels(Scale):
             else:
                 await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is already assigned to level {check.level}'))
     
+    @slash_command(name='ranklist', description="leveling roles list")
+    async def ranks_list(self, ctx:InteractionContext):
+        await ctx.defer()
+        hasrole = await has_role(ctx)
+        if hasrole == True:
+            from dis_snek.ext.paginators import Paginator
+            def chunks(l, n):
+                n = max(1, n)
+                return (l[i:i+n] for i in range(0, len(l), n))
+            
+            def mlis(lst, s, e):
+                nc = list(chunks(lst, 20))
+                mc = ''
+                for testlist in nc[s:e]:
+                    for m in testlist:
+                        mc = mc + m
+                return mc
+
+            def newpage(title, level, role):
+                embed = Embed(title=title,
+                color=0x0c73d3)
+                embed.add_field(name='Level', value=level, inline=True)
+                embed.add_field(name='Role', value=role, inline=True)
+                return embed
+
+            db = await odm.connect()
+            levels = await db.find(leveling_roles, {"guildid":ctx.guild_id})
+
+            level = [str(l.level)+"\n" for l in levels]
+
+            if level == []:
+                embed = Embed(description=f"There are no ranks for {ctx.guild.name}.",
+                            color=0x0c73d3)
+                await ctx.send(embed=embed)
+                return
+            
+            roles = []
+            for lvl in levels:
+                lvlrole = await ctx.guild.get_role(lvl.roleid)
+                if lvlrole == None:
+                    roles.append('[ROLE NOT FOUND]\n')
+                else:
+                    roles.append(f"{lvlrole.mention}\n")
+
+            s = -1
+            e = 0
+            embedcount = 1
+            nc = list(chunks(level, 20))
+            
+            embeds = []
+            while embedcount <= len(nc):
+                s = s+1
+                e = e+1
+                embeds.append(newpage(f'List of ranks for {ctx.guild.name}', mlis(level, s, e), mlis(roles, s, e)))
+                embedcount = embedcount+1
+                
+            paginator = Paginator(
+                client=self.bot, 
+                pages=embeds,
+                timeout_interval=80,
+                show_select_menu=False)
+            await paginator.send(ctx)
+    
     @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles")
     @role()
     async def leveling_remove_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):

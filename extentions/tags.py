@@ -305,14 +305,13 @@ class Tags(Scale):
 
             db = await odm.connect()
             tag_names = await db.find(tag, {"guild_id":ctx.guild_id})
-            
-            if tag_names == None:
-                embed = Embed(description=f"There are no tags for {ctx.guild}.",
+
+            names = [str(name.names)+"\n" for name in tag_names if name.names != None]
+            if names == []:
+                embed = Embed(description=f"There are no tags for {ctx.guild.name}.",
                             color=0x0c73d3)
                 await ctx.send(embed=embed)
                 return
-
-            names = [str(name.names)+"\n" for name in tag_names if name.names != None]
 
             s = -1
             e = 0
