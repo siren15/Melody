@@ -529,12 +529,11 @@ class Moderation(Scale):
                 warnrolename = f'Warning-{len(warncount)}'
                 warn_role = [role for role in ctx.guild.roles if role.name == warnrolename]
                 for role in warn_role:
-                    role=role
-                await user.remove_role(role, reason)
-                await db.delete(warning)
-                embed = Embed(description=f"warn removed from {user.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                            color=0x0c73d3)
-                await ctx.send(embed=embed)
+                    await user.remove_role(role, reason)
+                    await db.delete(warning)
+                    embed = Embed(description=f"warn removed from {user.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                                color=0x0c73d3)
+                    await ctx.send(embed=embed)
             else:
                 raise UserNotFound()
     
