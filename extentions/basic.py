@@ -147,11 +147,8 @@ class Basic(Scale):
         await ctx.defer()
         if member == None:
             member = ctx.author
-        
-        if member.guild_avatar != None:
-            avatarurl = member.guild_avatar.url
-        else:
-            avatarurl = member.avatar.url
+
+        avatarurl = member.avatar.url
         
         embed = Embed(description=member.display_name, color=0x0c73d3)
         embed.set_image(url=avatarurl)
