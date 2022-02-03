@@ -25,6 +25,11 @@ def colourme_name():
         return slash_option(name="colourme_name", description="name of the colourme", opt_type=OptionTypes.STRING, required=True)(func)
     return wrapper
 
+def giveyou_name():
+    def wrapper(func):
+        return slash_option(name="giveyou_name", description="name of the giveyou", opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
+
 def amount():
     def wrapper(func):
         return slash_option(name="amount", description="amount of messages to delete", opt_type=OptionTypes.INTEGER, required=True)(func)

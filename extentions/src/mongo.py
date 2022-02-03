@@ -73,7 +73,6 @@ class giveme(Model):
 class giveyou(Model):
 	guildid: Optional[int64] = None
 	name: Optional[str] = None
-	rolename: Optional[str] = None
 	roleid:	Optional[int64] = None
 
 class hasrole(Model):
