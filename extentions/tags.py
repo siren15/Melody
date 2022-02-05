@@ -318,34 +318,34 @@ class Tags(Scale):
         await paginator.send(ctx)
                 
     
-    @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
-    @tagname()
-    @check(role_lock())
-    async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
-        if tagname == None:
-            embed = Embed(description=f":x: You must include tag's name",
-                        color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-            return
+    # @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
+    # @tagname()
+    # @check(role_lock())
+    # async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
+    #     if tagname == None:
+    #         embed = Embed(description=f":x: You must include tag's name",
+    #                     color=0xDD2222)
+    #         await ctx.send(embed=embed, ephemeral=True)
+    #         return
 
-        db = await odm.connect()
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
-        tag_to_claim = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx})
-        if tag_to_claim.owner_id == ctx.author.id:
-            embed = Embed(description=f":x: You can't claim a tag you already own",
-                        color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-            return
-        if checktagowner(ctx.guild, tag_to_claim.owner_id) == None:
-            tag_to_claim.owner_id = ctx.author.id
-            await db.save(tag_to_claim)
-            embed = Embed(description=f"{ctx.author.mention} You are now owner of {tag_to_claim.names}",
-                        color=0x0c73d3)
-            await ctx.send(embed=embed)
-        else:
-            embed = Embed(description=f":x: You can't claim a tag that's not orphaned",
-                        color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
+    #     db = await odm.connect()
+    #     tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+    #     tag_to_claim = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx})
+    #     if tag_to_claim.owner_id == ctx.author.id:
+    #         embed = Embed(description=f":x: You can't claim a tag you already own",
+    #                     color=0xDD2222)
+    #         await ctx.send(embed=embed, ephemeral=True)
+    #         return
+    #     if checktagowner(ctx.guild, tag_to_claim.owner_id) == None:
+    #         tag_to_claim.owner_id = ctx.author.id
+    #         await db.save(tag_to_claim)
+    #         embed = Embed(description=f"{ctx.author.mention} You are now owner of {tag_to_claim.names}",
+    #                     color=0x0c73d3)
+    #         await ctx.send(embed=embed)
+    #     else:
+    #         embed = Embed(description=f":x: You can't claim a tag that's not orphaned",
+    #                     color=0xDD2222)
+    #         await ctx.send(embed=embed, ephemeral=True)
 
     @slash_command(name='tag', sub_cmd_name='gift', sub_cmd_description="gift your tags")
     @tagname()
