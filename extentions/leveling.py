@@ -115,7 +115,7 @@ class Levels(Scale):
         await ctx.defer()
         hasrole = await has_role(ctx)
         if hasrole == True:
-            from dis_snek.ext.paginators import Paginator
+            from .src.paginators import Paginator
             def chunks(l, n):
                 n = max(1, n)
                 return (l[i:i+n] for i in range(0, len(l), n))
