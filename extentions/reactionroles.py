@@ -1,7 +1,6 @@
 import random
 import asyncio
 
-from dis_snek.api.events.discord import *
 from dis_snek import Snake, Scale, Permissions, listen, Message, Embed, slash_command, InteractionContext
 from .src.mongo import *
 from .src.slash_options import *
@@ -48,7 +47,7 @@ class ReactionRoles(Scale):
     #modes: 1 = react to get a role - unreact to remove the role, 2 = react to get a role - not possible to remove the role, 3 = only one role allowed from the message
 
     @listen()
-    async def on_message_reaction_add(self, event:MessageReactionAdd):
+    async def on_message_reaction_add(self, event):
         #modes 1 and 2
         guild = event.message.guild
         message = event.message
@@ -89,7 +88,7 @@ class ReactionRoles(Scale):
                     raise RoleNotFound()
     
     @listen()
-    async def on_message_reaction_add(self, event:MessageReactionAdd):
+    async def on_message_reaction_add(self, event):
         #mode 3
         guild = event.message.guild
         message = event.message
@@ -124,7 +123,7 @@ class ReactionRoles(Scale):
                 raise RoleNotFound()
     
     @listen()
-    async def on_message_reaction_remove(self, event:MessageReactionRemove):
+    async def on_message_reaction_remove(self, event):
         #modes 1 and 3
         guild = event.message.guild
         message = event.message
