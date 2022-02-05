@@ -129,3 +129,8 @@ def role_level():
     def wrapper(func):
         return slash_option(name='role_level', description='Type the role level', opt_type=OptionTypes.STRING, required=False)(func)
     return wrapper
+
+def cmd():
+    def wrapper(func):
+        return slash_option(name='command', description='Type the command to restrict', opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
