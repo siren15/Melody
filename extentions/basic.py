@@ -11,7 +11,7 @@ class Basic(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
     
-    @slash_command(name='command', sub_cmd_name='restrict', sub_cmd_description='Restrict a commands usage to a specific role', scopes=[435038183231848449])
+    @slash_command(name='command', sub_cmd_name='restrict', sub_cmd_description='Restrict a commands usage to a specific role', scopes=[435038183231848449, 149167686159564800])
     @slash_option(name='command_name', description='Type the command to restrict', opt_type=OptionTypes.STRING, required=True)
     @role()
     @check(member_permissions(Permissions.ADMINISTRATOR))
@@ -33,7 +33,7 @@ class Basic(Scale):
             await db.save(hasrole(guildid=ctx.guild_id, command=cmd, role=role.id))
             await ctx.send(embed=Embed(color=0x0c73d3,description=f'`{cmd}` restricted to {role.mention}'))
     
-    @slash_command(name='command', sub_cmd_name='unrestrict', sub_cmd_description='Lift a command role restriction', scopes=[435038183231848449])
+    @slash_command(name='command', sub_cmd_name='unrestrict', sub_cmd_description='Lift a command role restriction', scopes=[435038183231848449, 149167686159564800])
     @slash_option(name='command_name', description='Type the command to restrict', opt_type=OptionTypes.STRING, required=True)
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def temp_unrestrict_cmd(self, ctx: InteractionContext, command_name:str=None):
