@@ -1,6 +1,11 @@
 from dis_snek.client.errors import *
 from .mongo import *
 import re
+from typing import Awaitable, Callable, Union
+from dis_snek import Permissions
+from dis_snek.models.discord.snowflake import Snowflake_Type, to_snowflake
+from dis_snek.models.snek.context import Context
+TYPE_CHECK_FUNCTION = Callable[[Context], Awaitable[bool]]
 
 class MissingPermissions(CommandException):
     """User is missing permissions"""
@@ -39,7 +44,46 @@ async def has_perms(author, perm):
     
     raise MissingPermissions(f'{author}|{author.id} is missing permission {perm}')
 
+def member_permissions(*permissions: Permissions) -> TYPE_CHECK_FUNCTION:
+    """
+    Check if member has any of the given permissions.
+    
+    Args:
+        *permissions: The Permission(s) to check for
+    """
+    async def check(ctx: Context) -> bool:
+        if ctx.guild is None:
+            return False
+        if any(ctx.author.has_permission(p) for p in permissions):
+            return True
+        raise MissingPermissions(f'{ctx.author.display_name}|{ctx.author.id} is missing permissions')
+    return check
+
+def role_lock() -> TYPE_CHECK_FUNCTION:
+    """
+    Check if member has a role assigned to the command in the DB
+
+    """
+    async def check(ctx: Context) -> bool:
+        await ctx.defer()
+        if ctx.author.has_permission(Permissions.ADMINISTRATOR) == True:
+            return True
+        db = await odm.connect()
+        regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
+        roleid = await db.find_one(hasrole, {"guildid":ctx.guild_id, "command":regx})
+        if roleid != None:
+            role = await ctx.guild.get_role(roleid.role)
+            if role not in ctx.author.roles:
+                raise MissingRole(f'{ctx.author} missing role {role.name}')
+            else:
+                return True
+        elif roleid == None:
+            return True
+    return check
+
+
 async def has_role(ctx):
+    await ctx.defer()
     db = await odm.connect()
     regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
     roleid = await db.find_one(hasrole, {"guildid":ctx.guild_id, "command":regx})
