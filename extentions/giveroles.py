@@ -12,7 +12,7 @@ class GiveRoles(Scale):
     @slash_command(name='giveyou', sub_cmd_name='_', sub_cmd_description="Give members a role from predefined list of roles")
     @user()
     @giveyou_name()
-    @check(member_permissions(Permissions.MANAGE_ROLES))
+    @check(member_permissions(Permissions.BAN_MEMBERS))
     async def giveyourole(self, ctx: InteractionContext, user:OptionTypes.USER=None, giveyou_name:str=None):
         if user == None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
@@ -43,7 +43,7 @@ class GiveRoles(Scale):
     @slash_command(name='giveyou', sub_cmd_name='create', sub_cmd_description="Create giveyou's")
     @giveyou_name()
     @role()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
+    @check(member_permissions(Permissions.MANAGE_ROLES))
     async def giveyourole_create(self, ctx: InteractionContext, giveyou_name:str=None, role:OptionTypes.ROLE=None):
         if giveyou_name == None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
@@ -62,7 +62,7 @@ class GiveRoles(Scale):
     
     @slash_command(name='giveyou', sub_cmd_name='delete', sub_cmd_description="Delete giveyou's")
     @giveyou_name()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
+    @check(member_permissions(Permissions.MANAGE_ROLES))
     async def giveyourole_delete(self, ctx: InteractionContext, giveyou_name:str=None):
         if giveyou_name == None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
@@ -79,7 +79,7 @@ class GiveRoles(Scale):
         await db.delete(gy)
     
     @slash_command(name='giveyou', sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild")
-    @check(member_permissions(Permissions.MANAGE_ROLES))
+    @check(member_permissions(Permissions.BAN_MEMBERS))
     async def giveyourole_list(self, ctx: InteractionContext):
         await ctx.defer()
         from .src.paginators import Paginator
@@ -138,6 +138,51 @@ class GiveRoles(Scale):
             show_select_menu=False)
         await paginator.send(ctx)
     
+    @slash_command(name='role', description="Add/remove users to a role or roles", scopes=[435038183231848449])
+    @members()
+    @roles()
+    @check(member_permissions(Permissions.MANAGE_ROLES))
+    async def give_role(self, ctx: InteractionContext, members:str=None, roles:str=None):
+        if members == None:
+            return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
+        if roles == None:
+            return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
+
+        raw_mem_list = members.split(' ')
+        member_list =[]
+        for m in raw_mem_list:
+            m = m.replace('<', '')
+            m = m.replace('@', '')
+            m = m.replace('!', '')
+            m = m.replace('&', '')
+            m = m.replace('>', '')
+            member_list.append(m)
+
+        raw_roles_list = roles.split(' ')
+        roles_list = []
+        for r in raw_roles_list:
+            r = r.replace('<', '')
+            r = r.replace('@', '')
+            r = r.replace('!', '')
+            r = r.replace('&', '')
+            r = r.replace('>', '')
+            roles_list.append(r)
+        
+        for member_id in member_list:
+            member = await ctx.guild.get_member(member_id)
+            removed_roles = 'I have removed: '
+            added_roles = 'I have assigned: '
+            for role_id in roles_list:
+                role = await ctx.guild.get_role(role_id)
+                if member.has_role(role) == True:
+                    await member.remove_role(role)
+                    removed_roles = removed_roles + f' {role.mention}'
+                else:
+                    await member.add_role(role)
+                    added_roles = added_roles + f' {role.mention}'
+            embed = Embed(description=f'Roles changed for {member.mention}\n\n{added_roles}\n\n{removed_roles}', color=0x0c73d3)
+            await ctx.send(embed=embed)
+
     # @slash_command(name='colourme', description="Give yourself a colour role from predefined list of roles. You are able to have just one.")
     # @colourme_name()
     # async def colourme_add(self, ctx: InteractionContext, colourme_name:str=None):

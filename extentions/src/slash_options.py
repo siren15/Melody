@@ -134,3 +134,13 @@ def cmd():
     def wrapper(func):
         return slash_option(name='command', description='Type the command to restrict', opt_type=OptionTypes.STRING, required=True)(func)
     return wrapper
+
+def roles():
+    def wrapper(func):
+        return slash_option(name='roles', description='Roles, seperated by a comma(,)', opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
+
+def members():
+    def wrapper(func):
+        return slash_option(name='members', description='Members, seperated by a comma(,)', opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
