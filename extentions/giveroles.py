@@ -138,7 +138,7 @@ class GiveRoles(Scale):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='role', description="Add/remove users to a role or roles", scopes=[435038183231848449])
+    @slash_command(name='role', description="Add/remove users to a role or roles")
     @members()
     @roles()
     @check(member_permissions(Permissions.MANAGE_ROLES))
