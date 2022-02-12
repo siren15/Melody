@@ -1,3 +1,4 @@
+from pickle import TRUE
 from dis_snek import slash_option, OptionTypes
 
 def user():
@@ -87,7 +88,7 @@ def content():
 
 def embed_message_id():
     def wrapper(func):
-        return slash_option(name='embed_message_id', description='Paste in the embed message ID', opt_type=OptionTypes.NUMBER, required=False)(func)
+        return slash_option(name='embed_message_id', description='Paste in the embed message ID', opt_type=OptionTypes.STRING, required=True)(func)
     return wrapper
 
 def rr_message_id():
