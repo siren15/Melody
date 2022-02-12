@@ -1,6 +1,8 @@
+import asyncio
 from datetime import datetime, timezone
+from socket import timeout
 from dateutil.relativedelta import relativedelta
-from dis_snek import Snake, Scale, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check
+from dis_snek import Snake, Scale, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
@@ -160,7 +162,7 @@ class Basic(Scale):
         embed.add_field(name="Highest role:", value=toprole, inline=False)
         embed.add_field(name="Library:", value="[dis-snek](https://dis-snek.readthedocs.io/)")
         embed.add_field(name="Servers:", value=len(self.bot.user.guilds))
-        #embed.add_field(name="Bot Latency:", value=f"{self.bot.ws.latency * 1000:.0f} ms")
+        embed.add_field(name="Bot Latency:", value=f"{self.bot.latency * 1000:.0f} ms")
         embed.add_field(name='GitHub: https://github.com/siren15/pinetree-dis-snek', value='‎')
         embed.set_footer(text="pinetree | Powered by Sneks")
         await ctx.send(embed=embed)
@@ -197,44 +199,88 @@ class Basic(Scale):
     @slash_command(name='ping', description="Ping! Pong!")
     async def ping(self, ctx:InteractionContext):
         await ctx.defer()
-        await ctx.send(f"Pong! \nBot's latency: {self.bot.ws.latency * 1000} ms")
+        await ctx.send(f"Pong! \nBot's latency: {self.bot.latency * 1000} ms")
     
     @slash_command(name='embed', sub_cmd_name='create' , sub_cmd_description='[admin]Create embeds', description="[admin]Create and edit embeds")
-    @embed_title()
-    @embed_text()
     @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def embed(self, ctx:InteractionContext, embed_title:str=None, embed_text:str=None):
+    async def embed(self, ctx:InteractionContext):
+        from dis_snek.models.discord import modal
+        m = modal.Modal(title='Create an embed', components=[
+            modal.InputText(
+                label="Embed Title",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'embed_title'
+            ),
+            modal.InputText(
+                label="Embed Text",
+                style=modal.TextStyles.PARAGRAPH,
+                custom_id=f'embed_text'
+            )
+        ],
+        custom_id=f'{ctx.author.id}_embed_modal'
+        )
+
+        await ctx.send_modal(modal=m)
+
+        try:
+            modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
+        except asyncio.TimeoutError:
+            return await ctx.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond.", ephemeral=True)
+        
+        embed_title = modal_recived.responses.get('embed_title')
+        embed_text = modal_recived.responses.get('embed_text')
         if (embed_title == None) and (embed_text == None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
         embed=Embed(color=0x0c73d3,
         description=embed_text,
         title=embed_title)
-        await ctx.send(embed=embed)
+        await modal_recived.send(embed=embed)
 
     @embed.subcommand(sub_cmd_name='edit' ,sub_cmd_description='[admin]Edit embeds')
-    @embed_title()
-    @embed_text()
     @embed_message_id()
     @channel()
     @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def embed_edit(self, ctx:InteractionContext, embed_message_id:int=None, embed_title:str=None, embed_text:str=None, channel:OptionTypes.CHANNEL=None):
+    async def embed_edit(self, ctx:InteractionContext, embed_message_id:str=None, channel:OptionTypes.CHANNEL=None):
         if embed_message_id == None:
             await ctx.send('You have to include the embed message ID, so that I can edit the embed', ephemeral=True)
             return
-        elif (embed_title == None) and (embed_text == None):
-            await ctx.send('You must include either embed title or text', ephemeral=True)
-            return
         elif channel == None:
             channel = ctx.channel
+        from dis_snek.models.discord import modal
+        m = modal.Modal(title='Create an embed', components=[
+            modal.InputText(
+                label="Embed Title",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'embed_title'
+            ),
+            modal.InputText(
+                label="Embed Text",
+                style=modal.TextStyles.PARAGRAPH,
+                custom_id=f'embed_text'
+            )
+        ],
+        custom_id=f'{ctx.author.id}_embed_modal'
+        )
+
+        await ctx.send_modal(modal=m)
+
+        try:
+            modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
+        except asyncio.TimeoutError:
+            return await ctx.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond.", ephemeral=True)
+        
+        embed_title = modal_recived.responses.get('embed_title')
+        embed_text = modal_recived.responses.get('embed_text')
+        if (embed_title == None) and (embed_text == None):
+            await ctx.send('You must include either embed title or text', ephemeral=True)
+            return
         message_to_edit = await channel.get_message(embed_message_id)
-        if message_to_edit.id == embed_message_id:
-            embed=Embed(color=0x0c73d3,
+        embed=Embed(color=0x0c73d3,
         description=embed_text,
         title=embed_title)
-        await channel.message_to_edit.edit(embed=embed)
-        await ctx.send('Message edited', ephemeral=True)
-
+        await message_to_edit.edit(embed=embed)
+        await modal_recived.send('Message edited', ephemeral=True)
 
 def setup(bot):
     Basic(bot)
