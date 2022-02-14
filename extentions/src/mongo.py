@@ -195,3 +195,8 @@ class levelwait(Model):
 	user: Optional[int64] = None
 	starttime: Optional[datetime] = None
 	endtime: Optional[datetime] = None
+
+class auditlogs(Model):
+	guildid: Optional[int64] = None
+	action_type: Optional[int64] = None
+	last_entry: Optional[int64] = None
