@@ -764,7 +764,7 @@ class Moderation(Scale):
                     embed.set_footer(text=f'User ID: {message.author.id}')
                     await log_channel.send(embed=embed)
 
-    from dis_snek.ext.tasks import Task
+    from dis_snek.ext.tasks.task import Task
     from dis_snek.ext.tasks.triggers import IntervalTrigger
 
     @Task.create(IntervalTrigger(seconds=60))
