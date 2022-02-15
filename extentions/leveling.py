@@ -89,7 +89,7 @@ class Levels(Scale):
     @role()
     @role_level()
     async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None, role_level:str=None):
-        await ctx.defer()
+        
         perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
         if (perms == True):
             if role == None:
@@ -112,7 +112,7 @@ class Levels(Scale):
     
     @slash_command(name='ranklist', description="leveling roles list")
     async def ranks_list(self, ctx:InteractionContext):
-        await ctx.defer()
+        
         hasrole = await has_role(ctx)
         if hasrole == True:
             from .src.paginators import Paginator
@@ -176,7 +176,7 @@ class Levels(Scale):
     @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles")
     @role()
     async def leveling_remove_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):
-        await ctx.defer()
+        
         perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
         if (perms == True):
             if role == None:
@@ -194,7 +194,7 @@ class Levels(Scale):
     @slash_command(name='oldrank', description='check your leveling statistics')
     @member()
     async def oldrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
-        await ctx.defer()
+        
         if member == None:
             member = ctx.author
         db = await odm.connect()
@@ -259,7 +259,7 @@ class Levels(Scale):
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
     async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
-        await ctx.defer()
+        
         if member == None:
             member = ctx.author
         db = await odm.connect()
@@ -351,7 +351,7 @@ class Levels(Scale):
             embed.add_field(name='Total XP', value=xp, inline=True)
             return embed
 
-        await ctx.defer()
+        
         
         db = await odm.connect()
         lvl_order = await db.find(leveling, {'guildid':ctx.guild_id}, sort=(leveling.level.desc(), leveling.total_xp.desc()))
