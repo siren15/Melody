@@ -64,7 +64,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MANAGE_MESSAGES))
     async def delete_messages(self, ctx:InteractionContext, amount:int=0, reason:str='No reason given'):
-        await ctx.defer()
+        
         if (amount <= 0) or (amount >= 1000):
             embed = Embed(description=f":x: Amount can't be less than 1 or more than 1000",
                         color=0xDD2222)
@@ -83,7 +83,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MANAGE_MESSAGES))
     async def userpurge(self, ctx:InteractionContext, user:OptionTypes.USER=None, amount:int=0, reason:str='No reason given'):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -126,7 +126,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def ban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -230,7 +230,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def unban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -269,7 +269,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.KICK_MEMBERS))
     async def kick(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
-        await ctx.defer()
+        
         member = await ctx.guild.get_member(user.id)
         if user.id == member.id:
             if user == None:
@@ -324,7 +324,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def mute(self, ctx:InteractionContext, user:OptionTypes.USER=None, mutetime:str=None, reason:str='No reason given'):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a member', ephemeral=True)
             return
@@ -416,7 +416,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def unmute(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -436,7 +436,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def warn(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -498,7 +498,7 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def warn_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, warnid:str=None, reason:str=None):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -532,7 +532,7 @@ class Moderation(Scale):
     @user()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def warn_list(self, ctx:InteractionContext, user:OptionTypes.USER=None):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -588,7 +588,7 @@ class Moderation(Scale):
     @user()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def strikes_list(self, ctx:InteractionContext, user:OptionTypes.USER=None):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -640,12 +640,12 @@ class Moderation(Scale):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users")
+    @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users", scopes=[435038183231848449,149167686159564800])
     @user()
     @reason()
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def limbo_add(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -710,12 +710,12 @@ class Moderation(Scale):
         else:
             raise UserNotFound()
     
-    @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo")
+    @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo", scopes=[435038183231848449,149167686159564800])
     @user()
     @reason()
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def limbo_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
-        await ctx.defer()
+        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
