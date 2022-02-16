@@ -123,6 +123,15 @@ class persistentroles(Model):
 	userid: Optional[int64] = None
 	roles: Optional[str] = None
 
+class persistent_roles(Model):
+	guildid: Optional[int64] = None
+	user: Optional[int64] = None
+	roles: Optional[str] = None
+
+class persistent_roles_settings(Model):
+	guildid: Optional[int64] = None
+	roleid: Optional[int64] = None
+
 class prefixes(Model):
 	guildid: Optional[int64] = None
 	prefix: Optional[str] = None
