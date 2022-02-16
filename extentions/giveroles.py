@@ -19,7 +19,7 @@ class GiveRoles(Scale):
         if giveyou_name == None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
 
-        await ctx.defer()
+        
         db = await odm.connect()
         gy = await db.find_one(giveyou, {'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
 
@@ -50,7 +50,7 @@ class GiveRoles(Scale):
         if role == None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
 
-        await ctx.defer()
+        
         db = await odm.connect()
         gy = await db.find_one(giveyou, {'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
 
@@ -67,7 +67,7 @@ class GiveRoles(Scale):
         if giveyou_name == None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
 
-        await ctx.defer()
+        
         db = await odm.connect()
         gy = await db.find_one(giveyou, {'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
 
@@ -81,7 +81,7 @@ class GiveRoles(Scale):
     @slash_command(name='giveyou', sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild")
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def giveyourole_list(self, ctx: InteractionContext):
-        await ctx.defer()
+        
         from .src.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
