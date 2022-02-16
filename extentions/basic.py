@@ -25,7 +25,7 @@ class Basic(Scale):
             return await ctx.send(':x: You have to include a role', ephemeral=True)
 
         if cmd.lower() in all_commands:
-            await ctx.defer()
+            
             db = await odm.connect()
             regx = re.compile(f"^{cmd}$", re.IGNORECASE)
             restricted_command = await db.find_one(hasrole,  {"guildid":ctx.guild_id, "command":regx})
@@ -44,7 +44,7 @@ class Basic(Scale):
             return await ctx.send(':x: You have to include a command name', ephemeral=True)
 
         if cmd.lower() in all_commands:
-            await ctx.defer()
+            
             db = await odm.connect()
             regx = re.compile(f"^{cmd}$", re.IGNORECASE)
             restricted_command = await db.find_one(hasrole,  {"guildid":ctx.guild_id, "command":regx})
@@ -67,7 +67,7 @@ class Basic(Scale):
     @slash_command(name='userinfo', description="let's me see info about server members")
     @member()
     async def userinfo(self, ctx:InteractionContext, member:OptionTypes.USER=None):
-        await ctx.defer()
+        
         if member == None:
             member = ctx.author
 
@@ -112,7 +112,7 @@ class Basic(Scale):
     
     @slash_command(name='botinfo', description="let's me see info about the bot")
     async def botinfo(self, ctx: InteractionContext):
-        await ctx.defer()
+        
         def getmember(ctx):
             members = ctx.guild.members
             for m in members:
@@ -170,7 +170,7 @@ class Basic(Scale):
     @slash_command(name='avatar', description="Show's you your avatar, or members, if provided")
     @member()
     async def avatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
-        await ctx.defer()
+        
         if member == None:
             member = ctx.author
         
@@ -186,7 +186,7 @@ class Basic(Scale):
     @slash_command(name='useravatar', description="Show's you your avatar, or users, if provided")
     @member()
     async def useravatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
-        await ctx.defer()
+        
         if member == None:
             member = ctx.author
 
@@ -198,7 +198,7 @@ class Basic(Scale):
     
     @slash_command(name='ping', description="Ping! Pong!")
     async def ping(self, ctx:InteractionContext):
-        await ctx.defer()
+        
         await ctx.send(f"Pong! \nBot's latency: {self.bot.latency * 1000} ms")
     
     @slash_command(name='embed', sub_cmd_name='create' , sub_cmd_description='[admin]Create embeds', description="[admin]Create and edit embeds")
