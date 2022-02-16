@@ -7,7 +7,7 @@ class PersistentRoles(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
     
-    @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent", scopes=[435038183231848449, 435038183231848449])
+    @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent", scopes=[435038183231848449, 149167686159564800])
     @role()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def persistent_roles_add(self, ctx, role:OptionTypes.ROLE=None):
