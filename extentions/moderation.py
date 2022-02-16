@@ -481,12 +481,12 @@ class Moderation(Scale):
                         color=0x0c73d3)
                 await user.send(embed=embed)
             except:
-                embed = Embed(description=f"Couldn't dm {user.mention}, warn logged | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                embed = Embed(description=f"Couldn't dm {user.mention}, warn logged and user was given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                         color=0x0c73d3)
                 await ctx.send(embed=embed)
                 return
             else:
-                embed = Embed(description=f"{user.mention} warned | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                embed = Embed(description=f"{user.mention} warned and given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                             color=0x0c73d3)
                 await ctx.send(embed=embed)
         else:
@@ -522,7 +522,7 @@ class Moderation(Scale):
             for role in warn_role:
                 await user.remove_role(role, reason)
                 await db.delete(warning)
-                embed = Embed(description=f"warn removed from {user.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                embed = Embed(description=f"warn removed from {user.mention}, {role.mention} was taken away | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                             color=0x0c73d3)
                 await ctx.send(embed=embed)
         else:
