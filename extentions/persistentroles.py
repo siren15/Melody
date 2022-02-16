@@ -7,7 +7,7 @@ class PersistentRoles(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
     
-    @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent", scopes=[435038183231848449])
+    @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent", scopes=[435038183231848449, 435038183231848449])
     @role()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def persistent_roles_add(self, ctx, role:OptionTypes.ROLE=None):
@@ -34,7 +34,7 @@ class PersistentRoles(Scale):
         embed.set_footer(text=f'{ctx.author}|{ctx.author.id}',icon_url=avatarurl)
         await ctx.send(embed=embed)
 
-    @slash_command(name='persistentroles', sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles", scopes=[435038183231848449])
+    @slash_command(name='persistentroles', sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles")
     @role()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def persistent_roles_remove(self, ctx, role:OptionTypes.ROLE=None):
@@ -61,7 +61,7 @@ class PersistentRoles(Scale):
         embed.set_footer(text=f'{ctx.author}|{ctx.author.id}',icon_url=avatarurl)
         await ctx.send(embed=embed)
     
-    @slash_command(name='persistentroles', sub_cmd_name='list', sub_cmd_description="List all the persistent roles", scopes=[435038183231848449])
+    @slash_command(name='persistentroles', sub_cmd_name='list', sub_cmd_description="List all the persistent roles")
     async def persistent_roles_list(self, ctx):
         from .src.paginators import Paginator
         def chunks(l, n):
