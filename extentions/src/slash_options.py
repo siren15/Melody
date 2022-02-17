@@ -86,6 +86,11 @@ def content():
         return slash_option(name='content', description='write the content', opt_type=OptionTypes.STRING, required=False)(func)
     return wrapper
 
+def attachment():
+    def wrapper(func):
+        return slash_option(name='attachment', description='upload a file', opt_type=OptionTypes.ATTACHMENT, required=False)(func)
+    return wrapper
+
 def embed_message_id():
     def wrapper(func):
         return slash_option(name='embed_message_id', description='Paste in the embed message ID', opt_type=OptionTypes.STRING, required=True)(func)
