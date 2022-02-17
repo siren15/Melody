@@ -65,7 +65,7 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
 
     """
     async def check(ctx: Context) -> bool:
-        await ctx.defer()
+        # await ctx.defer()
         if ctx.author.has_permission(Permissions.ADMINISTRATOR) == True:
             return True
         db = await odm.connect()
@@ -83,7 +83,7 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
 
 
 async def has_role(ctx):
-    await ctx.defer()
+    # await ctx.defer()
     db = await odm.connect()
     regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
     roleid = await db.find_one(hasrole, {"guildid":ctx.guild_id, "command":regx})
