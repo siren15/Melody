@@ -1,3 +1,4 @@
+import math
 import re
 import asyncio
 
@@ -13,10 +14,10 @@ def geturl(string):
     url = re.findall(regex,string)
     return [x[0] for x in url]
 
-def checktagowner(guild, userid):
-    members = guild.members
-    for m in members:
-        if m.id == userid:
+def find_member(ctx, userid):
+    members = [m for m in ctx.guild.members if m.id == userid]
+    if members != []:
+        for m in members:
             return m
     return None
 
@@ -37,7 +38,13 @@ class Tags(Scale):
                 color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
         else:
-            await ctx.send(tags.content)
+            if tags.attachment_url != None:
+                if tags.content != None:
+                    await ctx.send(f'{tags.content}\n{tags.attachment_url}')
+                else:
+                    await ctx.send(f'{tags.attachment_url}')
+            else:
+                await ctx.send(f'{tags.content}')
             uses = tags.no_of_times_used
             if uses == None:
                 uses = 0
@@ -59,7 +66,13 @@ class Tags(Scale):
                 color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
         else:
-            await ctx.send(tags.content)
+            if tags.attachment_url != None:
+                if tags.content != None:
+                    await ctx.send(f'{tags.content}\n{tags.attachment_url}')
+                else:
+                    await ctx.send(f'{tags.attachment_url}')
+            else:
+                await ctx.send(f'{tags.content}')
             uses = tags.no_of_times_used
             if uses == None:
                 uses = 0
@@ -71,14 +84,15 @@ class Tags(Scale):
     @slash_command(name='tag', sub_cmd_name='create', sub_cmd_description="allow's me to store tags")
     @tagname()
     @content()
+    @attachment()
     @check(role_lock())
-    async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None):
+    async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
         if tagname == None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
             return
-        elif (content == None) and (ctx.attachments == None):
+        elif (content == None) and (attachment == None):
             embed = Embed(description=f":x: You must include tag's content",
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
@@ -92,19 +106,59 @@ class Tags(Scale):
         tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
         check = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx})
         if check==None:
-            await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, creation_date=datetime.utcnow()))
-            url = geturl(content)
-            for url in url:
-                url = url
-            if url:
-                embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
-                            color=0x0c73d3)
-                embed.set_image(url=url)
-                await ctx.send(embed=embed)
+            if attachment != None:
+                if content == None:
+                    if attachment.content_type == 'image/png':
+                        image_url = attachment.url
+                        await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=image_url, creation_date=datetime.utcnow()))
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}",
+                                color=0x0c73d3)
+                        embed.set_image(url=image_url)
+                        await ctx.send(embed=embed)
+                        return
+                    else:
+                        await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=attachment.url, creation_date=datetime.utcnow()))
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {attachment.url}",
+                                color=0x0c73d3)
+                        await ctx.send(embed=embed)
+                        return
+                else:
+                    if attachment.content_type == 'image/png':
+                        image_url = attachment.url
+                        await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=image_url, creation_date=datetime.utcnow()))
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
+                                color=0x0c73d3)
+                        embed.set_image(url=image_url)
+                        await ctx.send(embed=embed)
+                        return
+                    else:
+                        await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=attachment.url, creation_date=datetime.utcnow()))
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {attachment.url}",
+                                color=0x0c73d3)
+                        await ctx.send(embed=embed)
+                        return
             else:
-                embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
-                            color=0x0c73d3)
-                await ctx.send(embed=embed)
+                if content != None:
+                    url = geturl(content)
+                    for url in url:
+                        url = url
+                    if url:
+                        if url.endswith('.png') or url.endswith('.apng') or url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.gif'):
+                            await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=url, creation_date=datetime.utcnow()))
+                            embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
+                                        color=0x0c73d3)
+                            embed.set_image(url=url)
+                            await ctx.send(embed=embed)
+                        else:
+                            await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=url, creation_date=datetime.utcnow()))
+                            embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
+                                        color=0x0c73d3)
+                            await ctx.send(embed=embed)
+                    else:
+                        await db.save(tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=None, creation_date=datetime.utcnow()))
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
+                                    color=0x0c73d3)
+                        await ctx.send(embed=embed)
         else:
             embed = Embed(description=f":x: The tag `{tagname}` already exists",
                         color=0xDD2222)
@@ -122,12 +176,14 @@ class Tags(Scale):
 
         db = await odm.connect()
         tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
-        tag_to_delete = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx, 'author':ctx.author.id})
+        tag_to_delete = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx, 'author_id':ctx.author.id})
         if tag_to_delete == None:
-            embed = Embed(description=f":x: You don't own a tag called  `{tagname}`",
-                        color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-            return
+            tag_to_delete = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
+            if tag_to_delete == None:
+                embed = Embed(description=f":x: You don't own a tag called  `{tagname}`",
+                            color=0xDD2222)
+                await ctx.send(embed=embed, ephemeral=True)
+                return
         url = geturl(tag_to_delete.content)
         for url in url:
             url = url
@@ -179,37 +235,103 @@ class Tags(Scale):
     @slash_command(name='tag', sub_cmd_name='edit', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
     @content()
+    @attachment()
     @check(role_lock())
-    async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None):
+    async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
         if tagname == None:
             embed = Embed(description=f":x: You must include tag's name",
+                        color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
+            return
+        elif (content == None) and (attachment == None):
+            embed = Embed(description=f":x: You must include tag's content",
+                        color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
+            return
+        elif (tagname == None) and (content == None):
+            embed = Embed(description=f":x: You must include tag's name and content",
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
             return
 
         db = await odm.connect()
         tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
-        tag_to_edit = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx, 'author':ctx.author.id})
+        tag_to_edit = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx, 'author_id':ctx.author.id})
         if tag_to_edit == None:
-            embed = Embed(description=f":x: You don't own a tag called  `{tagname}`",
-                        color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-            return
-        
-        tag_to_edit.content = content
-        await db.save(tag_to_edit)
-        url = geturl(content)
-        for url in url:
-            url = url
-        if url:
-            embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tag_to_edit.names} \n**Tag's new content:**{content}",
-                        color=0x0c73d3)
-            embed.set_image(url=url)
-            await ctx.send(embed=embed)
+            tag_to_edit = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
+            if tag_to_edit == None:
+                embed = Embed(description=f":x: You don't own a tag called  `{tagname}`",
+                            color=0xDD2222)
+                await ctx.send(embed=embed, ephemeral=True)
+                return
+
+        if attachment != None:
+            if content == None:
+                if attachment.content_type == 'image/png':
+                    image_url = attachment.url
+                    tag_to_edit.attachment_url = attachment.url
+                    tag_to_edit.content = content
+                    await db.save(tag_to_edit)
+                    embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}",
+                            color=0x0c73d3)
+                    embed.set_image(url=image_url)
+                    await ctx.send(embed=embed)
+                    return
+                else:
+                    tag_to_edit.attachment_url = attachment.url
+                    tag_to_edit.content = content
+                    await db.save(tag_to_edit)
+                    embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {attachment.url}",
+                            color=0x0c73d3)
+                    await ctx.send(embed=embed)
+                    return
+            else:
+                if attachment.content_type == 'image/png':
+                    image_url = attachment.url
+                    tag_to_edit.attachment_url = attachment.url
+                    tag_to_edit.content = content
+                    await db.save(tag_to_edit)
+                    embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
+                            color=0x0c73d3)
+                    embed.set_image(url=image_url)
+                    await ctx.send(embed=embed)
+                    return
+                else:
+                    tag_to_edit.attachment_url = attachment.url
+                    tag_to_edit.content = content
+                    await db.save(tag_to_edit)
+                    embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {attachment.url}",
+                            color=0x0c73d3)
+                    await ctx.send(embed=embed)
+                    return
         else:
-            embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tag_to_edit.names} \n**Tag's new content:**{content}",
-                        color=0x0c73d3)
-            await ctx.send(embed=embed)
+            if content != None:
+                url = geturl(content)
+                for url in url:
+                    url = url
+                if url:
+                    if url.endswith('.png') or url.endswith('.apng') or url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.gif'):
+                        tag_to_edit.attachment_url = None
+                        tag_to_edit.content = content
+                        await db.save(tag_to_edit)
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
+                                    color=0x0c73d3)
+                        embed.set_image(url=url)
+                        await ctx.send(embed=embed)
+                    else:
+                        tag_to_edit.attachment_url = None
+                        tag_to_edit.content = content
+                        await db.save(tag_to_edit)
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
+                                    color=0x0c73d3)
+                        await ctx.send(embed=embed)
+                else:
+                    tag_to_edit.attachment_url = None
+                    tag_to_edit.content = content
+                    await db.save(tag_to_edit)
+                    embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
+                                color=0x0c73d3)
+                    await ctx.send(embed=embed)
     
     @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
     @tagname()
@@ -238,7 +360,7 @@ class Tags(Scale):
         current_owner = 'Current owner'
         last_owner = tag_owner
 
-        in_guild = checktagowner(ctx.guild, tag_to_view.owner_id)
+        in_guild = find_member(ctx, tag_to_view.owner_id)
         if in_guild == None:
             current_owner = 'Currently Orphaned'
             last_owner = f'Last owner: {tag_owner}'
@@ -253,16 +375,22 @@ class Tags(Scale):
         if creation_date == None:
             date = 'UNKNOWN'
         else:
-            cdiff = relativedelta(datetime.now(tz=timezone.utc), tag_to_view.creation_date.replace(tzinfo=timezone.utc))
-            creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
-            date = tag_to_view.creation_date.strftime("%a, %#d %B %Y, %I:%M %p UTC")+f' [{creation_time}]'
+            date = f'<t:{math.ceil(tag_to_view.creation_date.replace(tzinfo=timezone.utc).timestamp())}:R>'
+        
+        if tag_to_view.attachment_url != None:
+            if tag_to_view.content != None:
+                content = f'{tag_to_view.content}\n{tag_to_view.attachment_url}'
+            else:
+                content = f'{tag_to_view.attachment_url}'
+        else:
+            content = f'{tag_to_view.content}'
 
         embed = Embed(title=f"Info about [{tag_to_view.names}] tag",
                     color=0x0c73d3)
         embed.add_field(name=current_owner, value=last_owner)
         embed.add_field(name="Total uses", value=uses)
         embed.add_field(name="Created", value=date)
-        embed.add_field(name="Content", value=tag_to_view.content)
+        embed.add_field(name="Content", value=content)
         await ctx.send(embed=embed)
     
     @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
@@ -289,7 +417,7 @@ class Tags(Scale):
 
         db = await odm.connect()
         tag_names = await db.find(tag, {"guild_id":ctx.guild_id})
-
+        
         names = [str(name.names)+"\n" for name in tag_names if name.names != None]
         if names == []:
             embed = Embed(description=f"There are no tags for {ctx.guild.name}.",
@@ -318,34 +446,48 @@ class Tags(Scale):
         await paginator.send(ctx)
                 
     
-    # @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
-    # @tagname()
-    # @check(role_lock())
-    # async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
-    #     if tagname == None:
-    #         embed = Embed(description=f":x: You must include tag's name",
-    #                     color=0xDD2222)
-    #         await ctx.send(embed=embed, ephemeral=True)
-    #         return
+    @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
+    @tagname()
+    @check(role_lock())
+    async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
+        if tagname == None:
+            embed = Embed(description=f":x: You must include tag's name",
+                        color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
+            return
 
-    #     db = await odm.connect()
-    #     tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
-    #     tag_to_claim = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx})
-    #     if tag_to_claim.owner_id == ctx.author.id:
-    #         embed = Embed(description=f":x: You can't claim a tag you already own",
-    #                     color=0xDD2222)
-    #         await ctx.send(embed=embed, ephemeral=True)
-    #         return
-    #     if checktagowner(ctx.guild, tag_to_claim.owner_id) == None:
-    #         tag_to_claim.owner_id = ctx.author.id
-    #         await db.save(tag_to_claim)
-    #         embed = Embed(description=f"{ctx.author.mention} You are now owner of {tag_to_claim.names}",
-    #                     color=0x0c73d3)
-    #         await ctx.send(embed=embed)
-    #     else:
-    #         embed = Embed(description=f":x: You can't claim a tag that's not orphaned",
-    #                     color=0xDD2222)
-    #         await ctx.send(embed=embed, ephemeral=True)
+        db = await odm.connect()
+        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tag_to_claim = await db.find_one(tag, {'guild_id':ctx.guild_id, 'names':tagname_regx})
+        if tag_to_claim == None:
+            embed = Embed(description=f":x: I couldn't find a tag called `{tagname}`",
+                        color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
+            return
+        if (tag_to_claim.owner_id == ctx.author.id):
+            embed = Embed(description=f":x: You can't claim a tag you already own",
+                        color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
+            return
+        if (tag_to_claim.author_id == ctx.author.id) and (tag_to_claim.owner_id != ctx.author.id):
+            stealer = find_member(ctx, tag_to_claim.owner_id)
+            embed = Embed(description=f"{ctx.author.mention} You took back your tag {tag_to_claim.names} from {stealer.mention}",
+                        color=0x0c73d3)
+            await ctx.send(embed=embed)
+            tag_to_claim.owner_id = ctx.author.id
+            await db.save(tag_to_claim)
+            return
+
+        if find_member(ctx, tag_to_claim.owner_id) == None:
+            tag_to_claim.owner_id = ctx.author.id
+            await db.save(tag_to_claim)
+            embed = Embed(description=f"{ctx.author.mention} You are now owner of {tag_to_claim.names}",
+                        color=0x0c73d3)
+            await ctx.send(embed=embed)
+        else:
+            embed = Embed(description=f":x: You can't claim a tag that's not orphaned",
+                        color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
 
     @slash_command(name='tag', sub_cmd_name='gift', sub_cmd_description="gift your tags")
     @tagname()
