@@ -8,6 +8,8 @@ from odmantic import Field, Model
 from datetime import datetime
 import os
 import certifi
+
+from extentions.src.slash_options import attachment
 ca = certifi.where()
 
 mongodb_url = os.environ["pt_mongo_url"]
@@ -159,6 +161,7 @@ class tag(Model):
 	author_id: Optional[int64] = None
 	names: Optional[str] = None
 	content: Optional[str] = None
+	attachment_url: Optional[str] = None
 	no_of_times_used: Optional[int64] = None
 	creation_date: Optional[datetime] = None
 	owner_id: Optional[int64] = None
