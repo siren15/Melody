@@ -98,7 +98,7 @@ class Moderation(Scale):
             await ctx.send("You can't purge yourself", ephemeral=True)
             return
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 await ctx.send("You can't purge an admin", ephemeral=True)
                 return
@@ -276,9 +276,8 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.KICK_MEMBERS))
     async def kick(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
-        
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             if user == None:
                 await ctx.send('You have to include a user', ephemeral=True)
                 return
@@ -339,7 +338,7 @@ class Moderation(Scale):
             await ctx.send("You can't mute yourself", ephemeral=True)
             return
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             
             if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 await ctx.send("You can't mute an admin", ephemeral=True)
@@ -428,7 +427,7 @@ class Moderation(Scale):
             await ctx.send('You have to include a user', ephemeral=True)
             return
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             await member.timeout(datetime.now(), '[UNMUTE] '+reason)
             embed = Embed(description=f"{user} **was unmuted** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                             color=0x0c73d3,
@@ -454,7 +453,7 @@ class Moderation(Scale):
             await ctx.send("You have to include a reason", ephemeral=True)
             return
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             db = await odm.connect()
             while True:
                 warnid = random_string_generator()
@@ -516,7 +515,7 @@ class Moderation(Scale):
             await ctx.send("You have to include a reason", ephemeral=True)
             return
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             db = await odm.connect()
             warnaction = re.compile(f"^warn$", re.IGNORECASE)
             warning = await db.find_one(strikes, {'guildid':ctx.guild_id, 'user':user.id, 'action':warnaction, 'strikeid':warnid})
@@ -660,7 +659,7 @@ class Moderation(Scale):
             await ctx.send('You have to include a reason', ephemeral=True)
             return
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 await ctx.send("You can't limbo an admin", ephemeral=True)
                 return
@@ -730,7 +729,7 @@ class Moderation(Scale):
             await ctx.send('You have to include a reason', ephemeral=True)
             return
         member = find_member(ctx, user.id)
-        if user.id == member.id:
+        if member != None:
             db = await odm.connect()
             limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':member.id})
             if limboed == None:
