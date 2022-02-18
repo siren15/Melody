@@ -25,6 +25,13 @@ async def user_has_perms(author, perm):
         return True
     return False
 
+def find_member(ctx, userid):
+    members = [m for m in ctx.guild.members if m.id == userid]
+    if members != []:
+        for m in members:
+            return m
+    return None
+
 async def seperate_string_number(string):
     previous_character = string[0]
     groups = []
@@ -90,7 +97,7 @@ class Moderation(Scale):
         elif user is ctx.author:
             await ctx.send("You can't purge yourself", ephemeral=True)
             return
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 await ctx.send("You can't purge an admin", ephemeral=True)
@@ -137,7 +144,7 @@ class Moderation(Scale):
             await ctx.guild.get_ban(user)
         except NotFound:
             db = await odm.connect()
-            member = await ctx.guild.get_member(user.id)
+            member = find_member(ctx, user.id)
             if user.id == member.id:
                 if member.has_permission(Permissions.ADMINISTRATOR) == True:
                     await ctx.send("You can't ban an admin", ephemeral=True)
@@ -270,7 +277,7 @@ class Moderation(Scale):
     @check(member_permissions(Permissions.KICK_MEMBERS))
     async def kick(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
         
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             if user == None:
                 await ctx.send('You have to include a user', ephemeral=True)
@@ -331,7 +338,7 @@ class Moderation(Scale):
         elif user is ctx.author:
             await ctx.send("You can't mute yourself", ephemeral=True)
             return
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             
             if member.has_permission(Permissions.ADMINISTRATOR) == True:
@@ -420,7 +427,7 @@ class Moderation(Scale):
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             await member.timeout(datetime.now(), '[UNMUTE] '+reason)
             embed = Embed(description=f"{user} **was unmuted** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
@@ -446,7 +453,7 @@ class Moderation(Scale):
         elif reason == None:
             await ctx.send("You have to include a reason", ephemeral=True)
             return
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             db = await odm.connect()
             while True:
@@ -508,7 +515,7 @@ class Moderation(Scale):
         elif reason == None:
             await ctx.send("You have to include a reason", ephemeral=True)
             return
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             db = await odm.connect()
             warnaction = re.compile(f"^warn$", re.IGNORECASE)
@@ -652,7 +659,7 @@ class Moderation(Scale):
         if reason == None:
             await ctx.send('You have to include a reason', ephemeral=True)
             return
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 await ctx.send("You can't limbo an admin", ephemeral=True)
@@ -722,7 +729,7 @@ class Moderation(Scale):
         if reason == None:
             await ctx.send('You have to include a reason', ephemeral=True)
             return
-        member = await ctx.guild.get_member(user.id)
+        member = find_member(ctx, user.id)
         if user.id == member.id:
             db = await odm.connect()
             limboed = await db.find_one(limbo, {'guildid':ctx.guild_id, 'userid':member.id})
