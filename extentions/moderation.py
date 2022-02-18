@@ -145,7 +145,7 @@ class Moderation(Scale):
         except NotFound:
             db = await odm.connect()
             member = find_member(ctx, user.id)
-            if user.id == member.id:
+            if member != None:
                 if member.has_permission(Permissions.ADMINISTRATOR) == True:
                     await ctx.send("You can't ban an admin", ephemeral=True)
                     return
@@ -755,21 +755,21 @@ class Moderation(Scale):
         else:
             raise UserNotFound
     
-    @listen()
-    async def on_message_create(self, event):
-        message = event.message
-        if message.guild.id == 149167686159564800:
-            db = await odm.connect()
-            channel = await db.find_one(logs, {'guild_id':message.guild.id})
-            if channel != None:
-                log_channel = message.guild.get_channel(int(channel.channel_id))
+    # @listen()
+    # async def on_message_create(self, event):
+    #     message = event.message
+    #     if message.guild.id == 149167686159564800:
+    #         db = await odm.connect()
+    #         channel = await db.find_one(logs, {'guild_id':message.guild.id})
+    #         if channel != None:
+    #             log_channel = message.guild.get_channel(int(channel.channel_id))
 
-                if message.channel.id == 736680179253903491:
-                    embed = Embed(title="Limbo log", timestamp=datetime.utcnow(), color=0x0c73d3)
-                    embed.set_thumbnail(url=f'{message.author.avatar.url}')
-                    embed.add_field(name=f"{message.author}", value=f"{message.content}", inline=False)
-                    embed.set_footer(text=f'User ID: {message.author.id}')
-                    await log_channel.send(embed=embed)
+    #             if message.channel.id == 736680179253903491:
+    #                 embed = Embed(title="Limbo log", timestamp=datetime.utcnow(), color=0x0c73d3)
+    #                 embed.set_thumbnail(url=f'{message.author.avatar.url}')
+    #                 embed.add_field(name=f"{message.author}", value=f"{message.content}", inline=False)
+    #                 embed.set_footer(text=f'User ID: {message.author.id}')
+    #                 await log_channel.send(embed=embed)
 
     from dis_snek.models.snek.tasks import Task
     from dis_snek.models.snek.tasks.triggers import IntervalTrigger
