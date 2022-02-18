@@ -226,7 +226,7 @@ class Logging(Scale):
     
     @listen()
     async def on_ban_create(self, event):
-        member = event.member
+        member = event.user
         if await is_event_active(member.guild, 'member_ban'):
             db = await odm.connect()
             last_au_entry = await db.find_one(auditlogs, {'guildid':member.guild.id, 'action_type':22})
@@ -261,7 +261,7 @@ class Logging(Scale):
     
     @listen()
     async def on_ban_remove(self, event):
-        member = event.member
+        member = event.user
         if await is_event_active(member.guild, 'member_unban'):
             db = await odm.connect()
             last_au_entry = await db.find_one(auditlogs, {'guildid':member.guild.id, 'action_type':23})
