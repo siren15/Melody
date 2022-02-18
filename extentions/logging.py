@@ -227,14 +227,15 @@ class Logging(Scale):
     @listen()
     async def on_ban_create(self, event):
         member = event.user
-        if await is_event_active(member.guild, 'member_ban'):
+        guild = event.guild
+        if await is_event_active(guild, 'member_ban'):
             db = await odm.connect()
-            last_au_entry = await db.find_one(auditlogs, {'guildid':member.guild.id, 'action_type':22})
+            last_au_entry = await db.find_one(auditlogs, {'guildid':guild.id, 'action_type':22})
             if last_au_entry == None:
                 last_entry = MISSING
             else:
                 last_entry = last_au_entry.last_entry
-            audit_log_entry = await member.guild.get_audit_log(action_type=22, limit=1, after=last_entry)
+            audit_log_entry = await guild.get_audit_log(action_type=22, limit=1, after=last_entry)
             for au_entry in audit_log_entry.entries:
                 if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
                     reason = au_entry.reason
@@ -245,13 +246,13 @@ class Logging(Scale):
                             moderator = au_user
                     
                     if last_au_entry == None:
-                        await db.save(auditlogs(guildid=member.guild.id, action_type=22, last_entry=au_entry.id))
+                        await db.save(auditlogs(guildid=guild.id, action_type=22, last_entry=au_entry.id))
                     else:
                         last_au_entry.last_entry = au_entry.id
                         await db.save(last_au_entry)
                     
-                    channelid = await db.find_one(logs, {"guild_id":member.guild.id})
-                    log_channel = member.guild.get_channel(channelid.channel_id)
+                    channelid = await db.find_one(logs, {"guild_id":guild.id})
+                    log_channel = guild.get_channel(channelid.channel_id)
                 
                     embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **banned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
                                             timestamp=datetime.utcnow(),
@@ -262,14 +263,15 @@ class Logging(Scale):
     @listen()
     async def on_ban_remove(self, event):
         member = event.user
-        if await is_event_active(member.guild, 'member_unban'):
+        guild = event.guild
+        if await is_event_active(guild, 'member_unban'):
             db = await odm.connect()
-            last_au_entry = await db.find_one(auditlogs, {'guildid':member.guild.id, 'action_type':23})
+            last_au_entry = await db.find_one(auditlogs, {'guildid':guild.id, 'action_type':23})
             if last_au_entry == None:
                 last_entry = MISSING
             else:
                 last_entry = last_au_entry.last_entry
-            audit_log_entry = await member.guild.get_audit_log(action_type=23, limit=1, after=last_entry)
+            audit_log_entry = await guild.get_audit_log(action_type=23, limit=1, after=last_entry)
             for au_entry in audit_log_entry.entries:
                 if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
                     reason = au_entry.reason
@@ -280,13 +282,13 @@ class Logging(Scale):
                             moderator = au_user
                     
                     if last_au_entry == None:
-                        await db.save(auditlogs(guildid=member.guild.id, action_type=23, last_entry=au_entry.id))
+                        await db.save(auditlogs(guildid=guild.id, action_type=23, last_entry=au_entry.id))
                     else:
                         last_au_entry.last_entry = au_entry.id
                         await db.save(last_au_entry)
                     
-                    channelid = await db.find_one(logs, {"guild_id":member.guild.id})
-                    log_channel = member.guild.get_channel(channelid.channel_id)
+                    channelid = await db.find_one(logs, {"guild_id":guild.id})
+                    log_channel = guild.get_channel(channelid.channel_id)
                 
                     embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **unbanned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
                                             timestamp=datetime.utcnow(),
