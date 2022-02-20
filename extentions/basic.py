@@ -3,12 +3,19 @@ from datetime import datetime, timezone
 import math
 from socket import timeout
 from dateutil.relativedelta import relativedelta
-from dis_snek import Snake, Scale, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext
+from dis_snek import Snake, Scale, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
 
 all_commands = ['echo', 'userinfo', 'botinfo', 'avatar', 'useravatar', 'embed create', 'embed edit', 't', 'tag recall', 'tag create', 'tag edit', 'tag delete', 'tag claim', 'tag list', 'tag aedit', 'tag gift', 'tag info', 'ban', 'mute', 'delete', 'kick', 'unban', 'warn add', 'warn remove', 'limbo', 'userpurge', 'warnings', 'strikes', 'rank', 'ranklist', 'leveling addrole', 'leveling removerole', 'leaderboard', 'giveyou _', 'giveyou create', 'giveyou delete', 'giveyou list', 'uptime', 'reactionrole create', 'reactionrole delete']
+
+async def guild_owner(ctx) -> bool:
+    members = [m for m in ctx.guild.members]
+    for member in members:
+        if ctx.guild.is_owner(member) == True:
+            return member
+
 
 class Basic(Scale):
     def __init__(self, bot: Snake):
@@ -65,7 +72,7 @@ class Basic(Scale):
         message = await ctx.send(f'{ctx.author.mention} message `{text}` in {channel.mention} echoed!', ephemeral=True)
         #await channel.delete_message(message, 'message for echo command')
     
-    @slash_command(name='userinfo', description="let's me see info about server members")
+    @slash_command(name='userinfo', description="lets me see info about server members")
     @member()
     async def userinfo(self, ctx:InteractionContext, member:OptionTypes.USER=None):
         
@@ -89,11 +96,11 @@ class Basic(Scale):
         else:
             color = member.top_role.color
         
-        # cdiff = relativedelta(datetime.now(tz=timezone.utc), member.created_at.replace(tzinfo=timezone.utc))
-        # creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
+        cdiff = relativedelta(datetime.now(tz=timezone.utc), member.created_at.replace(tzinfo=timezone.utc))
+        creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
 
-        # jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
-        # join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
+        jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
+        join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
 
         if member.guild_avatar != None:
             avatarurl = f'{member.guild_avatar.url}.png'
@@ -105,13 +112,31 @@ class Basic(Scale):
         embed.set_thumbnail(url=avatarurl)
         embed.add_field(name="ID(snowflake):", value=member.id, inline=False)
         embed.add_field(name="Nickname:", value=member.display_name, inline=False)
-        embed.add_field(name="Created account on:", value=f"<t:{math.ceil(member.created_at.timestamp())}> [<t:{math.ceil(member.created_at.timestamp())}:R>]", inline=False)
-        embed.add_field(name="Joined server on:", value=f"<t:{math.ceil(member.joined_at.timestamp())}> [<t:{math.ceil(member.joined_at.timestamp())}:R>]", inline=False)
+        embed.add_field(name="Created account on:", value=f"<t:{math.ceil(member.created_at.timestamp())}> [{creation_time}]", inline=False)
+        embed.add_field(name="Joined server on:", value=f"<t:{math.ceil(member.joined_at.timestamp())}> [{join_time}]", inline=False)
         embed.add_field(name=f"Roles: [{rolecount}]", value=roles, inline=False)
         embed.add_field(name="Highest role:", value=toprole, inline=False)
         await ctx.send(embed=embed)
     
-    @slash_command(name='botinfo', description="let's me see info about the bot")
+    @slash_command(name='serverinfo', description="lets me see info about the server")
+    async def serverinfo(self, ctx:InteractionContext):
+        cdiff = relativedelta(datetime.now(tz=timezone.utc), ctx.guild.created_at.replace(tzinfo=timezone.utc))
+        creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
+        owner = await guild_owner(ctx)
+        embed = Embed(title=f"Server Info", color=0x0c73d3)
+        embed.set_author(name=f'{ctx.guild.name}', icon_url=f'{ctx.guild.icon.url}')
+        embed.set_thumbnail(url=f'{ctx.guild.icon.url}')
+        embed.add_field(name='Server owner', value=f'{owner.mention}', inline=False)
+        embed.add_field(name='Members', value=f'{ctx.guild.member_count}', inline=False)
+        embed.add_field(name="Channels:", value=len(ctx.guild.channels), inline=False)
+        embed.add_field(name="Roles:", value=len(ctx.guild.roles), inline=False)
+        embed.add_field(name='Boost level', value=f'{ctx.guild.premium_tier}[{ctx.guild.premium_subscription_count} boosts]', inline=False)
+        embed.add_field(name='Created at', value=f'<t:{math.ceil(ctx.guild.created_at.timestamp())}> [{creation_time}]', inline=False)
+        embed.add_field(name='Region', value=f'{ctx.guild.preferred_locale}', inline=False)
+        embed.add_field(name='ID', value=f'{ctx.guild_id}', inline=True)
+        await ctx.send(embed=embed)
+    
+    @slash_command(name='botinfo', description="lets me see info about the bot")
     async def botinfo(self, ctx: InteractionContext):
         member = await ctx.guild.get_member(self.bot.user.id)
 
@@ -132,11 +157,11 @@ class Basic(Scale):
         else:
             color = member.top_role.color
         
-        # cdiff = relativedelta(datetime.now(tz=timezone.utc), member.created_at.replace(tzinfo=timezone.utc))
-        # creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
+        cdiff = relativedelta(datetime.now(tz=timezone.utc), member.created_at.replace(tzinfo=timezone.utc))
+        creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
 
-        # jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
-        # join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
+        jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
+        join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
 
         if member.guild_avatar != None:
             avatarurl = f'{member.guild_avatar.url}.png'
@@ -149,8 +174,8 @@ class Basic(Scale):
         #embed.set_author(name=member, icon_url=member.avatar.url)
         embed.add_field(name="ID(snowflake):", value=member.id, inline=False)
         embed.add_field(name="Nickname:", value=member.display_name, inline=False)
-        embed.add_field(name="Created account on:", value=f"<t:{math.ceil(member.created_at.timestamp())}> [<t:{math.ceil(member.created_at.timestamp())}:R>]", inline=False)
-        embed.add_field(name="Joined server on:", value=f"<t:{math.ceil(member.joined_at.timestamp())}> [<t:{math.ceil(member.joined_at.timestamp())}:R>]", inline=False)
+        embed.add_field(name="Created account on:", value=f"<t:{math.ceil(member.created_at.timestamp())}> [{creation_time}]", inline=False)
+        embed.add_field(name="Joined server on:", value=f"<t:{math.ceil(member.joined_at.timestamp())}> [{join_time}]", inline=False)
         embed.add_field(name=f"Roles: [{rolecount}]", value=roles, inline=False)
         embed.add_field(name="Highest role:", value=toprole, inline=False)
         embed.add_field(name="Library:", value="[dis-snek](https://dis-snek.readthedocs.io/)")
