@@ -77,7 +77,7 @@ class Moderation(Scale):
                         color=0xDD2222)
             await ctx.send(embed=embed)
             return
-        deleted = await channel.purge(deletion_limit=amount, search_limit=1000, reason=reason)
+        deleted = await ctx.channel.purge(deletion_limit=amount, search_limit=1000, reason=reason)
         embed = Embed(description=f"Deleted {deleted} messages",
                             timestamp=datetime.utcnow(),
                             color=0x0c73d3)

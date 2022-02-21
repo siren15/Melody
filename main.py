@@ -71,7 +71,7 @@ class CustomSnake(Snake):
         #         await channel.send(f"<@400713431423909889> An error occured while trying to execute `{ctx.invoked_name}` command in `{ctx.guild.name}`: ```{error}```")
 
 
-ad = AutoDefer(enabled=True, time_until_defer=0.5)
+ad = AutoDefer(enabled=True, time_until_defer=0)
 bot = CustomSnake(intents=intents, 
                   sync_interactions=True, 
                   delete_unused_application_cmds=True, 

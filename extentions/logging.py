@@ -166,7 +166,7 @@ class Logging(Scale):
 
             embed = Embed(description=f"{member.mention} **|** {member.display_name} **joined** {member.guild.name}",
                                     timestamp=datetime.utcnow(),
-                                    color=0x3a9757)
+                                    color=0x4ba567)
             embed.set_thumbnail(url=member.avatar.url)
             embed.add_field(name="Account created:", value=f"<t:{math.ceil(member.created_at.timestamp())}:R>")
             embed.set_footer(text=f'User ID: {member.id}')
@@ -187,7 +187,7 @@ class Logging(Scale):
             log_channel = member.guild.get_channel(channelid.channel_id)
             embed = Embed(description=f"{member.mention} **|** {member} **left** {member.guild.name}",
                                     timestamp=datetime.utcnow(),
-                                    color=0xda3d40)
+                                    color=0xda4d50)
             embed.set_thumbnail(url=member.avatar.url)
             embed.add_field(name=f'Roles: [{rolecount}]', value=roles)
             embed.set_footer(text=f'User ID: {member.id}')
