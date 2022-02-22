@@ -103,4 +103,4 @@ for filename in os.listdir('./extentions'):
     if filename.endswith('.py'):
         bot.load_extension(f'extentions.{filename[:-3]}')
 
-bot.start(os.environ['tyrone_token'])
+bot.start(os.environ['pinetree_token'])

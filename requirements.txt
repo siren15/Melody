@@ -1,5 +1,5 @@
-git+https://github.com/Discord-Snake-Pit/Dis-Snek.git@dev
 requests
+git+https://github.com/Discord-Snake-Pit/Dis-Snek.git@dev
 pymongo
 odmantic
 motor
