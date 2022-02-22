@@ -16,12 +16,12 @@ class BotConfiguration(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
 
-    @slash_command(name='pinetree', sub_cmd_name='settings', sub_cmd_description="[ADMIN]Configure how should pinetree behave", scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='bot', sub_cmd_name='settings', sub_cmd_description="[ADMIN]Configure how should pinetree behave", scopes=[435038183231848449,149167686159564800])
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def bot_configuration(self, ctx:InteractionContext):
         db = await odm.connect()
         events_logging = await db.find_one(prefixes, {'guildid':ctx.guild_id})
-        events_log_list = events_logging.activecommands.split(',')
+        events_log_list = events_logging.activecommands.lower()
         settings_selects = Select(
         options=[
             SelectOption(
@@ -79,13 +79,14 @@ class BotConfiguration(Scale):
             min_values=1,
             max_values=1,
             )
-            events_sel_message = await ctx.send("Choose an event to configure:", components=events_selects)
+            events_sel_message = await select_option.context.send("Choose an event to configure:", components=events_selects)
             try:
                 events_sel_option = await self.bot.wait_for_component(components=events_selects, timeout=600, check=select_check)
             except asyncio.TimeoutError:
                 events_selects.disabled=True
                 await events_sel_message.edit('Config closed after 10 minutes of inactivity.', components=events_selects)
                 return
+            events_btn_message = await events_sel_option.context.send(embed=Embed('buttons innit'))
             values = events_sel_option.context.values
             if 'msg_del_sel' in values:
                 if 'message_deleted' in events_log_list:
@@ -105,7 +106,8 @@ class BotConfiguration(Scale):
                         custom_id='deleted_messages_off'
                     )
                 )
-                await events_sel_message.edit(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `{msg_del_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = deleted_messages_buttons
+                await events_btn_message.edit(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `{msg_del_status}`'), components=deleted_messages_buttons)
                 await events_sel_option.context.send('You chose settings for Deleted Messages', ephemeral=True)
             
             if 'msg_edit_sel' in values:
@@ -126,7 +128,8 @@ class BotConfiguration(Scale):
                         custom_id='edited_messages_off'
                     )
                 )
-                await events_sel_message.edit(embed=Embed(color=0xfcab5f, description=f'Log edited messages: `{msg_edit_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = edited_messages_buttons
+                await events_btn_message.edit(embed=Embed(color=0xfcab5f, description=f'Log edited messages: `{msg_edit_status}`'), components=edited_messages_buttons)
                 await events_sel_option.context.send('You chose settings for Edited Messages', ephemeral=True)
             
             if 'usr_join_sel' in values:
@@ -147,7 +150,8 @@ class BotConfiguration(Scale):
                         custom_id='join_off'
                     )
                 )
-                await events_sel_message.edit(embed=Embed(color=0x4d9d54, description=f'Log users joining: `{mem_join_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = user_joined_buttons
+                await events_btn_message.edit(embed=Embed(color=0x4d9d54, description=f'Log users joining: `{mem_join_status}`'), components=user_joined_buttons)
                 await events_sel_option.context.send('You chose settings for User Join', ephemeral=True)
             
             if 'usr_left_sel' in values:
@@ -168,7 +172,8 @@ class BotConfiguration(Scale):
                         custom_id='left_off'
                     )
                 )
-                await events_sel_message.edit(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `{mem_leave_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = user_left_buttons
+                await events_btn_message.edit(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `{mem_leave_status}`'), components=user_left_buttons)
                 await events_sel_option.context.send('You chose settings for User Leave', ephemeral=True)
             
             if 'usr_left_sel' in values:
@@ -189,7 +194,8 @@ class BotConfiguration(Scale):
                         custom_id='left_off'
                     )
                 )
-                await events_sel_message.edit(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `{mem_leave_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = user_left_buttons
+                await events_btn_message.edit(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `{mem_leave_status}`'), components=user_left_buttons)
                 await events_sel_option.context.send('You chose settings for User Leave', ephemeral=True)
             
             if 'usr_kick_sel' in values:
@@ -210,7 +216,8 @@ class BotConfiguration(Scale):
                         custom_id='kicked_off'
                     ),
                 )
-                await events_sel_message.edit(embed=Embed(color=0x5c7fb0, description=f'Log kicking users: `{mem_kick_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = user_kicked_buttons
+                await events_btn_message.edit(embed=Embed(color=0x5c7fb0, description=f'Log kicking users: `{mem_kick_status}`'), components=user_kicked_buttons)
                 await events_sel_option.context.send('You chose settings for User Kick', ephemeral=True)
             
             if 'usr_ban_sel' in values:
@@ -231,7 +238,8 @@ class BotConfiguration(Scale):
                         custom_id='ban_off'
                     )
                 )
-                await events_sel_message.edit(embed=Embed(color=0x473657, description=f'Log banning users: `{mem_ban_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = user_banned_buttons
+                await events_btn_message.edit(embed=Embed(color=0x473657, description=f'Log banning users: `{mem_ban_status}`'), components=user_banned_buttons)
                 await events_sel_option.context.send('You chose settings for User Ban', ephemeral=True)
             
             if 'usr_unban_sel' in values:
@@ -252,22 +260,66 @@ class BotConfiguration(Scale):
                         custom_id='unban_off'
                     )
                 )
-                await events_sel_message.edit(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `{mem_unban_status}`'), components=[events_selects, deleted_messages_buttons])
+                log_button = user_unbanned_buttons
+                await events_btn_message.edit(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `{mem_unban_status}`'), components=user_unbanned_buttons)
                 await events_sel_option.context.send('You chose settings for User Unban', ephemeral=True)
             
             def buttons_check(component: Button) -> bool:
                 return (component.context.author == ctx.author)
-            try:
-                log_buttons_list = [deleted_messages_buttons, edited_messages_buttons, user_joined_buttons, user_left_buttons, user_kicked_buttons, user_banned_buttons, user_unbanned_buttons]
-                log_buttons = await self.bot.wait_for_component(components=log_buttons_list, timeout=600, check=buttons_check)
-            except asyncio.TimeoutError:
-                settings_selects.disabled=True
-                events_selects.disabled=True
-                await events_sel_message.delete()
-                await settings_sel_message.edit('Config closed after 10 minutes of inactivity.', components=settings_selects)
-                return
-            print(log_buttons.context.custom_id)
-                
+            while True:
+                events_logging = await db.find_one(prefixes, {'guildid':ctx.guild_id})
+                events_log_list = events_logging.activecommands.lower()
+                try:
+                    log_buttons = await self.bot.wait_for_component(components=log_button, timeout=600, check=buttons_check)
+                except asyncio.TimeoutError:
+                    settings_selects.disabled=True
+                    events_selects.disabled=True
+                    await events_sel_message.delete()
+                    await events_btn_message.delete()
+                    await settings_sel_message.edit('Config closed after 10 minutes of inactivity.', components=settings_selects)
+                    return
+                if log_buttons.context.custom_id == 'deleted_messages_on':
+                    if 'message_deleted' in events_log_list:
+                        await log_buttons.context.send('Logging of deleted messages already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace('message_deleted,', '')
+                        await db.save(events_logging)
+                        deleted_messages_buttons: list[ActionRow] = spread_to_rows(
+                            #deleted messages
+                            Button(
+                                style=ButtonStyles.GREEN,
+                                label="On",
+                                custom_id='deleted_messages_on'
+                            ),
+                            Button(
+                                style=ButtonStyles.RED,
+                                label="Off",
+                                custom_id='deleted_messages_off'
+                            )
+                        )
+                        await events_btn_message.edit(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `On`'), components=deleted_messages_buttons)
+                        await log_buttons.context.send('You turned on logging of deleted messages.', ephemeral=True)
+                elif log_buttons.context.custom_id == 'deleted_messages_off':
+                    if 'message_deleted' not in events_log_list:
+                        await log_buttons.context.send('Logging of deleted messages already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' message_deleted,'
+                        await db.save(events_logging)
+                        deleted_messages_buttons: list[ActionRow] = spread_to_rows(
+                            #deleted messages
+                            Button(
+                                style=ButtonStyles.GREEN,
+                                label="On",
+                                custom_id='deleted_messages_on'
+                            ),
+                            Button(
+                                style=ButtonStyles.RED,
+                                label="Off",
+                                custom_id='deleted_messages_off'
+                            )
+                        )
+                        await events_btn_message.edit(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `Off`'), components=deleted_messages_buttons)
+                        await log_buttons.context.send('You turned off logging of deleted messages.', ephemeral=True)
 
 def setup(bot):
     BotConfiguration(bot)
