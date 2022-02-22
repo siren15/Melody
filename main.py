@@ -6,11 +6,11 @@ from extentions.src.customchecks import *
 from extentions.src.mongo import *
 from dis_snek.client.errors import NotFound
 
-# import logging
-# import dis_snek
-# logging.basicConfig()
-# cls_log = logging.getLogger(dis_snek.const.logger_name)
-# cls_log.setLevel(logging.DEBUG)
+import logging
+import dis_snek
+logging.basicConfig()
+cls_log = logging.getLogger(dis_snek.const.logger_name)
+cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
 
@@ -26,7 +26,7 @@ class CustomSnake(Snake):
             regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
             roleid = await db.find_one(hasrole, {"guildid":ctx.guild.id, "command":regx})
             if roleid != None:
-                role = await ctx.guild.get_role(roleid.role)
+                role = ctx.guild.get_role(roleid.role)
                 embed = Embed(description=f":x: {ctx.author.mention} You don't have role {role.mention} that's required to use this command.",
                               color=0xDD2222)
                 await ctx.send(embed=embed, ephemeral=True)
@@ -66,7 +66,7 @@ class CustomSnake(Snake):
         #                   color=0xDD2222)
         #     await ctx.send(embed=embed, ephemeral=True)
         #     if ctx.guild_id != 435038183231848449:
-        #         guild = await bot.get_guild(435038183231848449)
+        #         guild = bot.get_guild(435038183231848449)
         #         channel = guild.get_channel(932661537729024132)
         #         await channel.send(f"<@400713431423909889> An error occured while trying to execute `{ctx.invoked_name}` command in `{ctx.guild.name}`: ```{error}```")
 
@@ -78,13 +78,13 @@ bot = CustomSnake(intents=intents,
                   default_prefix='p.', 
                   fetch_members=True, 
                   auto_defer=ad,
-                # asyncio_debug=True,
+                  asyncio_debug=True,
                   )
 
 @listen()
 async def on_ready():
     print(f"[Logged in]: {bot.user}")
-    guild = await bot.get_guild(435038183231848449)
+    guild = bot.get_guild(435038183231848449)
     channel = guild.get_channel(932661537729024132)
     await channel.send(f'[Logged in]: {bot.user}')
 
@@ -95,7 +95,7 @@ async def on_guild_join(event):
     if checkserver == None:
         #add server to database
         await db.save(prefixes(guildid=event.guild.id, prefix='p.'))
-        guild = await bot.get_guild(435038183231848449)
+        guild = bot.get_guild(435038183231848449)
         channel = guild.get_channel(932661537729024132)
         await channel.send(f'I was added to {event.guild.name}|{event.guild.id}')
 

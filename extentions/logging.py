@@ -235,7 +235,7 @@ class Logging(Scale):
                 last_entry = MISSING
             else:
                 last_entry = last_au_entry.last_entry
-            audit_log_entry = await guild.get_audit_log(action_type=22, limit=1, after=last_entry)
+            audit_log_entry = guild.get_audit_log(action_type=22, limit=1, after=last_entry)
             for au_entry in audit_log_entry.entries:
                 if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
                     reason = au_entry.reason
@@ -271,7 +271,7 @@ class Logging(Scale):
                 last_entry = MISSING
             else:
                 last_entry = last_au_entry.last_entry
-            audit_log_entry = await guild.get_audit_log(action_type=23, limit=1, after=last_entry)
+            audit_log_entry = guild.get_audit_log(action_type=23, limit=1, after=last_entry)
             for au_entry in audit_log_entry.entries:
                 if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
                     reason = au_entry.reason

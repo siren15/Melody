@@ -19,7 +19,6 @@ class ReactionRoles(Scale):
 
     @slash_command(name='reactionrole', sub_cmd_name='create' , sub_cmd_description='[admin]Create a reactionrole', description="[admin]Create and edit reactionroles")
     async def reaction_role_create(self, ctx:InteractionContext):
-        await ctx.defer()
         perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
         if (perms == True):
             def check(event:Message) -> bool:
@@ -65,7 +64,7 @@ class ReactionRoles(Scale):
                 reqrid = rr.requirementroleid
                 igrid = rr.ignoredroleid
                 member_roles = [role.id for role in member.roles]
-                role = await guild.get_role(rrid)
+                role = guild.get_role(rrid)
                 if role != None:
                     if igrid == None:
                         if reqrid == None:
@@ -107,7 +106,7 @@ class ReactionRoles(Scale):
             reqrid = rr.requirementroleid
             igrid = rr.ignoredroleid
             member_roles = [role.id for role in member.roles]
-            role = await guild.get_role(rrid)
+            role = guild.get_role(rrid)
             if role != None:
                 if igrid in member_roles:
                     return
@@ -141,7 +140,7 @@ class ReactionRoles(Scale):
                 reqrid = rr.requirementroleid
                 igrid = rr.ignoredroleid
                 member_roles = [role.id for role in member.roles]
-                role = await guild.get_role(rrid)
+                role = guild.get_role(rrid)
                 if role != None:
                     if igrid == None:
                         if reqrid == None:

@@ -72,7 +72,7 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
         regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
         roleid = await db.find_one(hasrole, {"guildid":ctx.guild_id, "command":regx})
         if roleid != None:
-            role = await ctx.guild.get_role(roleid.role)
+            role = ctx.guild.get_role(roleid.role)
             if role not in ctx.author.roles:
                 raise MissingRole(f'{ctx.author} missing role {role.name}')
             else:
@@ -88,7 +88,7 @@ async def has_role(ctx):
     regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
     roleid = await db.find_one(hasrole, {"guildid":ctx.guild_id, "command":regx})
     if roleid != None:
-        role = await ctx.guild.get_role(roleid.role)
+        role = ctx.guild.get_role(roleid.role)
         if role not in ctx.author.roles:
             raise MissingRole(f'{ctx.author} missing role {role.name}')
         else:

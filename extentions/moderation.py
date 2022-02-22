@@ -141,7 +141,7 @@ class Moderation(Scale):
             await ctx.send("You can't ban yourself", ephemeral=True)
             return
         try:
-            await ctx.guild.get_ban(user)
+            ctx.guild.get_ban(user)
         except NotFound:
             db = await odm.connect()
             member = find_member(ctx, user.id)
@@ -247,7 +247,7 @@ class Moderation(Scale):
             await ctx.send(embed=embed)
             return
         try:
-            await ctx.guild.get_ban(user)
+            ctx.guild.get_ban(user)
         except NotFound:
             embed = Embed(description=f":x: {user} not banned",
                         color=0xDD2222)
@@ -741,7 +741,7 @@ class Moderation(Scale):
                 limborole = limborole
 
             user_limbo_data = await db.find_one(limbo, {"guildid":ctx.guild_id, "userid":member.id})
-            roles = [await ctx.guild.get_role(int(id_)) for id_ in user_limbo_data.roles.split(",") if len(id_)]
+            roles = [ctx.guild.get_role(int(id_)) for id_ in user_limbo_data.roles.split(",") if len(id_)]
             for r in roles:
                 await member.add_role(r)
             await member.remove_role(limborole)
@@ -785,7 +785,7 @@ class Moderation(Scale):
                 await db.delete(m)
                 return
             try:
-                await guild.get_ban(m.user)
+                guild.get_ban(m.user)
             except NotFound:
                 print(f"[automod]|[unban_task]{m.user} not found in the ban list")
                 await db.delete(m)

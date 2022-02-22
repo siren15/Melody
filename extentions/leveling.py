@@ -148,7 +148,7 @@ class Levels(Scale):
             
             roles = []
             for lvl in levels:
-                lvlrole = await ctx.guild.get_role(lvl.roleid)
+                lvlrole = ctx.guild.get_role(lvl.roleid)
                 if lvlrole == None:
                     roles.append('[ROLE NOT FOUND]\n')
                 else:

@@ -96,7 +96,7 @@ class PersistentRoles(Scale):
             return
         roles = []
         for r in all_persistent_roles:
-            role = await ctx.guild.get_role(r)
+            role = ctx.guild.get_role(r)
             if role == None:
                 roles.append(f'{r}[ROLE NOT FOUND]\n')
             else:
@@ -147,14 +147,14 @@ class PersistentRoles(Scale):
         db = await odm.connect()
         p_r = await db.find_one(persistent_roles, {'guildid':guild.id, 'user':member.id})
         if p_r != None:
-            roles = [await guild.get_role(int(id_)) for id_ in p_r.roles.split(",") if len(id_)]
+            roles = [guild.get_role(int(id_)) for id_ in p_r.roles.split(",") if len(id_)]
             for role in roles:
                 if role not in member.roles:
                     await member.add_role(role, '[pt]persistent_role stored in db was added back to member on rejoin')
         else:
             p_r = await db.find_one(persistentroles, {'guildid':guild.id, 'userid':member.id})
             if p_r != None:
-                roles = [await guild.get_role(int(id_)) for id_ in p_r.roles.split(",") if len(id_)]
+                roles = [guild.get_role(int(id_)) for id_ in p_r.roles.split(",") if len(id_)]
                 level_roles = await db.find(leveling_roles, {"guildid":guild.id})
                 pers_roles = await db.find(persistent_roles_settings, {'guildid':guild.id})
                 level_roles = [lvl.roleid for lvl in level_roles]
@@ -170,7 +170,7 @@ class PersistentRoles(Scale):
                     level_roles = await db.find(leveling_roles, {"guildid":guild.id, 'level':{'$lte':mem_lvl.level}})
                     if level_roles != None:
                         for roleid in level_roles:
-                            role = await guild.get_role(roleid.roleid)
+                            role = guild.get_role(roleid.roleid)
                             if role not in member.roles:
                                 await member.add_role(role)
 

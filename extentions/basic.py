@@ -38,7 +38,7 @@ class Basic(Scale):
             regx = re.compile(f"^{cmd}$", re.IGNORECASE)
             restricted_command = await db.find_one(hasrole,  {"guildid":ctx.guild_id, "command":regx})
             if restricted_command != None:
-                r_role = await ctx.guild.get_role(restricted_command.role)
+                r_role = ctx.guild.get_role(restricted_command.role)
                 return await ctx.send(f'`{cmd}` already restricted to {r_role.mention}')
             await db.save(hasrole(guildid=ctx.guild_id, command=cmd, role=role.id))
             await ctx.send(embed=Embed(color=0x0c73d3,description=f'`{cmd}` restricted to {role.mention}'))
@@ -138,7 +138,7 @@ class Basic(Scale):
     
     @slash_command(name='botinfo', description="lets me see info about the bot")
     async def botinfo(self, ctx: InteractionContext):
-        member = await ctx.guild.get_member(self.bot.user.id)
+        member = ctx.guild.get_member(self.bot.user.id)
 
         if member.top_role.name != '@everyone':
             toprole = member.top_role.mention
@@ -293,7 +293,7 @@ class Basic(Scale):
         if (embed_title == None) and (embed_text == None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
-        message_to_edit = await channel.get_message(embed_message_id)
+        message_to_edit = channel.get_message(embed_message_id)
         embed=Embed(color=0x0c73d3,
         description=embed_text,
         title=embed_title)

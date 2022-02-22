@@ -26,7 +26,7 @@ class GiveRoles(Scale):
         if gy == None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: Couldn't find `{giveyou_name}` as a giveyou for {ctx.guild.name}"), ephemeral=True)
 
-        role = await ctx.guild.get_role(gy.roleid)
+        role = ctx.guild.get_role(gy.roleid)
 
         if role in user.roles:
             await user.remove_role(role, reason=f'{ctx.author.display_name}|{ctx.author.id} removed a giveyou {giveyou_name}')
@@ -74,7 +74,7 @@ class GiveRoles(Scale):
         if gy != None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: `{giveyou_name}` is not a giveyou for {ctx.guild.name}"), ephemeral=True)
 
-        role = await ctx.guild.get_role(gy.roleid)
+        role = ctx.guild.get_role(gy.roleid)
         await ctx.send(embed=Embed(color=0x0c73d3, description=f"giveyou `{giveyou_name}` deleted from {role.mention}"))
         await db.delete(gy)
     
@@ -113,7 +113,7 @@ class GiveRoles(Scale):
             return
         roles = []
         for g in gy:
-            role = await ctx.guild.get_role(g.roleid)
+            role = ctx.guild.get_role(g.roleid)
             if role == None:
                 roles.append('[ROLE NOT FOUND]\n')
             else:
@@ -169,11 +169,11 @@ class GiveRoles(Scale):
             roles_list.append(r)
         
         for member_id in member_list:
-            member = await ctx.guild.get_member(member_id)
+            member = ctx.guild.get_member(member_id)
             removed_roles = 'I have removed: '
             added_roles = 'I have assigned: '
             for role_id in roles_list:
-                role = await ctx.guild.get_role(role_id)
+                role = ctx.guild.get_role(role_id)
                 if member.has_role(role) == True:
                     await member.remove_role(role)
                     removed_roles = removed_roles + f' {role.mention}'
@@ -208,13 +208,13 @@ class GiveRoles(Scale):
     #         ign_roles = set(ignore_roles) & set(member_roles)
     #         if len(ign_roles) == 1:
     #             for i in ign_roles:
-    #                 role = await ctx.guild.get_role(int(i))
+    #                 role = ctx.guild.get_role(int(i))
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f":x: You have {role.mention}, members with this role can't get {colourme_name}"))
     #             return
     #         elif len(ign_roles) > 1:
     #             rs = ''
     #             for i in ign_roles:
-    #                 role = await ctx.guild.get_role(int(i))
+    #                 role = ctx.guild.get_role(int(i))
     #                 rs = rs+f' {role.mention}'
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f":x: You have {rs}, members with these roles can't get {colourme_name}"))
     #             return
@@ -226,13 +226,13 @@ class GiveRoles(Scale):
     #         req_roles = set(reqire_roles) & set(member_roles)
     #         if len(req_roles) == 1:
     #             for i in req_roles:
-    #                 role = await ctx.guild.get_role(int(i))
+    #                 role = ctx.guild.get_role(int(i))
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f":x: You are missing {role.mention}, you have to have this role to get {colourme_name}"))
     #             return
     #         elif len(req_roles) > 1:
     #             rs = ''
     #             for i in req_roles:
-    #                 role = await ctx.guild.get_role(int(i))
+    #                 role = ctx.guild.get_role(int(i))
     #                 rs = rs+f' {role.mention}'
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f":x: You are missing {rs}, you have to have these roles to get {colourme_name}"))
     #             return          
@@ -247,12 +247,12 @@ class GiveRoles(Scale):
     #         return None
 
     #     if get_other_role(member, nr) == None:
-    #         colourme_role = await ctx.guild.get_role(cr.colourme_role_id)
+    #         colourme_role = ctx.guild.get_role(cr.colourme_role_id)
     #         await member.add_role(colourme_role)
     #         await ctx.send(embed=Embed(color=0x0c73d3, description=f'I have assigned {colourme_name}|{colourme_role.mention} to you'))
     #         return
     #     else:
-    #         other_role = await ctx.guild.get_role(get_other_role(member, nr))
+    #         other_role = ctx.guild.get_role(get_other_role(member, nr))
         
     #     if other_role.id == cr.colourme_role_id:
     #         await member.remove_role(other_role)
@@ -260,7 +260,7 @@ class GiveRoles(Scale):
     #         return
     #     else:
     #         await member.remove_role(other_role)
-    #         colourme_role = await ctx.guild.get_role(cr.colourme_role_id)
+    #         colourme_role = ctx.guild.get_role(cr.colourme_role_id)
     #         await member.add_role(colourme_role)
     #         await ctx.send(embed=Embed(color=0x0c73d3, description=f'I have assigned {colourme_name}|{colourme_role.mention} to you'))
     
@@ -282,7 +282,7 @@ class GiveRoles(Scale):
     #         cm_regx = re.compile(f"^{colourme_name}$", re.IGNORECASE)
     #         cr = await db.find_one(colourme, {"colourme_name":cm_regx, "guildid":ctx.guild_id})
     #         if cr != None:
-    #             crole = await ctx.guild.get_role(cr.colourme_role_id)
+    #             crole = ctx.guild.get_role(cr.colourme_role_id)
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f':x: {colourme_name} is already a colourme for {crole.mention}'))
     #             return
     #         cr = await db.find_one(colourme, {"colourme_role_id":role.id, "guildid":ctx.guild_id})
@@ -364,7 +364,7 @@ class GiveRoles(Scale):
     #         if cr == None:
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f":x: {colourme_name} isn't a colourme for this guild"))
     #             return
-    #         role = await ctx.guild.get_role(cr.colourme_role_id)
+    #         role = ctx.guild.get_role(cr.colourme_role_id)
     #         await ctx.send(embed=Embed(color=0x0c73d3, description=f'Colourme {colourme_name}|{role.mention} was deleted'))
     #         await db.delete(cr)
     
