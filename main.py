@@ -6,11 +6,11 @@ from extentions.src.customchecks import *
 from extentions.src.mongo import *
 from dis_snek.client.errors import NotFound
 
-import logging
-import dis_snek
-logging.basicConfig()
-cls_log = logging.getLogger(dis_snek.const.logger_name)
-cls_log.setLevel(logging.DEBUG)
+# import logging
+# import dis_snek
+# logging.basicConfig()
+# cls_log = logging.getLogger(dis_snek.const.logger_name)
+# cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
 
@@ -78,7 +78,7 @@ bot = CustomSnake(intents=intents,
                   default_prefix='p.', 
                   fetch_members=True, 
                   auto_defer=ad,
-                  asyncio_debug=True,
+                  #asyncio_debug=True,
                   )
 
 @listen()
