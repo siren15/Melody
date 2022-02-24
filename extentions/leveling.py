@@ -59,7 +59,7 @@ class Levels(Scale):
             if levels.messages == None:  #if no messages logged in db
                 number_of_messages = 1 #number of xp messages is 1 for the current message
             else:
-                number_of_messages = levels.messages + 1 #otherwise the number of xp messages is logged no. of messages + 1 for the current message
+                number_of_messages = levels.messages + 1 #otherwise the number of xp messages is logged no. of messages + 1 for the current message  
 
             if xp_to_next_level <= (xp+xp_to_give): # if the members xp towards the next level equals or is higher than xp expected for next level, member levels up
                 levels.level = lvl+1 #members level gets updated
@@ -70,7 +70,7 @@ class Levels(Scale):
                 
                 roles = await db.find_one(leveling_roles, {'guildid':message.guild.id, 'level':lvl+1})#get the role reward for the level if it exists
                 if roles != None:#if it's not none
-                    role = await message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
+                    role = message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
                     if (role != None) and (role not in message.author.roles):#if it exists and the member doesn't have it
                         await message.author.add_role(role, '[bot]leveling role add')#give it to member
             else:                                       # if the members xp towards the next level equals or is not higher than xp expected for next level
@@ -78,6 +78,12 @@ class Levels(Scale):
                 levels.total_xp = new_total_xp          #with total xp
                 levels.messages = number_of_messages    #and number of messages
                 await db.save(levels)
+
+                roles = await db.find_one(leveling_roles, {'guildid':message.guild.id, 'level':lvl})#get the role reward for the level if it exists
+                if roles != None:#if it's not none
+                    role = message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
+                    if (role != None) and (role not in message.author.roles):#if it exists and the member doesn't have it
+                        await message.author.add_role(role, '[bot]leveling role add')#give it to member
 
             await db.save(levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60)))) #member gets put into the wait list
             await asyncio.sleep(60) #the commands gonna wait for 60 seconds
