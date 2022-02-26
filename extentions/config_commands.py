@@ -93,6 +93,7 @@ class BotConfiguration(Scale):
         events_log_list = events_logging.activecommands.lower()
         values = event.context.values
         events_btn_message = event.context.message
+        print(values)
         if 'msg_del_sel' in values:
             if 'message_deleted' in events_log_list:
                 msg_del_status = 'On'
