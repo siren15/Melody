@@ -129,6 +129,9 @@ class PersistentRoles(Scale):
         if member_roles == []:
             return
         db = await odm.connect()
+        p_r = await db.find_one(persistent_roles, {'guildid':guild.id, 'user':member.id})
+        if p_r != None:
+            await db.delete(p_r)
         level_roles = await db.find(leveling_roles, {"guildid":guild.id})
         pers_roles = await db.find(persistent_roles_settings, {'guildid':guild.id})
         level_roles = [lvl.roleid for lvl in level_roles]
