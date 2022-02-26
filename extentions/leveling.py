@@ -9,6 +9,13 @@ from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
 
+def find_member(ctx, userid):
+    members = [m for m in ctx.guild.members if m.id == userid]
+    if members != []:
+        for m in members:
+            return m
+    return None
+
 class Levels(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
@@ -375,7 +382,11 @@ class Levels(Scale):
                 ranks = '🥉 3'
             else:
                 ranks = rank
-            members.append(f'**{ranks}.** <@{lvl.memberid}>\n')
+            member = find_member(ctx, lvl.memberid)
+            if member != None:
+                members.append(f'**{ranks}.** {member.display_name}\n')
+            else:
+                members.append(f'**{ranks}.** <@{lvl.memberid}>\n')
             rank = rank+1
         lvls = [f'{lvl.level}\n' for lvl in lvl_order]
         tot_xp = [f'{xp.total_xp}\n' for xp in lvl_order]
