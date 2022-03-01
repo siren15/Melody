@@ -248,7 +248,8 @@ class Logging(Scale):
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
                 cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                if cdiff.seconds <= 60:
+                print(cdiff.seconds)
+                if int(cdiff.seconds) <= int(60):
                     reason = au_entry.reason
                     for au_user in audit_log_entry.users:
                         if au_entry.target_id == au_user.id:
@@ -275,7 +276,7 @@ class Logging(Scale):
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
                 cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                if cdiff.seconds <= 60:
+                if int(cdiff.seconds) <= int(60):
                     reason = au_entry.reason
                     for au_user in audit_log_entry.users:
                         if au_entry.target_id == au_user.id:
@@ -302,7 +303,7 @@ class Logging(Scale):
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
                 cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                if cdiff.seconds <= 60:
+                if int(cdiff.seconds) <= int(60):
                     reason = au_entry.reason
                     for au_user in audit_log_entry.users:
                         if au_entry.target_id == au_user.id:
