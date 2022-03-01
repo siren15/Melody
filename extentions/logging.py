@@ -7,7 +7,7 @@ from dis_snek.models.discord.enums import AuditLogEventType
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
-from dis_snek.api.events.discord import MemberRemove
+from dis_snek.api.events.discord import MemberRemove, MessageDelete, MessageUpdate, MemberRemove
 
 def geturl(string):
     regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
@@ -48,7 +48,7 @@ class Logging(Scale):
             await ctx.send(embed=embed)
     
     @listen()
-    async def on_message_delete(self, event):
+    async def on_message_delete_attachments(self, event: MessageDelete):
         message = event.message
         if message.author.bot:
             return
@@ -97,7 +97,7 @@ class Logging(Scale):
                         return
 
     @listen()
-    async def on_message_delete(self, event):
+    async def on_message_delete_regular(self, event: MessageDelete):
         message = event.message
         if message.author.bot:
             return
@@ -118,7 +118,7 @@ class Logging(Scale):
                     await log_channel.send(embed=embed)
 
     @listen()
-    async def on_message_delete(self, event):
+    async def on_message_delete_url(self, event: MessageDelete):
         message = event.message
         if message.author.bot:
             return
