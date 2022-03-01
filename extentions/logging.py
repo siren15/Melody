@@ -247,25 +247,24 @@ class Logging(Scale):
             audit_log_entry = await member.guild.fetch_audit_log(action_type=20, limit=1)
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
-                print(entry_created_at, datetime.utcnow())
                 cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                print(cdiff.seconds)
-                reason = au_entry.reason
-                for au_user in audit_log_entry.users:
-                    if au_entry.target_id == au_user.id:
-                        target = au_user
-                    elif au_entry.user_id == au_user.id:
-                        moderator = au_user
-                if target == member:
-                    db = await odm.connect()
-                    channelid = await db.find_one(logs, {"guild_id":member.guild.id})
-                    log_channel = member.guild.get_channel(channelid.channel_id)
-                
-                    embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **kicked** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
-                                            timestamp=datetime.utcnow(),
-                                            color=0x5c7fb0)
-                    embed.set_thumbnail(url=target.avatar.url)
-                    await log_channel.send(embed=embed)
+                if cdiff.seconds <= 60:
+                    reason = au_entry.reason
+                    for au_user in audit_log_entry.users:
+                        if au_entry.target_id == au_user.id:
+                            target = au_user
+                        elif au_entry.user_id == au_user.id:
+                            moderator = au_user
+                    if target == member:
+                        db = await odm.connect()
+                        channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+                        log_channel = member.guild.get_channel(channelid.channel_id)
+                    
+                        embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **kicked** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
+                                                timestamp=datetime.utcnow(),
+                                                color=0x5c7fb0)
+                        embed.set_thumbnail(url=target.avatar.url)
+                        await log_channel.send(embed=embed)
     
     @listen()
     async def on_ban_create(self, event):
@@ -274,58 +273,52 @@ class Logging(Scale):
         if await is_event_active(guild, 'member_ban'):
             audit_log_entry = await guild.fetch_audit_log(action_type=22, limit=1)
             for au_entry in audit_log_entry.entries:
-                reason = au_entry.reason
-                for au_user in audit_log_entry.users:
-                    if au_entry.target_id == au_user.id:
-                        target = au_user
-                    elif au_entry.user_id == au_user.id:
-                        moderator = au_user
-                if target == member:
-                    db = await odm.connect()
-                    channelid = await db.find_one(logs, {"guild_id":guild.id})
-                    log_channel = guild.get_channel(channelid.channel_id)
-                
-                    embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **banned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
-                                            timestamp=datetime.utcnow(),
-                                            color=0x62285e)
-                    embed.set_thumbnail(url=target.avatar.url)
-                    await log_channel.send(embed=embed)
-    
-    @listen()
-    async def on_ban_remove(self, event):
-        member = event.user
-        guild = event.guild
-        if await is_event_active(guild, 'member_unban'):
-            db = await odm.connect()
-            last_au_entry = await db.find_one(auditlogs, {'guildid':guild.id, 'action_type':23})
-            if last_au_entry == None:
-                last_entry = MISSING
-            else:
-                last_entry = last_au_entry.last_entry
-            audit_log_entry = await guild.fetch_audit_log(action_type=23, limit=1, after=last_entry)
-            for au_entry in audit_log_entry.entries:
-                if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
+                entry_created_at = snowflake_time(au_entry.id)
+                cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+                if cdiff.seconds <= 60:
                     reason = au_entry.reason
                     for au_user in audit_log_entry.users:
                         if au_entry.target_id == au_user.id:
                             target = au_user
                         elif au_entry.user_id == au_user.id:
                             moderator = au_user
+                    if target == member:
+                        db = await odm.connect()
+                        channelid = await db.find_one(logs, {"guild_id":guild.id})
+                        log_channel = guild.get_channel(channelid.channel_id)
                     
-                    if last_au_entry == None:
-                        await db.save(auditlogs(guildid=guild.id, action_type=23, last_entry=au_entry.id))
-                    else:
-                        last_au_entry.last_entry = au_entry.id
-                        await db.save(last_au_entry)
+                        embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **banned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
+                                                timestamp=datetime.utcnow(),
+                                                color=0x62285e)
+                        embed.set_thumbnail(url=target.avatar.url)
+                        await log_channel.send(embed=embed)
+    
+    @listen()
+    async def on_ban_remove(self, event):
+        member = event.user
+        guild = event.guild
+        if await is_event_active(guild, 'member_unban'):
+            audit_log_entry = await guild.fetch_audit_log(action_type=23, limit=1)
+            for au_entry in audit_log_entry.entries:
+                entry_created_at = snowflake_time(au_entry.id)
+                cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+                if cdiff.seconds <= 60:
+                    reason = au_entry.reason
+                    for au_user in audit_log_entry.users:
+                        if au_entry.target_id == au_user.id:
+                            target = au_user
+                        elif au_entry.user_id == au_user.id:
+                            moderator = au_user
+                    if target == member:
+                        db = await odm.connect()
+                        channelid = await db.find_one(logs, {"guild_id":guild.id})
+                        log_channel = guild.get_channel(channelid.channel_id)
                     
-                    channelid = await db.find_one(logs, {"guild_id":guild.id})
-                    log_channel = guild.get_channel(channelid.channel_id)
-                
-                    embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **unbanned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
-                                            timestamp=datetime.utcnow(),
-                                            color=0x9275b2)
-                    embed.set_thumbnail(url=target.avatar.url)
-                    await log_channel.send(embed=embed)
+                        embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **unbanned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
+                                                timestamp=datetime.utcnow(),
+                                                color=0x9275b2)
+                        embed.set_thumbnail(url=target.avatar.url)
+                        await log_channel.send(embed=embed)
 
 def setup(bot):
     Logging(bot)
