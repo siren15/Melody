@@ -255,7 +255,7 @@ class Logging(Scale):
                             target = au_user
                         elif au_entry.user_id == au_user.id:
                             moderator = au_user
-                    if target == member:
+                    if target.id == member.id:
                         db = await odm.connect()
                         channelid = await db.find_one(logs, {"guild_id":member.guild.id})
                         log_channel = member.guild.get_channel(channelid.channel_id)
@@ -282,7 +282,7 @@ class Logging(Scale):
                             target = au_user
                         elif au_entry.user_id == au_user.id:
                             moderator = au_user
-                    if target == member:
+                    if target.id == member.id:
                         db = await odm.connect()
                         channelid = await db.find_one(logs, {"guild_id":guild.id})
                         log_channel = guild.get_channel(channelid.channel_id)
@@ -309,7 +309,7 @@ class Logging(Scale):
                             target = au_user
                         elif au_entry.user_id == au_user.id:
                             moderator = au_user
-                    if target == member:
+                    if target.id == member.id:
                         db = await odm.connect()
                         channelid = await db.find_one(logs, {"guild_id":guild.id})
                         log_channel = guild.get_channel(channelid.channel_id)
