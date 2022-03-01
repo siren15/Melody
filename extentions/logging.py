@@ -70,6 +70,7 @@ class Logging(Scale):
                         embed.add_field(name="Content:", value=f"{content}", inline=False)
                         embed.set_image(url=f"{url}")
                         embed.set_footer(text=f'User ID: {message.author.id}\nMessage ID: {message.id}')
+                        db = await odm.connect()
                         channelid = await db.find_one(logs, {"guild_id":message.guild.id})
                         id = channelid.channel_id
                         log_channel = message.guild.get_channel(id)
