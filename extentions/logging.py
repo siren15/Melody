@@ -1,6 +1,7 @@
 from dataclasses import MISSING
 import math
 import re
+from datetime import datetime, timezone
 
 from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check, listen
 from dis_snek.models.discord.enums import AuditLogEventType
@@ -8,6 +9,20 @@ from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
 from dis_snek.api.events.discord import MemberRemove, MessageDelete, MessageUpdate, MemberRemove
+
+def snowflake_time(id: int) -> datetime:
+    """
+    Parameters
+    -----------
+    id: :class:`int`
+        The snowflake ID.
+    Returns
+    --------
+    :class:`datetime.datetime`
+        An aware datetime in UTC representing the creation time of the snowflake.
+    """
+    timestamp = ((id >> 22) + 1420070400000) / 1000
+    return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
 def geturl(string):
     regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
@@ -168,11 +183,6 @@ class Logging(Scale):
         if before.author.bot:
             return
         if await is_event_active(before.guild, 'message_edited'):
-            db = await odm.connect()
-            channelid = await db.find_one(logs, {"guild_id":before.guild.id})
-            id = channelid.channel_id
-            log_channel = before.guild.get_channel(id)
-
             if before.content == after.content:
                 return
 
@@ -184,6 +194,10 @@ class Logging(Scale):
             embed.add_field(name="Original message", value=before.content, inline=False)
             embed.add_field(name="Edited message", value=after.content, inline=False)
             embed.set_footer(text=f'User ID: {before.author.id}\nMessage ID: {before.id}')
+            db = await odm.connect()
+            channelid = await db.find_one(logs, {"guild_id":before.guild.id})
+            id = channelid.channel_id
+            log_channel = before.guild.get_channel(id)
             await log_channel.send(embed=embed)
     
     @listen()
@@ -229,28 +243,18 @@ class Logging(Scale):
     async def on_member_kick(self, event: MemberRemove):
         member = event.member
         if await is_event_active(member.guild, 'member_kick'):
-            db = await odm.connect()
-            last_au_entry = await db.find_one(auditlogs, {'guildid':member.guild.id, 'action_type':20})
-            if last_au_entry == None:
-                last_entry = MISSING
-            else:
-                last_entry = last_au_entry.last_entry
-            audit_log_entry = await member.guild.get_audit_log(action_type=20, limit=1, after=last_entry)
+            audit_log_entry = await member.guild.fetch_audit_log(action_type=20, limit=1)
             for au_entry in audit_log_entry.entries:
-                if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
-                    reason = au_entry.reason
-                    for au_user in audit_log_entry.users:
-                        if au_entry.target_id == au_user.id:
-                            target = au_user
-                        elif au_entry.user_id == au_user.id:
-                            moderator = au_user
-                    
-                    if last_au_entry == None:
-                        await db.save(auditlogs(guildid=member.guild.id, action_type=20, last_entry=au_entry.id))
-                    else:
-                        last_au_entry.last_entry = au_entry.id
-                        await db.save(last_au_entry)
-                    
+                entry_created_at = snowflake_time(au_entry.id)
+                print(entry_created_at, datetime.utcnow())
+                reason = au_entry.reason
+                for au_user in audit_log_entry.users:
+                    if au_entry.target_id == au_user.id:
+                        target = au_user
+                    elif au_entry.user_id == au_user.id:
+                        moderator = au_user
+                if target == member:
+                    db = await odm.connect()
                     channelid = await db.find_one(logs, {"guild_id":member.guild.id})
                     log_channel = member.guild.get_channel(channelid.channel_id)
                 
@@ -265,28 +269,16 @@ class Logging(Scale):
         member = event.user
         guild = event.guild
         if await is_event_active(guild, 'member_ban'):
-            db = await odm.connect()
-            last_au_entry = await db.find_one(auditlogs, {'guildid':guild.id, 'action_type':22})
-            if last_au_entry == None:
-                last_entry = MISSING
-            else:
-                last_entry = last_au_entry.last_entry
-            audit_log_entry = await guild.get_audit_log(action_type=22, limit=1, after=last_entry)
+            audit_log_entry = await guild.fetch_audit_log(action_type=22, limit=1)
             for au_entry in audit_log_entry.entries:
-                if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
-                    reason = au_entry.reason
-                    for au_user in audit_log_entry.users:
-                        if au_entry.target_id == au_user.id:
-                            target = au_user
-                        elif au_entry.user_id == au_user.id:
-                            moderator = au_user
-                    
-                    if last_au_entry == None:
-                        await db.save(auditlogs(guildid=guild.id, action_type=22, last_entry=au_entry.id))
-                    else:
-                        last_au_entry.last_entry = au_entry.id
-                        await db.save(last_au_entry)
-                    
+                reason = au_entry.reason
+                for au_user in audit_log_entry.users:
+                    if au_entry.target_id == au_user.id:
+                        target = au_user
+                    elif au_entry.user_id == au_user.id:
+                        moderator = au_user
+                if target == member:
+                    db = await odm.connect()
                     channelid = await db.find_one(logs, {"guild_id":guild.id})
                     log_channel = guild.get_channel(channelid.channel_id)
                 
@@ -307,7 +299,7 @@ class Logging(Scale):
                 last_entry = MISSING
             else:
                 last_entry = last_au_entry.last_entry
-            audit_log_entry = await guild.get_audit_log(action_type=23, limit=1, after=last_entry)
+            audit_log_entry = await guild.fetch_audit_log(action_type=23, limit=1, after=last_entry)
             for au_entry in audit_log_entry.entries:
                 if (int(au_entry.id) != int(last_au_entry.last_entry)) and (int(member.id) == int(au_entry.target_id)):
                     reason = au_entry.reason
