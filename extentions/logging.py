@@ -102,7 +102,7 @@ class Logging(Scale):
         if message.author.bot:
             return
         if await is_event_active(message.guild, 'message_deleted'):
-            if not message.attachments():
+            if not message.attachments:
                 if geturl(message.content) == None:
                     embed = Embed(description=f"Message deleted in {message.channel.mention}",
                                             timestamp=datetime.utcnow(),
@@ -123,7 +123,7 @@ class Logging(Scale):
         if message.author.bot:
             return
         if await is_event_active(message.guild, 'message_deleted'):
-            if not message.attachments():
+            if not message.attachments:
                 if geturl(message.content) != None:
                     url = geturl(message.content)
                     if url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.png') or url.endswith('.gif'):
