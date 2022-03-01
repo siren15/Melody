@@ -2,6 +2,7 @@ from dataclasses import MISSING
 import math
 import re
 from datetime import datetime, timezone
+from dateutil.relativedelta import relativedelta
 
 from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check, listen
 from dis_snek.models.discord.enums import AuditLogEventType
@@ -247,6 +248,8 @@ class Logging(Scale):
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
                 print(entry_created_at, datetime.utcnow())
+                cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+                print(cdiff.seconds)
                 reason = au_entry.reason
                 for au_user in audit_log_entry.users:
                     if au_entry.target_id == au_user.id:
