@@ -25,6 +25,10 @@ def snowflake_time(id: int) -> datetime:
     timestamp = ((id >> 22) + 1420070400000) / 1000
     return datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
+def date_diff_in_Seconds(dt2, dt1):
+  timedelta = dt2 - dt1
+  return timedelta.days * 24 * 3600 + timedelta.seconds
+
 def geturl(string):
     regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
     url = re.findall(regex,string)
@@ -247,9 +251,9 @@ class Logging(Scale):
             audit_log_entry = await member.guild.fetch_audit_log(action_type=20, limit=1)
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
-                cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                print(cdiff.seconds)
-                if int(cdiff.seconds) <= int(60):
+                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+
+                if cdiff <= 60:
                     reason = au_entry.reason
                     for au_user in audit_log_entry.users:
                         if au_entry.target_id == au_user.id:
@@ -275,8 +279,8 @@ class Logging(Scale):
             audit_log_entry = await guild.fetch_audit_log(action_type=22, limit=1)
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
-                cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                if int(cdiff.seconds) <= int(60):
+                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+                if int(cdiff) <= int(60):
                     reason = au_entry.reason
                     for au_user in audit_log_entry.users:
                         if au_entry.target_id == au_user.id:
@@ -302,8 +306,8 @@ class Logging(Scale):
             audit_log_entry = await guild.fetch_audit_log(action_type=23, limit=1)
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
-                cdiff = relativedelta(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                if int(cdiff.seconds) <= int(60):
+                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+                if int(cdiff) <= int(60):
                     reason = au_entry.reason
                     for au_user in audit_log_entry.users:
                         if au_entry.target_id == au_user.id:
