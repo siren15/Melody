@@ -205,7 +205,7 @@ class Logging(Scale):
             await log_channel.send(embed=embed)
     
     @listen()
-    async def on_member_remove(self, event):
+    async def on_member_leave(self, event: MemberRemove):
         member = event.member
         if await is_event_active(member.guild, 'member_leave') == True:
             roles = [role.mention for role in member.roles if role.name != '@everyone']
@@ -224,6 +224,10 @@ class Logging(Scale):
             embed.add_field(name=f'Roles: [{rolecount}]', value=roles)
             embed.set_footer(text=f'User ID: {member.id}')
             await log_channel.send(embed=embed)
+
+    @listen()
+    async def on_member_kick(self, event: MemberRemove):
+        member = event.member
         if await is_event_active(member.guild, 'member_kick'):
             db = await odm.connect()
             last_au_entry = await db.find_one(auditlogs, {'guildid':member.guild.id, 'action_type':20})
