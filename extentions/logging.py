@@ -1,5 +1,6 @@
 from dataclasses import MISSING
 import math
+import random
 import re
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
@@ -10,6 +11,13 @@ from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
 from dis_snek.api.events.discord import MemberRemove, MessageDelete, MessageUpdate, MemberRemove
+
+def random_string_generator():
+    characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
+    result=''
+    for i in range(0, 8):
+        result += random.choice(characters)
+    return result
 
 def snowflake_time(id: int) -> datetime:
     """
@@ -247,47 +255,56 @@ class Logging(Scale):
     @listen()
     async def on_member_kick(self, event: MemberRemove):
         member = event.member
-        if await is_event_active(member.guild, 'member_kick'):
-            audit_log_entry = await member.guild.fetch_audit_log(action_type=20, limit=1)
-            for au_entry in audit_log_entry.entries:
-                entry_created_at = snowflake_time(au_entry.id)
-                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-
-                if cdiff <= 60:
-                    reason = au_entry.reason
-                    for au_user in audit_log_entry.users:
-                        if au_entry.target_id == au_user.id:
-                            target = au_user
-                        elif au_entry.user_id == au_user.id:
-                            moderator = au_user
-                    if target.id == member.id:
+        audit_log_entry = await member.guild.fetch_audit_log(action_type=20, limit=1)
+        for au_entry in audit_log_entry.entries:
+            entry_created_at = snowflake_time(au_entry.id)
+            cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+            if cdiff <= 60:
+                reason = au_entry.reason
+                for au_user in audit_log_entry.users:
+                    if au_entry.target_id == au_user.id:
+                        target = au_user
+                    elif au_entry.user_id == au_user.id:
+                        moderator = au_user
+                if target.id == member.id:
+                    if await is_event_active(member.guild, 'member_kick'):
                         db = await odm.connect()
                         channelid = await db.find_one(logs, {"guild_id":member.guild.id})
                         log_channel = member.guild.get_channel(channelid.channel_id)
-                    
                         embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **kicked** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
                                                 timestamp=datetime.utcnow(),
                                                 color=0x5c7fb0)
                         embed.set_thumbnail(url=target.avatar.url)
                         await log_channel.send(embed=embed)
+
+                    db = await odm.connect()
+                    while True:
+                        kickid = random_string_generator()
+                        kickid_db = await db.find_one(strikes, {'guildid':event.guild_id, 'strikeid':kickid})
+                        if kickid_db == None:
+                            break
+                        else:
+                            continue
+                    daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                    await db.save(strikes(strikeid=kickid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Kick", day=daytime, reason=reason))
     
     @listen()
     async def on_ban_create(self, event):
         member = event.user
         guild = event.guild
-        if await is_event_active(guild, 'member_ban'):
-            audit_log_entry = await guild.fetch_audit_log(action_type=22, limit=1)
-            for au_entry in audit_log_entry.entries:
-                entry_created_at = snowflake_time(au_entry.id)
-                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                if int(cdiff) <= int(60):
-                    reason = au_entry.reason
-                    for au_user in audit_log_entry.users:
-                        if au_entry.target_id == au_user.id:
-                            target = au_user
-                        elif au_entry.user_id == au_user.id:
-                            moderator = au_user
-                    if target.id == member.id:
+        audit_log_entry = await guild.fetch_audit_log(action_type=22, limit=1)
+        for au_entry in audit_log_entry.entries:
+            entry_created_at = snowflake_time(au_entry.id)
+            cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+            if int(cdiff) <= int(60):
+                reason = au_entry.reason
+                for au_user in audit_log_entry.users:
+                    if au_entry.target_id == au_user.id:
+                        target = au_user
+                    elif au_entry.user_id == au_user.id:
+                        moderator = au_user
+                if target.id == member.id:
+                    if await is_event_active(guild, 'member_ban'):
                         db = await odm.connect()
                         channelid = await db.find_one(logs, {"guild_id":guild.id})
                         log_channel = guild.get_channel(channelid.channel_id)
@@ -297,24 +314,35 @@ class Logging(Scale):
                                                 color=0x62285e)
                         embed.set_thumbnail(url=target.avatar.url)
                         await log_channel.send(embed=embed)
-    
+
+                    db = await odm.connect()
+                    while True:
+                        kickid = random_string_generator()
+                        kickid_db = await db.find_one(strikes, {'guildid':guild.id, 'strikeid':kickid})
+                        if kickid_db == None:
+                            break
+                        else:
+                            continue
+                    daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                    await db.save(strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Ban", day=daytime, reason=reason))
+
     @listen()
     async def on_ban_remove(self, event):
         member = event.user
         guild = event.guild
-        if await is_event_active(guild, 'member_unban'):
-            audit_log_entry = await guild.fetch_audit_log(action_type=23, limit=1)
-            for au_entry in audit_log_entry.entries:
-                entry_created_at = snowflake_time(au_entry.id)
-                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-                if int(cdiff) <= int(60):
-                    reason = au_entry.reason
-                    for au_user in audit_log_entry.users:
-                        if au_entry.target_id == au_user.id:
-                            target = au_user
-                        elif au_entry.user_id == au_user.id:
-                            moderator = au_user
-                    if target.id == member.id:
+        audit_log_entry = await guild.fetch_audit_log(action_type=23, limit=1)
+        for au_entry in audit_log_entry.entries:
+            entry_created_at = snowflake_time(au_entry.id)
+            cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+            if int(cdiff) <= int(60):
+                reason = au_entry.reason
+                for au_user in audit_log_entry.users:
+                    if au_entry.target_id == au_user.id:
+                        target = au_user
+                    elif au_entry.user_id == au_user.id:
+                        moderator = au_user
+                if target.id == member.id:
+                    if await is_event_active(guild, 'member_unban'):
                         db = await odm.connect()
                         channelid = await db.find_one(logs, {"guild_id":guild.id})
                         log_channel = guild.get_channel(channelid.channel_id)
@@ -324,6 +352,17 @@ class Logging(Scale):
                                                 color=0x9275b2)
                         embed.set_thumbnail(url=target.avatar.url)
                         await log_channel.send(embed=embed)
+
+                    db = await odm.connect()
+                    while True:
+                        kickid = random_string_generator()
+                        kickid_db = await db.find_one(strikes, {'guildid':guild.id, 'strikeid':kickid})
+                        if kickid_db == None:
+                            break
+                        else:
+                            continue
+                    daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                    await db.save(strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Unban", day=daytime, reason=reason))
 
 def setup(bot):
     Logging(bot)
