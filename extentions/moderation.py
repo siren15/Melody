@@ -231,6 +231,8 @@ class Moderation(Scale):
                 embed.set_thumbnail(url=user.avatar.url)
                 await ctx.send(embed=embed)
             await ctx.guild.ban(DiscordObject(id=int(user.id), client=self.bot), reason=reason, delete_message_days=deletedays)
+        else:
+            await ctx.send(f'{user} already banned')
     
     @slash_command(name='unban', description="[MOD]allows me to unban users from the server")
     @user()
