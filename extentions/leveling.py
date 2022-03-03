@@ -296,6 +296,8 @@ class Levels(Scale):
             return first / second * 100
         percent = getPercent(levels.xp_to_next_level,level_stats.xptolevel)
         def findx(percentage):
+            if percentage == 0:
+                return 1
             return 715/(100/percentage)
 
         if member.guild_avatar != None:
