@@ -140,9 +140,8 @@ class Moderation(Scale):
         elif user is ctx.author:
             await ctx.send("You can't ban yourself", ephemeral=True)
             return
-        try:
-            await ctx.guild.fetch_ban(user)
-        except NotFound:
+        banned = await ctx.guild.fetch_ban(user)
+        if banned == None:
             db = await odm.connect()
             member = find_member(ctx, user.id)
             if member != None:
@@ -248,9 +247,8 @@ class Moderation(Scale):
                         color=0xDD2222)
             await ctx.send(embed=embed)
             return
-        try:
-            await ctx.guild.fetch_ban(user)
-        except NotFound:
+        banned = await ctx.guild.fetch_ban(user)
+        if banned == None:
             embed = Embed(description=f":x: {user} not banned",
                         color=0xDD2222)
             await ctx.send(embed=embed)
@@ -786,9 +784,8 @@ class Moderation(Scale):
                 print(f"[automod]|[unban_task]{m.guildid} not found in the guild list")
                 await db.delete(m)
                 return
-            try:
-                await guild.fetch_ban(m.user)
-            except NotFound:
+            banned = await guild.fetch_ban(m.user)
+            if banned == None:
                 print(f"[automod]|[unban_task]{m.user} not found in the ban list")
                 await db.delete(m)
                 return
