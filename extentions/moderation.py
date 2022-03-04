@@ -163,16 +163,16 @@ class Moderation(Scale):
                     await ctx.send(embed=embed)
                     return
 
-            while True:
-                banid = random_string_generator()
-                banid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':banid})
-                if banid_db == None:
-                    break
-                else:
-                    continue
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+            # while True:
+            #     banid = random_string_generator()
+            #     banid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':banid})
+            #     if banid_db == None:
+            #         break
+            #     else:
+            #         continue
+            # daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
             if bantime == None:
-                await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Ban", day=daytime, reason=reason))
+                # await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Ban", day=daytime, reason=reason))
                 embed = Embed(description=f"{user} **was banned** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                                 color=0x0c73d3,
                                 timestamp=datetime.utcnow())
@@ -221,7 +221,7 @@ class Moderation(Scale):
                     await ctx.send("Ban time can't be shorter than 1 hour and longer than 3 years")
                     return
                 
-                await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Temp Ban", day=daytime, reason=reason))
+                # await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Temp Ban", day=daytime, reason=reason))
                 await db.save(tempbans(guildid=ctx.guild_id, user=user.id, starttime=datetime.now(), endtime=endtime, banreason=reason))
                 
                 embed = Embed(description=f"{user} **was banned** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
@@ -238,7 +238,6 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def unban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
-        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
@@ -260,16 +259,16 @@ class Moderation(Scale):
                                 timestamp=datetime.utcnow())
             embed.set_thumbnail(url=user.avatar.url)
             await ctx.send(embed=embed)
-            db = await odm.connect()
-            while True:
-                banid = random_string_generator()
-                banid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':banid})
-                if banid_db == None:
-                    break
-                else:
-                    continue
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Unban", day=daytime, reason=reason))
+            # db = await odm.connect()
+            # while True:
+            #     banid = random_string_generator()
+            #     banid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':banid})
+            #     if banid_db == None:
+            #         break
+            #     else:
+            #         continue
+            # daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+            # await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Unban", day=daytime, reason=reason))
 
     @slash_command(name='kick', description="[MOD]allows me to kick users from the server")
     @user()
@@ -294,7 +293,7 @@ class Moderation(Scale):
             elif member.has_permission(Permissions.KICK_MEMBERS) == True:
                 await ctx.send("You can't kick users with kick perms", ephemeral=True)
                 return
-            db = await odm.connect()
+            
             if ctx.author.top_role == member.top_role:
                 embed = Embed(description=f":x: You can't kick people with the same role as you!",
                             color=0xDD2222)
@@ -306,15 +305,16 @@ class Moderation(Scale):
                             color=0xDD2222)
                 await ctx.send(embed=embed)
                 return
-            while True:
-                kickid = random_string_generator()
-                kickid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':kickid})
-                if kickid_db == None:
-                    break
-                else:
-                    continue
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            await db.save(strikes(strikeid=kickid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Kick", day=daytime, reason=reason))
+            # db = await odm.connect()
+            # while True:
+            #     kickid = random_string_generator()
+            #     kickid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':kickid})
+            #     if kickid_db == None:
+            #         break
+            #     else:
+            #         continue
+            # daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+            # await db.save(strikes(strikeid=kickid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Kick", day=daytime, reason=reason))
             await ctx.guild.kick(user, reason)
             embed = Embed(description=f"{user} **was kicked** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                         color=0x0c73d3,
@@ -330,7 +330,6 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def mute(self, ctx:InteractionContext, user:OptionTypes.USER=None, mutetime:str=None, reason:str='No reason given'):
-        
         if user == None:
             await ctx.send('You have to include a member', ephemeral=True)
             return
@@ -398,16 +397,16 @@ class Moderation(Scale):
             
             if (seconds < 10) or (seconds > 2419200):
                 await ctx.send("Mute time can't be shorter than 10 seconds and longer than 28 days.", ephemeral=True)
-            daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            db = await odm.connect()
-            while True:
-                muteid = random_string_generator()
-                muteid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':muteid})
-                if muteid_db == None:
-                    break
-                else:
-                    continue
-            await db.save(strikes(strikeid=muteid, guildid=ctx.guild_id, user=member.id, moderator=ctx.author.id, action="Mute", day=daytime, reason=reason))
+            # daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+            # db = await odm.connect()
+            # while True:
+            #     muteid = random_string_generator()
+            #     muteid_db = await db.find_one(strikes, {'guildid':ctx.guild_id, 'strikeid':muteid})
+            #     if muteid_db == None:
+            #         break
+            #     else:
+            #         continue
+            # await db.save(strikes(strikeid=muteid, guildid=ctx.guild_id, user=member.id, moderator=ctx.author.id, action="Mute", day=daytime, reason=reason))
             await member.timeout(endtime, reason)
             embed = Embed(description=f"{member} **was muted** | {reason} \n**User ID:** {member.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
                             color=0x0c73d3,
@@ -422,13 +421,12 @@ class Moderation(Scale):
     @reason()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def unmute(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
-        
         if user == None:
             await ctx.send('You have to include a user', ephemeral=True)
             return
         member = find_member(ctx, user.id)
         if member != None:
-            await member.timeout(datetime.now(), '[UNMUTE] '+reason)
+            await member.timeout(None, '[UNMUTE] '+reason)
             embed = Embed(description=f"{user} **was unmuted** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                             color=0x0c73d3,
                             timestamp=datetime.utcnow())
