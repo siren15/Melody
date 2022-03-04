@@ -148,6 +148,19 @@ class BotConfiguration(Scale):
                 custom_id=f'{ctx.author.id}_unban_off'
             )
         )
+        mem_timeout_buttons: list[ActionRow] = spread_to_rows(
+            #unbaned
+            Button(
+                style=ButtonStyles.GREEN,
+                label="On",
+                custom_id=f'{ctx.author.id}_timeout_on'
+            ),
+            Button(
+                style=ButtonStyles.RED,
+                label="Off",
+                custom_id=f'{ctx.author.id}_timeout_off'
+            )
+        )
 
         buttons = [
             deleted_messages_buttons,
@@ -156,7 +169,8 @@ class BotConfiguration(Scale):
             user_left_buttons,
             user_kicked_buttons,
             user_banned_buttons,
-            user_unbanned_buttons
+            user_unbanned_buttons,
+            mem_timeout_buttons
         ]
 
         db = await odm.connect()
@@ -179,19 +193,19 @@ class BotConfiguration(Scale):
             mem_join_status = 'On'
         else:
             mem_join_status = 'Off'
-        mem_jo_msg = await ctx.send(embed=Embed(color=0x4d9d54, description=f'Log users joining: `{mem_join_status}`'), components=user_joined_buttons)
+        mem_jo_msg = await ctx.send(embed=Embed(color=0x4d9d54, description=f'Log members joining: `{mem_join_status}`'), components=user_joined_buttons)
 
         if 'member_leave' in events_log_list:
             mem_leave_status = 'On'
         else:
             mem_leave_status = 'Off'
-        mem_le_msg = await ctx.send(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `{mem_leave_status}`'), components=user_left_buttons)
+        mem_le_msg = await ctx.send(embed=Embed(color=0xcb4c4c, description=f'Log members leaving: `{mem_leave_status}`'), components=user_left_buttons)
 
         if 'member_kick' in events_log_list:
             mem_kick_status = 'On'
         else:
             mem_kick_status = 'Off'
-        mem_kck_msg = await ctx.send(embed=Embed(color=0x5c7fb0, description=f'Log kicking users: `{mem_kick_status}`'), components=user_kicked_buttons)
+        mem_kck_msg = await ctx.send(embed=Embed(color=0x5c7fb0, description=f'Log kicking members: `{mem_kick_status}`'), components=user_kicked_buttons)
 
         if 'member_ban' in events_log_list:
             mem_ban_status = 'On'
@@ -205,6 +219,12 @@ class BotConfiguration(Scale):
             mem_unban_status = 'Off'
         mem_un_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `{mem_unban_status}`'), components=user_unbanned_buttons)
 
+        if 'member_timeout' in events_log_list:
+            mem_timeout_status = 'On'
+        else:
+            mem_timeout_status = 'Off'
+        mem_ti_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log muting members: `{mem_timeout_status}`'), components=mem_timeout_buttons)
+
         button_messages = [
             msg_de_msg,
             msg_ed_msg,
@@ -212,7 +232,8 @@ class BotConfiguration(Scale):
             mem_le_msg,
             mem_kck_msg,
             mem_bn_msg,
-            mem_un_msg
+            mem_un_msg,
+            mem_ti_msg
         ]
 
         def buttons_check(component: Button) -> bool:
@@ -326,10 +347,10 @@ class BotConfiguration(Scale):
                         await bctx.edit_origin(embed=Embed(color=0x62285e, description=f'Log banning users: `Off`'))
                 
                 elif bctx.custom_id == f'{bctx.author.id}_unban_on':
-                    if 'unmember_ban' in events_log_list:
+                    if 'member_unban' in events_log_list:
                         await bctx.send(f'{bctx.author.mention} Member unban logs already turned on.', ephemeral=True)
                     else:
-                        events_logging.activecommands = events_logging.activecommands+' unmember_ban,'
+                        events_logging.activecommands = events_logging.activecommands+' member_unban,'
                         await db.save(events_logging)
                         await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `On`'))
 
@@ -340,6 +361,22 @@ class BotConfiguration(Scale):
                         events_logging.activecommands = events_logging.activecommands.replace(' member_unban,', '')
                         await db.save(events_logging)
                         await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_timeout_on':
+                    if 'member_timout' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Member muting logs already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' member_timeout,'
+                        await db.save(events_logging)
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log muting users: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_timeout_off':
+                    if 'member_timeout' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Member muting logs already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' member_timeout,', '')
+                        await db.save(events_logging)
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log muting users: `Off`'))                  
 
 def setup(bot):
     BotConfiguration(bot)
