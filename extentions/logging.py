@@ -10,7 +10,7 @@ from dis_snek.models.discord.enums import AuditLogEventType
 from .src.mongo import *
 from .src.slash_options import *
 from .src.customchecks import *
-from dis_snek.api.events.discord import MemberRemove, MessageDelete, MessageUpdate, MemberRemove
+from dis_snek.api.events.discord import MemberRemove, MessageDelete, MessageUpdate, MemberUpdate
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -251,7 +251,77 @@ class Logging(Scale):
             embed.add_field(name=f'Roles: [{rolecount}]', value=roles)
             embed.set_footer(text=f'User ID: {member.id}')
             await log_channel.send(embed=embed)
+    
+    @listen()
+    async def on_member_update_timeout_remove(self, event: MemberUpdate):
+        member_after = event.after
+        if (member_after.communication_disabled_until == None) and (await is_event_active(event.guild, 'member_timeout') == True):
+            audit_log_entry = await event.guild.fetch_audit_log(action_type=24, limit=1)
+            for au_entry in audit_log_entry.entries:
+                entry_created_at = snowflake_time(au_entry.id)
+                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+                if cdiff <= 60:
+                    reason = au_entry.reason
+                    for au_user in audit_log_entry.users:
+                        if au_entry.target_id == au_user.id:
+                            target = au_user
+                        elif au_entry.user_id == au_user.id:
+                            moderator = au_user
+            if target.id == member_after.id:
+                embed = Embed(description=f"{target} **was unmuted** | {reason} \n**User ID:** {target.id} \n**Actioned by:** {moderator}",
+                                color=0x0c73d3,
+                                timestamp=datetime.utcnow())
+                embed.set_thumbnail(url=target.avatar.url)
+                db = await odm.connect()
+                channelid = await db.find_one(logs, {"guild_id":event.guild_id})
+                log_channel = event.guild.get_channel(channelid.channel_id)
+                await log_channel.send(embed=embed)
 
+
+    @listen()
+    async def on_member_update_timeout_add(self, event: MemberUpdate):
+        member_after = event.after
+        if member_after.communication_disabled_until != None:
+            timeout_timestamp = f'{member_after.communication_disabled_until}'.replace('<t:', '')
+            timeout_timestamp = timeout_timestamp.replace('>', '')
+            timeout_timestamp = int(timeout_timestamp)
+            dt = datetime.fromtimestamp(timeout_timestamp)
+            dt = dt.replace(tzinfo=timezone.utc)
+            audit_log_entry = await event.guild.fetch_audit_log(action_type=24, limit=1)
+            for au_entry in audit_log_entry.entries:
+                entry_created_at = snowflake_time(au_entry.id)
+                cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
+                if cdiff <= 60:
+                    reason = au_entry.reason
+                    for au_user in audit_log_entry.users:
+                        if au_entry.target_id == au_user.id:
+                            target = au_user
+                        elif au_entry.user_id == au_user.id:
+                            moderator = au_user
+            if target.id == member_after.id:
+                if (member_after.communication_disabled_until != None) and (dt > datetime.now(tz=timezone.utc)):
+                    if await is_event_active(event.guild, 'member_timeout') == True:
+                        mute_time = f'{member_after.communication_disabled_until}'.replace('>', ':R>')
+                        embed = Embed(description=f"{target} **was muted** | {reason} \n**User ID:** {target.id} \n**Actioned by:** {moderator}\n**End time:**{mute_time}",
+                                        color=0x0c73d3,
+                                        timestamp=datetime.utcnow())
+                        embed.set_thumbnail(url=target.avatar.url)
+                        db = await odm.connect()
+                        channelid = await db.find_one(logs, {"guild_id":event.guild_id})
+                        log_channel = event.guild.get_channel(channelid.channel_id)
+                        await log_channel.send(embed=embed)
+
+                    daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
+                    db = await odm.connect()
+                    while True:
+                        muteid = random_string_generator()
+                        muteid_db = await db.find_one(strikes, {'guildid':event.guild_id, 'strikeid':muteid})
+                        if muteid_db == None:
+                            break
+                        else:
+                            continue
+                    await db.save(strikes(strikeid=muteid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Mute", day=daytime, reason=reason))
+            
     @listen()
     async def on_member_kick(self, event: MemberRemove):
         member = event.member
