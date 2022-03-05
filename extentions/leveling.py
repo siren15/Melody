@@ -1,5 +1,6 @@
 import asyncio
-from PIL import Image, ImageDraw, ImageFont
+from ctypes.wintypes import RGB
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import requests
 
@@ -272,7 +273,7 @@ class Levels(Scale):
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
     async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
-        
+        # assets: https://imgur.com/a/3Y6W7lZ
         if member == None:
             member = ctx.author
         db = await odm.connect()
@@ -298,47 +299,88 @@ class Levels(Scale):
         def findx(percentage):
             if percentage == 0:
                 return 1
-            return 715/(100/percentage)
+            return 543/(100/percentage)
 
         if member.guild_avatar != None:
             avatarurl = f'{member.guild_avatar.url}.png'
         else:
             avatarurl = f'{member.avatar.url}.png'
+        
+        def round(im):
+            im = im.resize((448*16,448*16), resample=Image.ANTIALIAS)
+            mask = Image.new("L", im.size, 0)
+            draw = ImageDraw.Draw(mask)
+            draw.ellipse((0,0)+im.size, fill=255)
+            out = ImageOps.fit(im, mask.size, centering=(0,0))
+            out.putalpha(mask)
+            image = out.resize((179,179), resample=Image.ANTIALIAS).convert("RGBA")
+            return image
+
+        IW, IH = (950, 350)
+
+        if levels.lc_background != None:
+            background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((IW,IH), resample=Image.ANTIALIAS).convert("RGBA")
+        else:
+            background = Image.open(requests.get('https://i.imgur.com/aE8O7iJ.png', stream=True).raw).convert("RGBA")
+
+        overlay = Image.open(requests.get('https://i.imgur.com/kpNbUbk.png', stream=True).raw).convert("RGBA")
+        background.paste(overlay, (0, 0), overlay)
+
         pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230)).convert("RGBA")
+        pfp = round(pfp)
+        background.paste(pfp, (63, 49), pfp)
 
-        IW, IH = (1100, 500)
+        # progress_bar = Image.open(requests.get('https://i.imgur.com/YZIuHJV.png', stream=True).raw).resize((int(findx(int(percent))), 23), resample=Image.ANTIALIAS).convert("RGBA")
+        # background.paste(progress_bar, (277, 288), progress_bar)
+        
+        def draw_progress_bar(fx):
+            rad = 115
+            im = Image.open(requests.get('https://i.imgur.com/sRseF8Y.png', stream=True).raw).convert('RGBA')
+            im = im.resize((fx*16,23*16), resample=Image.ANTIALIAS)
+            circle = Image.new('L', (rad * 2, rad * 2), 0)
+            draw = ImageDraw.Draw(circle)
+            draw.ellipse((0, 0, rad * 2, rad * 2), fill=255)
+            alpha = Image.new('L', im.size, 255)
+            w, h = im.size
+            alpha.paste(circle.crop((0, 0, rad, rad)), (0, 0))
+            alpha.paste(circle.crop((0, rad, rad, rad * 2)), (0, h - rad))
+            alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
+            alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
+            im.putalpha(alpha)
+            im = im.resize((fx,23), resample=Image.ANTIALIAS)
+            return im
 
-        background = Image.open(requests.get('https://i.imgur.com/wQsqg2H.png', stream=True).raw).convert("RGBA")
-        shade = Image.open(requests.get('https://i.imgur.com/8sGr8So.png', stream=True).raw).convert("RGBA")
-        background.paste(shade, (0, 0), shade)
-        background.paste(pfp, (68, 143), pfp)
+        fx = findx(int(percent))
+        progress_bar = draw_progress_bar(int(fx))
+        background.paste(progress_bar, (277, 288), progress_bar)
 
-        progressbar_fill = Image.open(requests.get('https://i.imgur.com/HE0XtlF.png', stream=True).raw).resize((int(findx(int(percent))), 47)).convert("RGBA")
-        background.paste(progressbar_fill, (323, 146), progressbar_fill)
+        def rectangle_fill(im):
+            mask = Image.new("L", im.size, 0)
+            draw = ImageDraw.Draw(mask)
+            draw.rectangle((0,0)+im.size, fill=255)
+            out = ImageOps.fit(im, mask.size, centering=(0,0))
+            out.putalpha(mask)
+            return out
 
-        avatar_frame = Image.open(requests.get('https://i.imgur.com/6iKS56q.png', stream=True).raw).convert("RGBA")
-        background.paste(avatar_frame, (0, 75), avatar_frame)
+        background = rectangle_fill(background)
 
-        font = ImageFont.truetype('Everson-Mono-Bold.ttf', 56)
+        font = ImageFont.truetype('Everson-Mono-Bold.ttf', 40)
         
         I1 = ImageDraw.Draw(background)
-        lvlmsg = f'LVL:{levels.level}|XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
-        I1.text((312,201), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
 
-        namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 80)
+        lvlfont = ImageFont.truetype('Everson-Mono-Bold.ttf', 45)
+        I1.text((95,255), f'{levels.level}', font=lvlfont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        lvlfont_2 = ImageFont.truetype('Everson-Mono-Bold.ttf', 25)
+        I1.text((52,273), 'Lvl', font=lvlfont_2, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+
+        lvlmsg = f'XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
+        I1.text((285,110), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+
+        namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 40)
         name = f'{member.display_name}'
-        tw, th = I1.textsize(name, namefont)
-        position = ((IW-tw)/2,(IH-th)/12)
-        if len(member.display_name) >= 15:
-            namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 70)
-            tw, th = I1.textsize(name, namefont)
-            position = ((IW-tw)/2,(IH-th)/11.5)
-        elif len(member.display_name) >= 25:
-            namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 60)
-            tw, th = I1.textsize(name, namefont)
-            position = ((IW-tw)/2,(IH-th)/10)
-
-        I1.text(position, name, font=namefont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        if len(name) > 27:
+            name = name[:-5]
+        I1.text((285, 32), name, font=namefont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
         background.save(f'levelcard_{member.id}.png')
         await ctx.send(file=f'levelcard_{member.id}.png')
         os.remove(f'levelcard_{member.id}.png')
