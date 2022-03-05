@@ -97,6 +97,7 @@ class leveling(Model):
 	total_xp: Optional[int64] = None
 	messages: Optional[int64] = None
 	decimal: Optional[int64] = None
+	lc_background: Optional[str] = None
 	
 class leveling_roles(Model):
 	guildid: Optional[int64] = None
