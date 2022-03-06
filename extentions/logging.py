@@ -191,6 +191,8 @@ class Logging(Scale):
     
     @listen()
     async def on_message_update(self, event):
+        if event.before == None:
+            return
         before = event.before
         after = event.after
         if before.author.bot:
@@ -254,6 +256,8 @@ class Logging(Scale):
     
     @listen()
     async def on_member_update_timeout_remove(self, event: MemberUpdate):
+        if event.after == None:
+            return
         member_after = event.after
         if (member_after.communication_disabled_until == None) and (await is_event_active(event.guild, 'member_timeout') == True):
             audit_log_entry = await event.guild.fetch_audit_log(action_type=24, limit=1)
