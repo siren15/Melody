@@ -299,7 +299,7 @@ class Levels(Scale):
         def findx(percentage):
             if percentage == 0:
                 return 1
-            return 543/(100/percentage)
+            return 550/(100/percentage)
 
         if member.guild_avatar != None:
             avatarurl = f'{member.guild_avatar.url}.png'
@@ -307,28 +307,30 @@ class Levels(Scale):
             avatarurl = f'{member.avatar.url}.png'
         
         def round(im):
-            im = im.resize((448*16,448*16), resample=Image.ANTIALIAS)
+            im = im.resize((210*16,210*16), resample=Image.ANTIALIAS)
             mask = Image.new("L", im.size, 0)
             draw = ImageDraw.Draw(mask)
             draw.ellipse((0,0)+im.size, fill=255)
             out = ImageOps.fit(im, mask.size, centering=(0,0))
             out.putalpha(mask)
-            image = out.resize((179,179), resample=Image.ANTIALIAS).convert("RGBA")
+            image = out.resize((210,210), resample=Image.ANTIALIAS).convert("RGBA")
             return image
 
-        IW, IH = (950, 350)
+        IW, IH = (956, 435)
 
         if levels.lc_background != None:
-            background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((IW,IH), resample=Image.ANTIALIAS).convert("RGBA")
+            background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((0,0,IW,IH)).convert("RGBA")
         else:
-            background = Image.open(requests.get('https://i.imgur.com/aE8O7iJ.png', stream=True).raw).convert("RGBA")
+            background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
 
-        overlay = Image.open(requests.get('https://i.imgur.com/kpNbUbk.png', stream=True).raw).convert("RGBA")
+        overlay = Image.open(requests.get('https://i.imgur.com/7U1lOnG.png', stream=True).raw).convert("RGBA")
+        overlay = overlay.resize((IW*16,IH*16), resample=Image.ANTIALIAS)
+        overlay = overlay.resize((IW,IH), resample=Image.ANTIALIAS)
         background.paste(overlay, (0, 0), overlay)
 
         pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230)).convert("RGBA")
         pfp = round(pfp)
-        background.paste(pfp, (63, 49), pfp)
+        background.paste(pfp, (78, 115), pfp)
 
         # progress_bar = Image.open(requests.get('https://i.imgur.com/YZIuHJV.png', stream=True).raw).resize((int(findx(int(percent))), 23), resample=Image.ANTIALIAS).convert("RGBA")
         # background.paste(progress_bar, (277, 288), progress_bar)
@@ -336,7 +338,7 @@ class Levels(Scale):
         def draw_progress_bar(fx):
             rad = 115
             im = Image.open(requests.get('https://i.imgur.com/sRseF8Y.png', stream=True).raw).convert('RGBA')
-            im = im.resize((fx*16,23*16), resample=Image.ANTIALIAS)
+            im = im.resize((fx*16,30*16), resample=Image.ANTIALIAS)
             circle = Image.new('L', (rad * 2, rad * 2), 0)
             draw = ImageDraw.Draw(circle)
             draw.ellipse((0, 0, rad * 2, rad * 2), fill=255)
@@ -347,12 +349,12 @@ class Levels(Scale):
             alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
             alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
             im.putalpha(alpha)
-            im = im.resize((fx,23), resample=Image.ANTIALIAS)
+            im = im.resize((fx,30), resample=Image.ANTIALIAS)
             return im
 
         fx = findx(int(percent))
         progress_bar = draw_progress_bar(int(fx))
-        background.paste(progress_bar, (277, 288), progress_bar)
+        background.paste(progress_bar, (330, 370), progress_bar)
 
         def rectangle_fill(im):
             mask = Image.new("L", im.size, 0)
@@ -364,27 +366,50 @@ class Levels(Scale):
 
         background = rectangle_fill(background)
 
-        font = ImageFont.truetype('Everson-Mono-Bold.ttf', 40)
+        font = ImageFont.truetype('Everson-Mono-Bold.ttf', 45)
         
         I1 = ImageDraw.Draw(background)
 
         lvlfont = ImageFont.truetype('Everson-Mono-Bold.ttf', 45)
-        I1.text((95,255), f'{levels.level}', font=lvlfont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
-        lvlfont_2 = ImageFont.truetype('Everson-Mono-Bold.ttf', 25)
-        I1.text((52,273), 'Lvl', font=lvlfont_2, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        I1.text((73,352), f'LVL:{levels.level}', font=lvlfont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        # lvlfont_2 = ImageFont.truetype('Everson-Mono-Bold.ttf', 25)
+        # I1.text((52,360), 'Lvl', font=lvlfont_2, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
 
         lvlmsg = f'XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
-        I1.text((285,110), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        I1.text((341,110), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
 
-        namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 40)
+        namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 50)
         name = f'{member.display_name}'
         if len(name) > 27:
-            name = name[:-5]
-        I1.text((285, 32), name, font=namefont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+            name = name[:-4]
+        # tw, th = I1.textsize(name, font)
+        # position = ((IW-tw)/2,(IH-th)/14)
+        I1.text((73,28), name, font=namefont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
         background.save(f'levelcard_{member.id}.png')
         await ctx.send(file=f'levelcard_{member.id}.png')
         os.remove(f'levelcard_{member.id}.png')
     
+    @slash_command(name='level', sub_cmd_name='background', sub_cmd_description='change the background of your level stats card(resolution should be min: 956x435, 16:9 aspect ratio)', scopes=[435038183231848449,149167686159564800])
+    @attachment()
+    @reset_to_default()
+    async def level_bg(self, ctx: InteractionContext, attachment: OptionTypes.ATTACHMENT, reset_to_default:OptionTypes.BOOLEAN=False):
+
+        if reset_to_default == True:
+            db = await odm.connect()
+            levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':ctx.author.id})
+            if levels.lc_background != None:
+                levels.lc_background = None
+                await db.save(levels)
+                return await ctx.send(f"{ctx.author.mention} Background is now set back to default")
+            elif levels.lc_background == None:
+                return await ctx.send(f"{ctx.author.mention} You don't have a custom background set")
+
+        db = await odm.connect()
+        levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':ctx.author.id})
+        levels.lc_background = attachment.url
+        await db.save(levels)
+        await ctx.send(f"{ctx.author.mention} Background set to\n{attachment.url}")
+
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
         from .src.paginators import Paginator
