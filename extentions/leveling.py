@@ -323,9 +323,7 @@ class Levels(Scale):
         else:
             background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
 
-        overlay = Image.open(requests.get('https://i.imgur.com/7U1lOnG.png', stream=True).raw).convert("RGBA")
-        overlay = overlay.resize((IW*16,IH*16), resample=Image.ANTIALIAS)
-        overlay = overlay.resize((IW,IH), resample=Image.ANTIALIAS)
+        overlay = Image.open(requests.get('https://i.imgur.com/fsuIzSv.png', stream=True).raw).convert("RGBA")
         background.paste(overlay, (0, 0), overlay)
 
         pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230)).convert("RGBA")
