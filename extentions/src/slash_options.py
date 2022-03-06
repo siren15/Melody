@@ -91,6 +91,16 @@ def attachment():
         return slash_option(name='attachment', description='upload a file', opt_type=OptionTypes.ATTACHMENT, required=False)(func)
     return wrapper
 
+def req_attachment():
+    def wrapper(func):
+        return slash_option(name='attachment', description='upload a file', opt_type=OptionTypes.ATTACHMENT, required=True)(func)
+    return wrapper
+
+def reset_to_default():
+    def wrapper(func):
+        return slash_option(name='reset_to_default', description='reset background to the default one?', opt_type=OptionTypes.BOOLEAN , required=False)(func)
+    return wrapper
+
 def embed_message_id():
     def wrapper(func):
         return slash_option(name='embed_message_id', description='Paste in the embed message ID', opt_type=OptionTypes.STRING, required=True)(func)
