@@ -267,15 +267,15 @@ class Logging(Scale):
                             target = au_user
                         elif au_entry.user_id == au_user.id:
                             moderator = au_user
-            if target.id == member_after.id:
-                embed = Embed(description=f"{target} **was unmuted** | {reason} \n**User ID:** {target.id} \n**Actioned by:** {moderator}",
-                                color=0x0c73d3,
-                                timestamp=datetime.utcnow())
-                embed.set_thumbnail(url=target.avatar.url)
-                db = await odm.connect()
-                channelid = await db.find_one(logs, {"guild_id":event.guild_id})
-                log_channel = event.guild.get_channel(channelid.channel_id)
-                await log_channel.send(embed=embed)
+                    if target.id == member_after.id:
+                        embed = Embed(description=f"{target} **was unmuted** | {reason} \n**User ID:** {target.id} \n**Actioned by:** {moderator}",
+                                        color=0x0c73d3,
+                                        timestamp=datetime.utcnow())
+                        embed.set_thumbnail(url=target.avatar.url)
+                        db = await odm.connect()
+                        channelid = await db.find_one(logs, {"guild_id":event.guild_id})
+                        log_channel = event.guild.get_channel(channelid.channel_id)
+                        await log_channel.send(embed=embed)
 
 
     @listen()
