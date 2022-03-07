@@ -3,6 +3,7 @@ import math
 import random
 import re
 from datetime import datetime, timezone
+from types import NoneType
 from dateutil.relativedelta import relativedelta
 
 from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check, listen
@@ -256,7 +257,7 @@ class Logging(Scale):
     
     @listen()
     async def on_member_update_timeout_remove(self, event: MemberUpdate):
-        if event.after == None:
+        if event.after == NoneType:
             return
         member_after = event.after
         if (member_after.communication_disabled_until == None) and (await is_event_active(event.guild, 'member_timeout') == True):
