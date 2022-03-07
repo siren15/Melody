@@ -77,8 +77,7 @@ bot = CustomSnake(intents=intents,
                   delete_unused_application_cmds=True, 
                   default_prefix='p.', 
                   fetch_members=True, 
-                  auto_defer=ad,
-                  #asyncio_debug=True,
+                  auto_defer=ad
                   )
 
 @listen()
