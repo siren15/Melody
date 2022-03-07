@@ -256,6 +256,61 @@ class Logging(Scale):
             await log_channel.send(embed=embed)
     
     @listen()
+    async def on_member_role_remove(self, event: MemberUpdate):
+        if event.before == NoneType:
+            return
+        member = event.after
+        before_roles = event.before.roles
+        after_roles = event.after.roles
+
+        roles_list = [role.mention for role in before_roles if role not in after_roles]
+        if roles_list != []:
+            roles = ' '.join(roles_list)
+            embed = Embed(description=f"`{member}` **got removed** {roles} ",
+                                          color=0x0c73d3)
+            db = await odm.connect()
+            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            log_channel = member.guild.get_channel(channelid.channel_id)
+            await log_channel.send(embed=embed)
+    
+    @listen()
+    async def on_member_role_add(self, event: MemberUpdate):
+        if event.before == NoneType:
+            return
+        member = event.after
+        before_roles = event.before.roles
+        after_roles = event.after.roles
+
+        roles_list = [role.mention for role in after_roles if role not in before_roles]
+        if roles_list != []:
+            roles = ' '.join(roles_list)
+            embed = Embed(description=f"`{member}` **got assigned** {roles} ",
+                                          color=0x0c73d3)
+            db = await odm.connect()
+            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            log_channel = member.guild.get_channel(channelid.channel_id)
+            await log_channel.send(embed=embed)
+    
+    @listen()
+    async def on_member_nickname_change(self, event: MemberUpdate):
+        if event.before == NoneType:
+            return
+        member = event.after
+        before = event.before
+        after = event.after
+
+        if before.display_name != after.display_name:
+            embed = Embed(description=f"`{member}` changed their nickname",
+                                    color=0x0c73d3)
+            embed.set_thumbnail(url=after.avatar.url)
+            embed.add_field(name="Before", value=before.display_name)
+            embed.add_field(name="After", value=after.display_name)
+            db = await odm.connect()
+            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            log_channel = member.guild.get_channel(channelid.channel_id)
+            await log_channel.send(embed=embed)
+
+    @listen()
     async def on_member_update_timeout_remove(self, event: MemberUpdate):
         if event.after == NoneType:
             return
