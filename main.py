@@ -1,3 +1,4 @@
+from distutils import extension
 import os
 import asyncio
 
@@ -99,7 +100,8 @@ async def on_guild_join(event):
         await channel.send(f'I was added to {event.guild.name}|{event.guild.id}')
 
 for filename in os.listdir('./extentions'):
-    if filename.endswith('.py'):
+    if filename.endswith('.py') and not filename.startswith('--'):
         bot.load_extension(f'extentions.{filename[:-3]}')
+        print(f'grew {filename[:-3]}')
 
 bot.start(os.environ['pinetree_token'])

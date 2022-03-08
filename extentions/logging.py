@@ -257,8 +257,6 @@ class Logging(Scale):
     
     @listen()
     async def on_member_role_remove(self, event: MemberUpdate):
-        if event.before == NoneType:
-            return
         member = event.after
         before_roles = event.before.roles
         after_roles = event.after.roles
@@ -275,8 +273,6 @@ class Logging(Scale):
     
     @listen()
     async def on_member_role_add(self, event: MemberUpdate):
-        if event.before == NoneType:
-            return
         member = event.after
         before_roles = event.before.roles
         after_roles = event.after.roles
@@ -293,8 +289,6 @@ class Logging(Scale):
     
     @listen()
     async def on_member_nickname_change(self, event: MemberUpdate):
-        if event.before == NoneType:
-            return
         member = event.after
         before = event.before
         after = event.after
@@ -312,8 +306,6 @@ class Logging(Scale):
 
     @listen()
     async def on_member_update_timeout_remove(self, event: MemberUpdate):
-        if event.after == NoneType:
-            return
         member_after = event.after
         if (member_after.communication_disabled_until == None) and (await is_event_active(event.guild, 'member_timeout') == True):
             audit_log_entry = await event.guild.fetch_audit_log(action_type=24, limit=1)
