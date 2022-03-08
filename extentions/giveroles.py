@@ -1,9 +1,9 @@
 import re
 
 from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check
-from .src.mongo import *
-from .src.slash_options import *
-from .src.customchecks import *
+from extentions.touk import BeanieDocuments as db
+from utils.slash_options import *
+from utils.customchecks import *
 
 class GiveRoles(Scale):
     def __init__(self, bot: Snake):
@@ -14,16 +14,16 @@ class GiveRoles(Scale):
     @giveyou_name()
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def giveyourole(self, ctx: InteractionContext, user:OptionTypes.USER=None, giveyou_name:str=None):
-        if user == None:
+        if user is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
-        if giveyou_name == None:
+        if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
 
         
-        db = await odm.connect()
-        gy = await db.find_one(giveyou, {'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
+        
+        gy = await db.giveyou.find_one({'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
 
-        if gy == None:
+        if gy is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: Couldn't find `{giveyou_name}` as a giveyou for {ctx.guild.name}"), ephemeral=True)
 
         role = ctx.guild.get_role(gy.roleid)
@@ -45,44 +45,42 @@ class GiveRoles(Scale):
     @role()
     @check(member_permissions(Permissions.MANAGE_ROLES))
     async def giveyourole_create(self, ctx: InteractionContext, giveyou_name:str=None, role:OptionTypes.ROLE=None):
-        if giveyou_name == None:
+        if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
-        if role == None:
+        if role is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
 
         
-        db = await odm.connect()
-        gy = await db.find_one(giveyou, {'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
+        
+        gy = await db.giveyou.find_one({'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
 
-        if gy != None:
+        if gy is not None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: `{giveyou_name}` already exists as a giveyou for {ctx.guild.name}"), ephemeral=True)
 
-        await db.save(giveyou(guildid=ctx.guild_id, name=giveyou_name, roleid=role.id))
+        await db.giveyou(guildid=ctx.guild_id, name=giveyou_name, roleid=role.id).insert()
         await ctx.send(embed=Embed(color=0x0c73d3, description=f"giveyou `{giveyou_name}` created for {role.mention}"))
     
     @slash_command(name='giveyou', sub_cmd_name='delete', sub_cmd_description="Delete giveyou's")
     @giveyou_name()
     @check(member_permissions(Permissions.MANAGE_ROLES))
     async def giveyourole_delete(self, ctx: InteractionContext, giveyou_name:str=None):
-        if giveyou_name == None:
+        if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
+  
+        gy = await db.giveyou.find_one({'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
 
-        
-        db = await odm.connect()
-        gy = await db.find_one(giveyou, {'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
-
-        if gy != None:
+        if gy is not None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: `{giveyou_name}` is not a giveyou for {ctx.guild.name}"), ephemeral=True)
 
         role = ctx.guild.get_role(gy.roleid)
         await ctx.send(embed=Embed(color=0x0c73d3, description=f"giveyou `{giveyou_name}` deleted from {role.mention}"))
-        await db.delete(gy)
+        await gy.delete()
     
     @slash_command(name='giveyou', sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild")
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def giveyourole_list(self, ctx: InteractionContext):
         
-        from .src.paginators import Paginator
+        from dis_snek.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -102,19 +100,20 @@ class GiveRoles(Scale):
             embed.add_field(name='Role', value=roles, inline=True)
             return embed
 
-        db = await odm.connect()
-        gy = await db.find(giveyou, {"guildid":ctx.guild_id})
         
-        names = [str(g.name)+"\n" for g in gy]
+        gy = db.giveyou.find({"guildid":ctx.guild_id})
+        names = []
+        async for g in gy:
+            names.append(f"{g.name}\n")
         if names == []:
             embed = Embed(description=f"There are no giveyous for {ctx.guild.name}.",
                         color=0x0c73d3)
             await ctx.send(embed=embed)
             return
         roles = []
-        for g in gy:
+        async for g in gy:
             role = ctx.guild.get_role(g.roleid)
-            if role == None:
+            if role is None:
                 roles.append('[ROLE NOT FOUND]\n')
             else:
                 roles.append(f"{role.mention}\n")
@@ -143,9 +142,9 @@ class GiveRoles(Scale):
     @roles()
     @check(member_permissions(Permissions.MANAGE_ROLES))
     async def give_role(self, ctx: InteractionContext, members:str=None, roles:str=None):
-        if members == None:
+        if members is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
-        if roles == None:
+        if roles is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
 
         raw_mem_list = members.split(' ')
@@ -188,20 +187,20 @@ class GiveRoles(Scale):
     # async def colourme_add(self, ctx: InteractionContext, colourme_name:str=None):
     #     await ctx.defer()
     #     member = ctx.author
-    #     if colourme_name == None:
+    #     if colourme_name is None:
     #         embed = Embed(
     #             description=":x: Please provide a colourme name",
     #             color=0xDD2222)
     #         await ctx.send(embed=embed)
     #         return
-    #     db = await odm.connect()
+    #     
     #     cm_regx = re.compile(f"^{colourme_name}$", re.IGNORECASE)
     #     cr = await db.find_one(colourme, {"colourme_name":cm_regx, "guildid":ctx.guild_id})
-    #     if cr == None:
+    #     if cr is None:
     #         await ctx.send(embed=Embed(color=0xDD2222, description=f':x: {colourme_name} not found in colourme roles'))
     #         return
         
-    #     if cr.ignore_role_id != None:
+    #     if cr.ignore_role_id is not None:
     #         ignore_roles = re.sub('[<@&>]', '', cr.ignore_role_id)
     #         ignore_roles = ignore_roles.split(',')
     #         member_roles = [role.id for role in member.roles]
@@ -219,7 +218,7 @@ class GiveRoles(Scale):
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f":x: You have {rs}, members with these roles can't get {colourme_name}"))
     #             return
         
-    #     if cr.requirement_role_id != None:
+    #     if cr.requirement_role_id is not None:
     #         reqire_roles = re.sub('[<@&>]', '', cr.requirement_role_id)
     #         reqire_roles = reqire_roles.split(',')
     #         member_roles = [role.id for role in member.roles]
@@ -246,7 +245,7 @@ class GiveRoles(Scale):
     #             return other_role
     #         return None
 
-    #     if get_other_role(member, nr) == None:
+    #     if get_other_role(member, nr) is None:
     #         colourme_role = ctx.guild.get_role(cr.colourme_role_id)
     #         await member.add_role(colourme_role)
     #         await ctx.send(embed=Embed(color=0x0c73d3, description=f'I have assigned {colourme_name}|{colourme_role.mention} to you'))
@@ -271,22 +270,22 @@ class GiveRoles(Scale):
     #     await ctx.defer()
     #     perms = await has_perms(ctx.author, Permissions.MANAGE_ROLES)
     #     if (perms == True):
-    #         if role == None:
+    #         if role is None:
     #             await ctx.send('You have to include a role', ephemeral=True)
     #             return
-    #         elif colourme_name == None:
+    #         elif colourme_name is None:
     #             await ctx.send('You have to include a colourme name', ephemeral=True)
     #             return
             
-    #         db = await odm.connect()
+    #         
     #         cm_regx = re.compile(f"^{colourme_name}$", re.IGNORECASE)
     #         cr = await db.find_one(colourme, {"colourme_name":cm_regx, "guildid":ctx.guild_id})
-    #         if cr != None:
+    #         if cr is not None:
     #             crole = ctx.guild.get_role(cr.colourme_role_id)
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f':x: {colourme_name} is already a colourme for {crole.mention}'))
     #             return
     #         cr = await db.find_one(colourme, {"colourme_role_id":role.id, "guildid":ctx.guild_id})
-    #         if cr != None:
+    #         if cr is not None:
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f':x: {role.mention} is already a colourme as {cr.colourme_name}'))
     #             return
     #         await db.save(colourme(guildid=ctx.guild_id, colourme_name=colourme_name, colourme_role_id=role.id))
@@ -299,16 +298,16 @@ class GiveRoles(Scale):
     #     await ctx.defer()
     #     perms = await has_perms(ctx.author, Permissions.MANAGE_ROLES)
     #     if (perms == True):
-    #         if role == None:
+    #         if role is None:
     #             await ctx.send('You have to include a role', ephemeral=True)
     #             return
-    #         db = await odm.connect()
+    #         
     #         cm_regx = re.compile(f"^{colourme_name}$", re.IGNORECASE)
     #         cr = await db.find_one(colourme, {"colourme_name":cm_regx, "guildid":ctx.guild_id})
-    #         if cr == None:
+    #         if cr is None:
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f':x: {colourme_name} is not a colourme in this server'))
     #             return
-    #         if cr.requirement_role_id == None:
+    #         if cr.requirement_role_id is None:
     #             cr.requirement_role_id = f'<@&{role.id}>'
     #         else:
     #             reqire_roles = re.sub('[<@&>]', '', cr.requirement_role_id)
@@ -327,16 +326,16 @@ class GiveRoles(Scale):
     #     await ctx.defer()
     #     perms = await has_perms(ctx.author, Permissions.MANAGE_ROLES)
     #     if (perms == True):
-    #         if role == None:
+    #         if role is None:
     #             await ctx.send('You have to include a role', ephemeral=True)
     #             return
-    #         db = await odm.connect()
+    #         
     #         cm_regx = re.compile(f"^{colourme_name}$", re.IGNORECASE)
     #         cr = await db.find_one(colourme, {"colourme_name":cm_regx, "guildid":ctx.guild_id})
-    #         if cr == None:
+    #         if cr is None:
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f':x: {colourme_name} is not a colourme in this server'))
     #             return
-    #         if cr.ignore_role_id == None:
+    #         if cr.ignore_role_id is None:
     #             cr.ignore_role_id = f'<@&{role.id}>'
     #         else:
     #             ignore_roles = re.sub('[<@&>]', '', cr.ignore_role_id)
@@ -354,14 +353,14 @@ class GiveRoles(Scale):
     #     await ctx.defer()
     #     perms = await has_perms(ctx.author, Permissions.MANAGE_ROLES)
     #     if (perms == True):
-    #         if colourme_name == None:
+    #         if colourme_name is None:
     #             await ctx.send('You have to include a colourme name', ephemeral=True)
     #             return
 
-    #         db = await odm.connect()
+    #         
     #         cm_regx = re.compile(f"^{colourme_name}$", re.IGNORECASE)
     #         cr = await db.find_one(colourme, {"colourme_name":cm_regx, "guildid":ctx.guild_id})
-    #         if cr == None:
+    #         if cr is None:
     #             await ctx.send(embed=Embed(color=0xDD2222, description=f":x: {colourme_name} isn't a colourme for this guild"))
     #             return
     #         role = ctx.guild.get_role(cr.colourme_role_id)
@@ -371,7 +370,7 @@ class GiveRoles(Scale):
     # @slash_command(name='colorme', sub_cmd_name='list', sub_cmd_description="Lists all colourmes for guild")
     # async def colourme_list(self, ctx: InteractionContext):
     #     await ctx.defer()
-    #     from .src.paginators import Paginator
+    #     from dis_snek.ext.paginators import Paginator
     #     def chunks(l, n):
     #         n = max(1, n)
     #         return (l[i:i+n] for i in range(0, len(l), n))
@@ -390,20 +389,20 @@ class GiveRoles(Scale):
     #         embed.add_field(name='Colourme | Role | Requirement | Ignored', value=names, inline=True)
     #         return embed
 
-    #     db = await odm.connect()
+    #     
     #     cnames = await db.find(colourme, {"guildid":ctx.guild_id})
         
-    #     if cnames == None:
+    #     if cnames is None:
     #         embed = Embed(description=f"There are no colourmes for {ctx.guild}.",
     #                     color=0x0c73d3)
     #         await ctx.send(embed=embed)
     #         return
     #     for n in cnames:
-    #         if (n.requirement_role_id == None) and (n.ignore_role_id == None):
+    #         if (n.requirement_role_id is None) and (n.ignore_role_id is None):
     #             names = [f"{name.colourme_name} | <@&{name.colourme_role_id}> | No requirement roles | No ignore roles\n\n" for name in cnames]
-    #         elif (n.requirement_role_id == None) and (n.ignore_role_id != None):
+    #         elif (n.requirement_role_id is None) and (n.ignore_role_id is not None):
     #             names = [f"{name.colourme_name} | <@&{name.colourme_role_id}> | No requirement roles | {name.ignore_role_id}\n\n" for name in cnames]
-    #         elif (n.requirement_role_id != None) and (n.ignore_role_id == None):
+    #         elif (n.requirement_role_id is not None) and (n.ignore_role_id is None):
     #             names = [f"{name.colourme_name} | <@&{name.colourme_role_id}> | {name.requirement_role_id} | No ignore roles\n\n" for name in cnames]
     #         else:
     #             names = [f"{name.colourme_name} | <@&{name.colourme_role_id}> | {name.requirement_role_id} | {name.ignore_role_id}\n\n" for name in cnames]

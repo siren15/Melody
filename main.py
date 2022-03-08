@@ -1,10 +1,13 @@
 from distutils import extension
 import os
 import asyncio
+from typing import Optional
+import motor
 
+from beanie import Indexed, init_beanie
 from dis_snek import Snake, Intents, listen, Embed, InteractionContext, AutoDefer
-from extentions.src.customchecks import *
-from extentions.src.mongo import *
+from utils.customchecks import *
+from extentions.touk import BeanieDocuments as db
 from dis_snek.client.errors import NotFound
 
 # import logging
@@ -14,8 +17,49 @@ from dis_snek.client.errors import NotFound
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
+ad = AutoDefer(enabled=True, time_until_defer=0)
 
 class CustomSnake(Snake):
+    def __init__(self):
+        super().__init__(
+            intents=intents, 
+            sync_interactions=True, 
+            delete_unused_application_cmds=True, 
+            default_prefix='p.', 
+            fetch_members=True, 
+            auto_defer=ad
+        )
+
+        self.db: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
+        self.models = list()
+
+    def startup(self):
+        for filename in os.listdir('./extentions'):
+            if filename.endswith('.py') and not filename.startswith('--'):
+                self.load_extension(f'extentions.{filename[:-3]}')
+                print(f'grew {filename[:-3]}')
+
+        self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
+        self.loop.run_until_complete(init_beanie(database=self.db.giffany, document_models=self.models))
+        self.start(os.environ['tyrone_token'])
+    
+    @listen()
+    async def on_ready(self):
+        print(f"[Logged in]: {self.user}")
+        guild = self.get_guild(435038183231848449)
+        channel = guild.get_channel(932661537729024132)
+        await channel.send(f'[Logged in]: {self.user}')
+
+    @listen()
+    async def on_guild_join(self, event):
+        checkserver = await db.prefixes.find_one({'guildid':event.guild.id})
+        if checkserver is None:
+            #add server to database
+            await db.prefixes(guildid=event.guild.id, prefix='p.').insert()
+            guild = self.get_guild(435038183231848449)
+            channel = guild.get_channel(932661537729024132)
+            await channel.send(f'I was added to {event.guild.name}|{event.guild.id}')
+
     async def on_command_error(self, ctx: InteractionContext, error:Exception):
         if isinstance(error, MissingPermissions):
             embed = Embed(description=f":x: {ctx.author.mention} You don't have permissions to perform that action",
@@ -23,10 +67,10 @@ class CustomSnake(Snake):
             await ctx.send(embed=embed, ephemeral=True)
 
         elif isinstance(error, MissingRole):
-            db = await odm.connect()
+            
             regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
-            roleid = await db.find_one(hasrole, {"guildid":ctx.guild.id, "command":regx})
-            if roleid != None:
+            roleid = await db.hasrole.find_one({"guildid":ctx.guild.id, "command":regx})
+            if roleid is not None:
                 role = ctx.guild.get_role(roleid.role)
                 embed = Embed(description=f":x: {ctx.author.mention} You don't have role {role.mention} that's required to use this command.",
                               color=0xDD2222)
@@ -66,42 +110,17 @@ class CustomSnake(Snake):
         #     embed = Embed(description=f":x: An error occured while trying to execute `{ctx.invoked_name}` command: ```{error}```",
         #                   color=0xDD2222)
         #     await ctx.send(embed=embed, ephemeral=True)
-        #     if ctx.guild_id != 435038183231848449:
-        #         guild = bot.get_guild(435038183231848449)
-        #         channel = guild.get_channel(932661537729024132)
-        #         await channel.send(f"<@400713431423909889> An error occured while trying to execute `{ctx.invoked_name}` command in `{ctx.guild.name}`: ```{error}```")
+            # if ctx.guild_id != 435038183231848449:
+            #     guild = self.get_guild(435038183231848449)
+            #     channel = guild.get_channel(932661537729024132)
+            #     await channel.send(f"<@400713431423909889> An error occured while trying to execute `{ctx.invoked_name}` command in `{ctx.guild.name}`: ```{error}```")
+        
+    def add_model(self, model):
+        self.models.append(model)
 
+def main():
+    bot = CustomSnake()
+    bot.startup()
 
-ad = AutoDefer(enabled=True, time_until_defer=0)
-bot = CustomSnake(intents=intents, 
-                  sync_interactions=True, 
-                  delete_unused_application_cmds=True, 
-                  default_prefix='p.', 
-                  fetch_members=True, 
-                  auto_defer=ad
-                  )
-
-@listen()
-async def on_ready():
-    print(f"[Logged in]: {bot.user}")
-    guild = bot.get_guild(435038183231848449)
-    channel = guild.get_channel(932661537729024132)
-    await channel.send(f'[Logged in]: {bot.user}')
-
-@listen()
-async def on_guild_join(event):
-    db = await odm.connect()
-    checkserver = await db.find_one(prefixes, {'guildid':event.guild.id})
-    if checkserver == None:
-        #add server to database
-        await db.save(prefixes(guildid=event.guild.id, prefix='p.'))
-        guild = bot.get_guild(435038183231848449)
-        channel = guild.get_channel(932661537729024132)
-        await channel.send(f'I was added to {event.guild.name}|{event.guild.id}')
-
-for filename in os.listdir('./extentions'):
-    if filename.endswith('.py') and not filename.startswith('--'):
-        bot.load_extension(f'extentions.{filename[:-3]}')
-        print(f'grew {filename[:-3]}')
-
-bot.start(os.environ['pinetree_token'])
+if __name__ == "__main__":
+    main()

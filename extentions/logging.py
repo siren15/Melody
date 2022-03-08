@@ -8,9 +8,9 @@ from dateutil.relativedelta import relativedelta
 
 from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check, listen
 from dis_snek.models.discord.enums import AuditLogEventType
-from .src.mongo import *
-from .src.slash_options import *
-from .src.customchecks import *
+from extentions.touk import BeanieDocuments as db
+from utils.slash_options import *
+from utils.customchecks import *
 from dis_snek.api.events.discord import MemberRemove, MessageDelete, MessageUpdate, MemberUpdate
 
 def random_string_generator():
@@ -55,17 +55,17 @@ class Logging(Scale):
     @channel()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def logchannel(self, ctx, channel:OptionTypes.CHANNEL=None):
-        if channel == None:
+        if channel is None:
             embed = Embed(
                 description=":x: Please provide a channel",
                 color=0xDD2222)
             await ctx.send(embed=embed)
             return
 
-        db = await odm.connect()
-        log_entry = await db.find_one(logs, {"guild_id":ctx.guild.id})
-        if log_entry == None:
-            await db.save(logs(guild_id=ctx.guild.id, channel_id=channel.id))
+        
+        log_entry = await db.logs.find_one({"guild_id":ctx.guild.id})
+        if log_entry is None:
+            await db.logs(guild_id=ctx.guild.id, channel_id=channel.id).save()
             embed = Embed(description=f"I have assigned {channel.mention} as a log channel.",
                                   color=0x0c73d3)
             await ctx.send(embed=embed)
@@ -99,8 +99,8 @@ class Logging(Scale):
                         embed.add_field(name="Content:", value=f"{content}", inline=False)
                         embed.set_image(url=f"{url}")
                         embed.set_footer(text=f'User ID: {message.author.id}\nMessage ID: {message.id}')
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":message.guild.id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":message.guild.id})
                         id = channelid.channel_id
                         log_channel = message.guild.get_channel(id)
                         await log_channel.send(embed=embed)
@@ -119,8 +119,8 @@ class Logging(Scale):
                         embed.set_thumbnail(url=message.author.avatar.url)
                         embed.add_field(name="Content:", value=f"{content}\n\n{url}", inline=False)
                         embed.set_footer(text=f'User ID: {message.author.id}\nMessage ID: {message.id}')
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":message.guild.id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":message.guild.id})
                         id = channelid.channel_id
                         log_channel = message.guild.get_channel(id)
                         await log_channel.send(embed=embed)
@@ -133,7 +133,7 @@ class Logging(Scale):
             return
         if await is_event_active(message.guild, 'message_deleted'):
             if not message.attachments:
-                if geturl(message.content) == None:
+                if geturl(message.content) is None:
                     embed = Embed(description=f"Message deleted in {message.channel.mention}",
                                             timestamp=datetime.utcnow(),
                                             color=0xfc5f62)
@@ -141,8 +141,8 @@ class Logging(Scale):
                     embed.set_thumbnail(url=message.author.avatar.url)
                     embed.add_field(name="Content:", value=message.content, inline=False)
                     embed.set_footer(text=f'User ID: {message.author.id}\nMessage ID: {message.id}')
-                    db = await odm.connect()
-                    channelid = await db.find_one(logs, {"guild_id":message.guild.id})
+                    
+                    channelid = await db.logs.find_one({"guild_id":message.guild.id})
                     id = channelid.channel_id
                     log_channel = message.guild.get_channel(id)
                     await log_channel.send(embed=embed)
@@ -154,7 +154,7 @@ class Logging(Scale):
             return
         if await is_event_active(message.guild, 'message_deleted'):
             if not message.attachments:
-                if geturl(message.content) != None:
+                if geturl(message.content) is not None:
                     url = geturl(message.content)
                     if url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.png') or url.endswith('.gif'):
                         content = message.content.replace(f'{url}', '')
@@ -169,8 +169,8 @@ class Logging(Scale):
                         embed.add_field(name="Content:", value=content, inline=False)
                         embed.set_image(url=url)
                         embed.set_footer(text=f'User ID: {message.author.id}\nMessage ID: {message.id}')
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":message.guild.id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":message.guild.id})
                         id = channelid.channel_id
                         log_channel = message.guild.get_channel(id)
                         await log_channel.send(embed=embed)
@@ -183,8 +183,8 @@ class Logging(Scale):
                         embed.set_thumbnail(url=message.author.avatar.url)
                         embed.add_field(name="Content:", value=message.content, inline=False)
                         embed.set_footer(text=f'User ID: {message.author.id}\nMessage ID: {message.id}')
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":message.guild.id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":message.guild.id})
                         id = channelid.channel_id
                         log_channel = message.guild.get_channel(id)
                         await log_channel.send(embed=embed)
@@ -192,7 +192,7 @@ class Logging(Scale):
     
     @listen()
     async def on_message_update(self, event):
-        if event.before == None:
+        if event.before is None:
             return
         before = event.before
         after = event.after
@@ -210,8 +210,8 @@ class Logging(Scale):
             embed.add_field(name="Original message", value=before.content, inline=False)
             embed.add_field(name="Edited message", value=after.content, inline=False)
             embed.set_footer(text=f'User ID: {before.author.id}\nMessage ID: {before.id}')
-            db = await odm.connect()
-            channelid = await db.find_one(logs, {"guild_id":before.guild.id})
+            
+            channelid = await db.logs.find_one({"guild_id":before.guild.id})
             id = channelid.channel_id
             log_channel = before.guild.get_channel(id)
             await log_channel.send(embed=embed)
@@ -221,8 +221,8 @@ class Logging(Scale):
         member = event.member
         
         if await is_event_active(member.guild, 'member_join') == True:
-            db = await odm.connect()
-            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            
+            channelid = await db.logs.find_one({"guild_id":member.guild.id})
             id = channelid.channel_id
             log_channel = member.guild.get_channel(id)
 
@@ -244,8 +244,8 @@ class Logging(Scale):
                 roles = 'None'
             else:
                 roles = ' '.join(roles)
-            db = await odm.connect()
-            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            
+            channelid = await db.logs.find_one({"guild_id":member.guild.id})
             log_channel = member.guild.get_channel(channelid.channel_id)
             embed = Embed(description=f"{member.mention} **|** {member} **left** {member.guild.name}",
                                     timestamp=datetime.utcnow(),
@@ -266,8 +266,8 @@ class Logging(Scale):
             roles = ' '.join(roles_list)
             embed = Embed(description=f"`{member}` **got removed** {roles} ",
                                           color=0x0c73d3)
-            db = await odm.connect()
-            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            
+            channelid = await db.logs.find_one({"guild_id":member.guild.id})
             log_channel = member.guild.get_channel(channelid.channel_id)
             await log_channel.send(embed=embed)
     
@@ -282,8 +282,8 @@ class Logging(Scale):
             roles = ' '.join(roles_list)
             embed = Embed(description=f"`{member}` **got assigned** {roles} ",
                                           color=0x0c73d3)
-            db = await odm.connect()
-            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            
+            channelid = await db.logs.find_one({"guild_id":member.guild.id})
             log_channel = member.guild.get_channel(channelid.channel_id)
             await log_channel.send(embed=embed)
     
@@ -299,15 +299,15 @@ class Logging(Scale):
             embed.set_thumbnail(url=after.avatar.url)
             embed.add_field(name="Before", value=before.display_name)
             embed.add_field(name="After", value=after.display_name)
-            db = await odm.connect()
-            channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+            
+            channelid = await db.logs.find_one({"guild_id":member.guild.id})
             log_channel = member.guild.get_channel(channelid.channel_id)
             await log_channel.send(embed=embed)
 
     @listen()
     async def on_member_update_timeout_remove(self, event: MemberUpdate):
         member_after = event.after
-        if (member_after.communication_disabled_until == None) and (await is_event_active(event.guild, 'member_timeout') == True):
+        if (member_after.communication_disabled_until is None) and (await is_event_active(event.guild, 'member_timeout') == True):
             audit_log_entry = await event.guild.fetch_audit_log(action_type=24, limit=1)
             for au_entry in audit_log_entry.entries:
                 entry_created_at = snowflake_time(au_entry.id)
@@ -324,8 +324,8 @@ class Logging(Scale):
                                         color=0x0c73d3,
                                         timestamp=datetime.utcnow())
                         embed.set_thumbnail(url=target.avatar.url)
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":event.guild_id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":event.guild_id})
                         log_channel = event.guild.get_channel(channelid.channel_id)
                         await log_channel.send(embed=embed)
 
@@ -333,7 +333,7 @@ class Logging(Scale):
     @listen()
     async def on_member_update_timeout_add(self, event: MemberUpdate):
         member_after = event.after
-        if member_after.communication_disabled_until != None:
+        if member_after.communication_disabled_until is not None:
             timeout_timestamp = f'{member_after.communication_disabled_until}'.replace('<t:', '')
             timeout_timestamp = timeout_timestamp.replace('>', '')
             timeout_timestamp = int(timeout_timestamp)
@@ -351,28 +351,28 @@ class Logging(Scale):
                         elif au_entry.user_id == au_user.id:
                             moderator = au_user
             if target.id == member_after.id:
-                if (member_after.communication_disabled_until != None) and (dt > datetime.now(tz=timezone.utc)):
+                if (member_after.communication_disabled_until is not None) and (dt > datetime.now(tz=timezone.utc)):
                     if await is_event_active(event.guild, 'member_timeout') == True:
                         mute_time = f'{member_after.communication_disabled_until}'.replace('>', ':R>')
                         embed = Embed(description=f"{target} **was muted** | {reason} \n**User ID:** {target.id} \n**Actioned by:** {moderator}\n**End time:**{mute_time}",
                                         color=0x0c73d3,
                                         timestamp=datetime.utcnow())
                         embed.set_thumbnail(url=target.avatar.url)
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":event.guild_id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":event.guild_id})
                         log_channel = event.guild.get_channel(channelid.channel_id)
                         await log_channel.send(embed=embed)
 
                     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-                    db = await odm.connect()
+                    
                     while True:
                         muteid = random_string_generator()
-                        muteid_db = await db.find_one(strikes, {'guildid':event.guild_id, 'strikeid':muteid})
-                        if muteid_db == None:
+                        muteid_db = await db.strikes.find_one({'guildid':event.guild_id, 'strikeid':muteid})
+                        if muteid_db is None:
                             break
                         else:
                             continue
-                    await db.save(strikes(strikeid=muteid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Mute", day=daytime, reason=reason))
+                    await db.strikes(strikeid=muteid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Mute", day=daytime, reason=reason).insert()
             
     @listen()
     async def on_member_kick(self, event: MemberRemove):
@@ -390,8 +390,8 @@ class Logging(Scale):
                         moderator = au_user
                 if target.id == member.id:
                     if await is_event_active(member.guild, 'member_kick'):
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":member.guild.id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":member.guild.id})
                         log_channel = member.guild.get_channel(channelid.channel_id)
                         embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **kicked** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
                                                 timestamp=datetime.utcnow(),
@@ -399,16 +399,16 @@ class Logging(Scale):
                         embed.set_thumbnail(url=target.avatar.url)
                         await log_channel.send(embed=embed)
 
-                    db = await odm.connect()
+                    
                     while True:
                         kickid = random_string_generator()
-                        kickid_db = await db.find_one(strikes, {'guildid':event.guild_id, 'strikeid':kickid})
-                        if kickid_db == None:
+                        kickid_db = await db.strikes.find_one({'guildid':event.guild_id, 'strikeid':kickid})
+                        if kickid_db is None:
                             break
                         else:
                             continue
                     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-                    await db.save(strikes(strikeid=kickid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Kick", day=daytime, reason=reason))
+                    await db.strikes(strikeid=kickid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Kick", day=daytime, reason=reason).insert()
     
     @listen()
     async def on_ban_create(self, event):
@@ -427,8 +427,8 @@ class Logging(Scale):
                         moderator = au_user
                 if target.id == member.id:
                     if await is_event_active(guild, 'member_ban'):
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":guild.id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":guild.id})
                         log_channel = guild.get_channel(channelid.channel_id)
                     
                         embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **banned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
@@ -437,16 +437,16 @@ class Logging(Scale):
                         embed.set_thumbnail(url=target.avatar.url)
                         await log_channel.send(embed=embed)
 
-                    db = await odm.connect()
+                    
                     while True:
                         kickid = random_string_generator()
-                        kickid_db = await db.find_one(strikes, {'guildid':guild.id, 'strikeid':kickid})
-                        if kickid_db == None:
+                        kickid_db = await db.strikes.find_one({'guildid':guild.id, 'strikeid':kickid})
+                        if kickid_db is None:
                             break
                         else:
                             continue
                     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-                    await db.save(strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Ban", day=daytime, reason=reason))
+                    await db.strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Ban", day=daytime, reason=reason).insert()
 
     @listen()
     async def on_ban_remove(self, event):
@@ -465,8 +465,8 @@ class Logging(Scale):
                         moderator = au_user
                 if target.id == member.id:
                     if await is_event_active(guild, 'member_unban'):
-                        db = await odm.connect()
-                        channelid = await db.find_one(logs, {"guild_id":guild.id})
+                        
+                        channelid = await db.logs.find_one({"guild_id":guild.id})
                         log_channel = guild.get_channel(channelid.channel_id)
                     
                         embed = Embed(description=f'{moderator.mention}**[**{moderator}**|**{moderator.id}**]** **unbanned** {target.mention}**[**{target}**|**{target.id}**]** **|** `{reason}`',
@@ -475,16 +475,16 @@ class Logging(Scale):
                         embed.set_thumbnail(url=target.avatar.url)
                         await log_channel.send(embed=embed)
 
-                    db = await odm.connect()
+                    
                     while True:
                         kickid = random_string_generator()
-                        kickid_db = await db.find_one(strikes, {'guildid':guild.id, 'strikeid':kickid})
-                        if kickid_db == None:
+                        kickid_db = await db.strikes.find_one({'guildid':guild.id, 'strikeid':kickid})
+                        if kickid_db is None:
                             break
                         else:
                             continue
                     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-                    await db.save(strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Unban", day=daytime, reason=reason))
+                    await db.strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Unban", day=daytime, reason=reason).insert()
 
 def setup(bot):
     Logging(bot)

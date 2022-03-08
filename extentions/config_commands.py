@@ -8,9 +8,9 @@ from dateutil.relativedelta import *
 from datetime import datetime, timedelta
 from dis_snek import Snake, Scale, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, Select, SelectOption,  Button, ButtonStyles, ActionRow, spread_to_rows
 from dis_snek.models.discord.base import DiscordObject
-from .src.mongo import *
-from .src.slash_options import *
-from .src.customchecks import *
+from extentions.touk import BeanieDocuments as db
+from utils.slash_options import *
+from utils.customchecks import *
 from dis_snek.client.errors import NotFound
 from dis_snek.api.events.internal import Component
 
@@ -173,8 +173,8 @@ class BotConfiguration(Scale):
             mem_timeout_buttons
         ]
 
-        db = await odm.connect()
-        events_logging = await db.find_one(prefixes, {'guildid':ctx.guild_id})
+        
+        events_logging = await db.prefixes.find_one({'guildid':ctx.guild_id})
         events_log_list = events_logging.activecommands.lower()
 
         if 'message_deleted' in events_log_list:
@@ -248,7 +248,7 @@ class BotConfiguration(Scale):
                 return await ctx.send(f'{ctx.author.mention} Timed out after 2 minutes of inactivity')
             else:
                 bctx = button_used.context
-                events_logging = await db.find_one(prefixes, {'guildid':ctx.guild_id})
+                events_logging = await db.prefixes.find_one({'guildid':ctx.guild_id})
                 events_log_list = events_logging.activecommands.lower()
                 if bctx.custom_id == f'{bctx.author.id}_deleted_messages_on':
                     if 'message_deleted' in events_log_list:

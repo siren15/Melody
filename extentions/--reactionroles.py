@@ -2,9 +2,9 @@ import random
 import asyncio
 
 from dis_snek import Snake, Scale, Permissions, listen, Message, Embed, slash_command, InteractionContext
-from .src.mongo import *
-from .src.slash_options import *
-from .src.customchecks import *
+from extentions.touk import BeanieDocuments as db
+from utils.slash_options import *
+from utils.customchecks import *
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -53,7 +53,7 @@ class ReactionRoles(Scale):
         emoji = event.emoji
         member = event.message.author
 
-        db = await odm.connect()
+        
         rr = await db.find_one(reactionroles, {'guildid': guild.id, 'channelid': message.channel.id, 'reactionmessageid': message.id, 'reactionemoji': emoji.name})
 
         if rr == None:
@@ -94,7 +94,7 @@ class ReactionRoles(Scale):
         emoji = event.emoji
         member = event.message.author
 
-        db = await odm.connect()
+        
         rr = await db.find_one(reactionroles, {'guildid': guild.id, 'channelid': message.channel.id, 'reactionmessageid': message.id, 'reactionemoji': emoji.name, 'mode': 3})
 
         if rr == None:
@@ -129,7 +129,7 @@ class ReactionRoles(Scale):
         emoji = event.emoji
         member = event.message.author
 
-        db = await odm.connect()
+        
         rr = await db.find_one(reactionroles, {'guildid': guild.id, 'channelid': message.channel.id, 'reactionmessageid': message.id, 'reactionemoji': emoji.name})
 
         if rr == None:

@@ -1,12 +1,11 @@
 import asyncio
 from datetime import datetime, timezone
 import math
-from socket import timeout
 from dateutil.relativedelta import relativedelta
 from dis_snek import Snake, Scale, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild
-from .src.mongo import *
-from .src.slash_options import *
-from .src.customchecks import *
+# from extentions.touk import BeanieDocuments as db
+from utils.slash_options import *
+from utils.customchecks import *
 
 all_commands = ['echo', 'userinfo', 'botinfo', 'avatar', 'useravatar', 'embed create', 'embed edit', 't', 'tag recall', 'tag create', 'tag edit', 'tag delete', 'tag claim', 'tag list', 'tag aedit', 'tag gift', 'tag info', 'ban', 'mute', 'delete', 'kick', 'unban', 'warn add', 'warn remove', 'limbo', 'userpurge', 'warnings', 'strikes', 'rank', 'ranklist', 'leveling addrole', 'leveling removerole', 'leaderboard', 'giveyou _', 'giveyou create', 'giveyou delete', 'giveyou list', 'uptime', 'reactionrole create', 'reactionrole delete']
 
@@ -27,20 +26,20 @@ class Basic(Scale):
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def temp_restrict_cmd(self, ctx: InteractionContext, command_name:str=None, role:OptionTypes.ROLE=None):
         cmd = command_name
-        if cmd == None:
+        if cmd is None:
             return await ctx.send(':x: You have to include a command name', ephemeral=True)
-        elif role == None:
+        elif role is None:
             return await ctx.send(':x: You have to include a role', ephemeral=True)
 
         if cmd.lower() in all_commands:
             
-            db = await odm.connect()
+            
             regx = re.compile(f"^{cmd}$", re.IGNORECASE)
-            restricted_command = await db.find_one(hasrole,  {"guildid":ctx.guild_id, "command":regx})
-            if restricted_command != None:
+            restricted_command = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
+            if restricted_command is not None:
                 r_role = ctx.guild.get_role(restricted_command.role)
                 return await ctx.send(f'`{cmd}` already restricted to {r_role.mention}')
-            await db.save(hasrole(guildid=ctx.guild_id, command=cmd, role=role.id))
+            await db.hasrole(guildid=ctx.guild_id, command=cmd, role=role.id).insert()
             await ctx.send(embed=Embed(color=0x0c73d3,description=f'`{cmd}` restricted to {role.mention}'))
     
     @slash_command(name='command', sub_cmd_name='unrestrict', sub_cmd_description='Lift a command role restriction', scopes=[435038183231848449, 149167686159564800])
@@ -48,17 +47,17 @@ class Basic(Scale):
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def temp_unrestrict_cmd(self, ctx: InteractionContext, command_name:str=None):
         cmd = command_name
-        if cmd == None:
+        if cmd is None:
             return await ctx.send(':x: You have to include a command name', ephemeral=True)
 
         if cmd.lower() in all_commands:
             
-            db = await odm.connect()
+            
             regx = re.compile(f"^{cmd}$", re.IGNORECASE)
-            restricted_command = await db.find_one(hasrole,  {"guildid":ctx.guild_id, "command":regx})
-            if restricted_command == None:
+            restricted_command = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
+            if restricted_command is None:
                 return await ctx.send(f'`{cmd}` not restricted')
-            await db.delete(restricted_command)
+            await restricted_command.delete()
             await ctx.send(embed=Embed(color=0x0c73d3,description=f'Restriction lifted from `{cmd}`'))
 
     @slash_command("echo", description="echo your messages")
@@ -76,7 +75,7 @@ class Basic(Scale):
     @member()
     async def userinfo(self, ctx:InteractionContext, member:OptionTypes.USER=None):
         
-        if member == None:
+        if member is None:
             member = ctx.author
 
         if member.top_role.name != '@everyone':
@@ -102,7 +101,7 @@ class Basic(Scale):
         jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
         join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
 
-        if member.guild_avatar != None:
+        if member.guild_avatar is not None:
             avatarurl = f'{member.guild_avatar.url}.png'
         else:
             avatarurl = f'{member.avatar.url}.png'
@@ -163,7 +162,7 @@ class Basic(Scale):
         jdiff = relativedelta(datetime.now(tz=timezone.utc), member.joined_at.replace(tzinfo=timezone.utc))
         join_time = f"{jdiff.years} Y, {jdiff.months} M, {jdiff.days} D"
 
-        if member.guild_avatar != None:
+        if member.guild_avatar is not None:
             avatarurl = f'{member.guild_avatar.url}.png'
         else:
             avatarurl = f'{member.avatar.url}.png'
@@ -189,10 +188,10 @@ class Basic(Scale):
     @member()
     async def avatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
         
-        if member == None:
+        if member is None:
             member = ctx.author
         
-        if member.guild_avatar != None:
+        if member.guild_avatar is not None:
             avatarurl = member.guild_avatar.url
         else:
             avatarurl = member.avatar.url
@@ -205,7 +204,7 @@ class Basic(Scale):
     @member()
     async def useravatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
         
-        if member == None:
+        if member is None:
             member = ctx.author
 
         avatarurl = member.avatar.url
@@ -247,7 +246,7 @@ class Basic(Scale):
         
         embed_title = modal_recived.responses.get('embed_title')
         embed_text = modal_recived.responses.get('embed_text')
-        if (embed_title == None) and (embed_text == None):
+        if (embed_title is None) and (embed_text is None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
         embed=Embed(color=0x0c73d3,
@@ -260,10 +259,10 @@ class Basic(Scale):
     @channel()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def embed_edit(self, ctx:InteractionContext, embed_message_id:str=None, channel:OptionTypes.CHANNEL=None):
-        if embed_message_id == None:
+        if embed_message_id is None:
             await ctx.send('You have to include the embed message ID, so that I can edit the embed', ephemeral=True)
             return
-        elif channel == None:
+        elif channel is None:
             channel = ctx.channel
         from dis_snek.models.discord import modal
         m = modal.Modal(title='Create an embed', components=[
@@ -290,7 +289,7 @@ class Basic(Scale):
         
         embed_title = modal_recived.responses.get('embed_title')
         embed_text = modal_recived.responses.get('embed_text')
-        if (embed_title == None) and (embed_text == None):
+        if (embed_title is None) and (embed_text is None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
         message_to_edit = channel.get_message(embed_message_id)

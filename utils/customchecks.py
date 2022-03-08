@@ -1,10 +1,11 @@
 from dis_snek.client.errors import *
-from .mongo import *
 import re
 from typing import Awaitable, Callable, Union
 from dis_snek import Permissions
 from dis_snek.models.discord.snowflake import Snowflake_Type, to_snowflake
 from dis_snek.models.snek.context import Context
+from extentions.touk import BeanieDocuments as db
+
 TYPE_CHECK_FUNCTION = Callable[[Context], Awaitable[bool]]
 
 class MissingPermissions(CommandException):
@@ -68,9 +69,9 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
         # await ctx.defer()
         if ctx.author.has_permission(Permissions.ADMINISTRATOR) == True:
             return True
-        db = await odm.connect()
+        
         regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
-        roleid = await db.find_one(hasrole, {"guildid":ctx.guild_id, "command":regx})
+        roleid = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
         if roleid != None:
             role = ctx.guild.get_role(roleid.role)
             if role not in ctx.author.roles:
@@ -84,9 +85,9 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
 
 async def has_role(ctx):
     # await ctx.defer()
-    db = await odm.connect()
+    
     regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
-    roleid = await db.find_one(hasrole, {"guildid":ctx.guild_id, "command":regx})
+    roleid = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
     if roleid != None:
         role = ctx.guild.get_role(roleid.role)
         if role not in ctx.author.roles:
@@ -97,29 +98,29 @@ async def has_role(ctx):
         return True
     
 async def is_extension_active(ctx):    
-    db = await odm.connect()
-    commands = await db.find_one(prefixes, {"guildid":ctx.guild.id})
+    
+    commands = await db.prefixes.find_one({"guildid":ctx.guild.id})
     if ctx.invoked_name.lower() not in commands.activecogs.lower():
         raise ExtensionNotActivatedInGuild(f'{ctx.invoked_name} not activated for {ctx.guild}')
     return True
 
 async def is_command_active(ctx):
-    db = await odm.connect()
-    commands = await db.find_one(prefixes, {"guildid":ctx.guild.id})
+    
+    commands = await db.prefixes.find_one({"guildid":ctx.guild.id})
     if ctx.invoked_name.lower() not in commands.activecommands.lower():
         raise CommandNotActivatedInGuild(f'{ctx.invoked_name} not activated for {ctx.guild}')
     return True
 
 async def is_event_active(guild, event: str):
-    db = await odm.connect()
-    commands = await db.find_one(prefixes, {"guildid":guild.id})
+    
+    commands = await db.prefixes.find_one({"guildid":guild.id})
     if event.lower() not in commands.activecommands.lower():
         raise EventNotActivatedInGuild(f'{event} not activated for {guild}')
     return True
 
 async def is_user_blacklisted_e(message):
-    db = await odm.connect()
-    users = await db.find_one(userfilter, {"guild":message.guild.id, "userid":message.author.id})
+    
+    users = await db.userfilter.find_one({"guild":message.guild.id, "userid":message.author.id})
     if users.userid == message.author.id:
         raise UserInBlacklist(f'{message.author} has been blacklisted from using events')
     elif users.userid == None:

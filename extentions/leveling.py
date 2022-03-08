@@ -7,9 +7,9 @@ import requests
 
 from datetime import datetime, timedelta
 from dis_snek import Snake, Scale, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes
-from .src.mongo import *
-from .src.slash_options import *
-from .src.customchecks import *
+from extentions.touk import BeanieDocuments as db
+from utils.slash_options import *
+from utils.customchecks import *
 
 def find_member(ctx, userid):
     members = [m for m in ctx.guild.members if m.id == userid]
@@ -30,21 +30,21 @@ class Levels(Scale):
         #if (iscogactive(message.guild, 'leveling') == True) and (is_event_active(message.guild, 'leveling')):
         
         #level_settings = await db.find_one(leveling_settings, {'guildid':message.guild.id})
-        #if level_settings != None:
+        #if level_settings is not None:
             #if message.channel.id in level_settings.no_xp_channel:
                 #return
-        db = await odm.connect() #connect to database
+         #connect to database
         #check if enough time has passed since last message
-        wait_mem = await db.find_one(levelwait, {'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$gt':datetime.utcnow()}})
+        wait_mem = await db.levelwait.find_one({'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$gt':datetime.utcnow()}})
         if wait_mem == None:
             #check what xp the user has
-            levels = await db.find_one(leveling, {'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
+            levels = await db.leveling.find_one({'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
             
             if levels == None: #if the member is not logged in db
-                await db.save(leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0)) #member get's logged to db with level and xp set to 0
+                await db.leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0).insert() #member get's logged to db with level and xp set to 0
                 return
 
-            level_stats = await db.find_one(levelingstats, {'lvl':levels.level}) #get level stats from db
+            level_stats = await db.levelingstats.find_one( {'lvl':levels.level}) #get level stats from db
 
             total_xp = levels.total_xp #total xp the user has
             lvl = levels.level #the level the user has
@@ -75,30 +75,30 @@ class Levels(Scale):
                 levels.xp_to_next_level = 0 #members xp towards next level gets reset to 0
                 levels.total_xp = new_total_xp #total xp gets updated
                 levels.messages = number_of_messages #no. of messages that made xp get updated
-                await db.save(levels)
+                await levels.save()
                 
-                roles = await db.find_one(leveling_roles, {'guildid':message.guild.id, 'level':lvl+1})#get the role reward for the level if it exists
-                if roles != None:#if it's not none
+                roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':lvl+1})#get the role reward for the level if it exists
+                if roles is not None:#if it's not none
                     role = message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
-                    if (role != None) and (role not in message.author.roles):#if it exists and the member doesn't have it
+                    if (role is not None) and (role not in message.author.roles):#if it exists and the member doesn't have it
                         await message.author.add_role(role, '[bot]leveling role add')#give it to member
             else:                                       # if the members xp towards the next level equals or is not higher than xp expected for next level
                 levels.xp_to_next_level = xp+xp_to_give #members xp towards the next level gets updated
                 levels.total_xp = new_total_xp          #with total xp
                 levels.messages = number_of_messages    #and number of messages
-                await db.save(levels)
+                await levels.save()
 
-                roles = await db.find_one(leveling_roles, {'guildid':message.guild.id, 'level':lvl})#get the role reward for the level if it exists
-                if roles != None:#if it's not none
+                roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':lvl})#get the role reward for the level if it exists
+                if roles is not None:#if it's not none
                     role = message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
-                    if (role != None) and (role not in message.author.roles):#if it exists and the member doesn't have it
+                    if (role is not None) and (role not in message.author.roles):#if it exists and the member doesn't have it
                         await message.author.add_role(role, '[bot]leveling role add')#give it to member
 
-            await db.save(levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60)))) #member gets put into the wait list
+            await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert() #member gets put into the wait list
             await asyncio.sleep(60) #the commands gonna wait for 60 seconds
-            level_wait = await db.find(levelwait, {'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$lte':datetime.utcnow()}}) #find member in the wait list
-            for instance in level_wait:
-                await db.delete(instance) #member gets removed from wait list
+            level_wait = db.levelwait.find({'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$lte':datetime.utcnow()}}) #find member in the wait list
+            async for instance in level_wait:
+                await instance.delete() #member gets removed from wait list
     
     @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles")
     @role()
@@ -117,10 +117,10 @@ class Levels(Scale):
                 await ctx.send('role level has to be more than 0 and less than 300')
                 return
 
-            db = await odm.connect()
-            check = await db.find_one(leveling_roles, {'guildid':ctx.guild.id, 'roleid':role.id})
+            
+            check = await db.leveling_roles.find_one({'guildid':ctx.guild.id, 'roleid':role.id})
             if check == None:
-                await db.save(leveling_roles(guildid=ctx.guild.id, roleid=role.id, level=int(role_level)))
+                await db.leveling_roles(guildid=ctx.guild.id, roleid=role.id, level=int(role_level)).insert()
                 await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} assigned to level {role_level}'))
             else:
                 await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is already assigned to level {check.level}'))
@@ -130,7 +130,7 @@ class Levels(Scale):
         
         hasrole = await has_role(ctx)
         if hasrole == True:
-            from .src.paginators import Paginator
+            from dis_snek.ext.paginators import Paginator
             def chunks(l, n):
                 n = max(1, n)
                 return (l[i:i+n] for i in range(0, len(l), n))
@@ -150,10 +150,10 @@ class Levels(Scale):
                 embed.add_field(name='Role', value=role, inline=True)
                 return embed
 
-            db = await odm.connect()
-            levels = await db.find(leveling_roles, {"guildid":ctx.guild_id})
-
-            level = [str(l.level)+"\n" for l in levels]
+            
+            levels = db.leveling_roles.find({"guildid":ctx.guild_id})
+            async for l in levels:
+                level = [str(l.level)+"\n"]
 
             if level == []:
                 embed = Embed(description=f"There are no ranks for {ctx.guild.name}.",
@@ -198,13 +198,13 @@ class Levels(Scale):
                 await ctx.send('you have to include a role')
                 return
 
-            db = await odm.connect()
-            check = await db.find_one(leveling_roles, {'guildid':ctx.guild.id, 'roleid':role.id})
+            
+            check = await db.leveling_roles.find_one({'guildid':ctx.guild.id, 'roleid':role.id})
             if check == None:
                 await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is not assigned to a level'))
             else:
                 await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} removed from level {check.level}'))
-                await db.delete(check)
+                await check.delete()
 
     @slash_command(name='oldrank', description='check your leveling statistics')
     @member()
@@ -212,13 +212,13 @@ class Levels(Scale):
         
         if member == None:
             member = ctx.author
-        db = await odm.connect()
-        levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':member.id}) 
+        
+        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) 
         if levels == None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
 
-        level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
+        level_stats = await db.levelingstats.find_one({'lvl':levels.level})
 
         #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
         #if lvl_set == None:
@@ -273,17 +273,17 @@ class Levels(Scale):
     
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
-    async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
+    async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER='None'):
         # assets: https://imgur.com/a/3Y6W7lZ
-        if member == None:
+        if member is 'None':
             member = ctx.author
-        db = await odm.connect()
-        levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':member.id}) 
+        
+        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) 
         if levels == None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
 
-        level_stats = await db.find_one(levelingstats, {'lvl':levels.level})
+        level_stats = await db.levelingstats.find_one({'lvl':levels.level})
 
         #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
         #if lvl_set == None:
@@ -302,7 +302,7 @@ class Levels(Scale):
                 return 1
             return 550/(100/percentage)
 
-        if member.guild_avatar != None:
+        if member.guild_avatar is not None:
             avatarurl = f'{member.guild_avatar.url}.png'
         else:
             avatarurl = f'{member.avatar.url}.png'
@@ -319,7 +319,7 @@ class Levels(Scale):
 
         IW, IH = (956, 435)
 
-        if levels.lc_background != None:
+        if levels.lc_background is not None:
             background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((0,0,IW,IH)).convert("RGBA")
         else:
             background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
@@ -392,26 +392,23 @@ class Levels(Scale):
     @attachment()
     @reset_to_default()
     async def level_bg(self, ctx: InteractionContext, attachment: OptionTypes.ATTACHMENT, reset_to_default:OptionTypes.BOOLEAN=False):
-
         if reset_to_default == True:
-            db = await odm.connect()
-            levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':ctx.author.id})
-            if levels.lc_background != None:
+            levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
+            if levels.lc_background is not None:
                 levels.lc_background = None
-                await db.save(levels)
+                await levels.save()
                 return await ctx.send(f"{ctx.author.mention} Background is now set back to default")
             elif levels.lc_background == None:
                 return await ctx.send(f"{ctx.author.mention} You don't have a custom background set")
 
-        db = await odm.connect()
-        levels = await db.find_one(leveling, {'guildid':ctx.guild_id, 'memberid':ctx.author.id})
+        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
         levels.lc_background = attachment.url
-        await db.save(levels)
+        await levels.save()
         await ctx.send(f"{ctx.author.mention} Background set to\n{attachment.url}")
 
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
-        from .src.paginators import Paginator
+        from dis_snek.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -431,17 +428,12 @@ class Levels(Scale):
             embed.add_field(name='Level', value=lvl, inline=True)
             embed.add_field(name='Total XP', value=xp, inline=True)
             return embed
-
         
+        lvl_order = await db.leveling.find({'guildid':ctx.guild_id}).sort(-db.leveling.level, -db.leveling.total_xp).to_list()
         
-        db = await odm.connect()
-        lvl_order = await db.find(leveling, {'guildid':ctx.guild_id}, sort=(leveling.level.desc(), leveling.total_xp.desc()))
-        if lvl_order == None:
-            await ctx.send('Nobody has levels in this server yet')
-            return
         rank = 1
         members = []
-        for lvl in lvl_order:
+        async for lvl in lvl_order:
             if rank == 1:
                 ranks = '🏆 1'
             elif rank == 2:
@@ -451,13 +443,22 @@ class Levels(Scale):
             else:
                 ranks = rank
             member = find_member(ctx, lvl.memberid)
-            if member != None:
+            if member is not None:
                 members.append(f'**{ranks}.** {member.display_name}\n')
             else:
                 members.append(f'**{ranks}.** <@{lvl.memberid}>\n')
             rank = rank+1
-        lvls = [f'{lvl.level}\n' for lvl in lvl_order]
-        tot_xp = [f'{xp.total_xp}\n' for xp in lvl_order]
+        
+        if members == []:
+            await ctx.send('Nobody has levels in this server yet')
+            return
+        
+        lvls = []
+        async for lvl in lvl_order:
+            lvls.append(f'{lvl.level}\n')
+        tot_xp = []
+        async for xp in lvl_order:
+            tot_xp .append(f'{xp.total_xp}\n')
         
         s = -1
         e = 0
