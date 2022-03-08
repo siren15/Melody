@@ -72,13 +72,13 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
         
         regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
         roleid = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
-        if roleid != None:
+        if roleid is not None:
             role = ctx.guild.get_role(roleid.role)
             if role not in ctx.author.roles:
                 raise MissingRole(f'{ctx.author} missing role {role.name}')
             else:
                 return True
-        elif roleid == None:
+        elif roleid is None:
             return True
     return check
 
@@ -88,13 +88,13 @@ async def has_role(ctx):
     
     regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
     roleid = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
-    if roleid != None:
+    if roleid is not None:
         role = ctx.guild.get_role(roleid.role)
         if role not in ctx.author.roles:
             raise MissingRole(f'{ctx.author} missing role {role.name}')
         else:
             return True
-    elif roleid == None:
+    elif roleid is None:
         return True
     
 async def is_extension_active(ctx):    
@@ -123,7 +123,7 @@ async def is_user_blacklisted_e(message):
     users = await db.userfilter.find_one({"guild":message.guild.id, "userid":message.author.id})
     if users.userid == message.author.id:
         raise UserInBlacklist(f'{message.author} has been blacklisted from using events')
-    elif users.userid == None:
+    elif users.userid is None:
         return True
     return True
 
