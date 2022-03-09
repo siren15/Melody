@@ -1,4 +1,3 @@
-from pickle import TRUE
 from dis_snek import slash_option, OptionTypes
 
 def user():

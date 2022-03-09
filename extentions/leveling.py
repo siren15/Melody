@@ -6,7 +6,7 @@ import os
 import requests
 
 from datetime import datetime, timedelta
-from dis_snek import Snake, Scale, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes
+from dis_snek import Snake, Scale, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -391,6 +391,7 @@ class Levels(Scale):
     @slash_command(name='level', sub_cmd_name='background', sub_cmd_description='change the background of your level stats card(resolution should be min: 956x435, 16:9 aspect ratio)', scopes=[435038183231848449,149167686159564800])
     @attachment()
     @reset_to_default()
+    @check(role_lock())
     async def level_bg(self, ctx: InteractionContext, attachment: OptionTypes.ATTACHMENT, reset_to_default:OptionTypes.BOOLEAN=False):
         if reset_to_default == True:
             levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})

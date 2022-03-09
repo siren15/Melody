@@ -20,8 +20,8 @@ class GiveRoles(Scale):
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
 
         
-        
-        gy = await db.giveyou.find_one({'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
+        regx = {'$regex': f"^{giveyou_name}$", '$options':'i'}
+        gy = await db.giveyou.find_one({'name':regx, 'guildid': ctx.guild_id})
 
         if gy is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: Couldn't find `{giveyou_name}` as a giveyou for {ctx.guild.name}"), ephemeral=True)
@@ -51,8 +51,8 @@ class GiveRoles(Scale):
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
 
         
-        
-        gy = await db.giveyou.find_one({'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
+        regx = {'$regex': f"^{giveyou_name}$", '$options':'i'}
+        gy = await db.giveyou.find_one({'name':regx, 'guildid': ctx.guild_id})
 
         if gy is not None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: `{giveyou_name}` already exists as a giveyou for {ctx.guild.name}"), ephemeral=True)
@@ -66,8 +66,9 @@ class GiveRoles(Scale):
     async def giveyourole_delete(self, ctx: InteractionContext, giveyou_name:str=None):
         if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
-  
-        gy = await db.giveyou.find_one({'name':re.compile(f"^{giveyou_name}$", re.IGNORECASE), 'guildid': ctx.guild_id})
+
+        regx = {'$regex': f"^{giveyou_name}$", '$options':'i'}
+        gy = await db.giveyou.find_one({'name':regx, 'guildid': ctx.guild_id})
 
         if gy is not None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: `{giveyou_name}` is not a giveyou for {ctx.guild.name}"), ephemeral=True)

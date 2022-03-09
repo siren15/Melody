@@ -41,7 +41,7 @@ class CustomSnake(Snake):
 
         self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
         self.loop.run_until_complete(init_beanie(database=self.db.giffany, document_models=self.models))
-        self.start(os.environ['tyrone_token'])
+        self.start(os.environ['pinetree_token'])
     
     @listen()
     async def on_ready(self):
@@ -68,7 +68,7 @@ class CustomSnake(Snake):
 
         elif isinstance(error, MissingRole):
             
-            regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
+            regx = {'$regex':f"^{ctx.invoked_name}$", '$options':'i'}
             roleid = await db.hasrole.find_one({"guildid":ctx.guild.id, "command":regx})
             if roleid is not None:
                 role = ctx.guild.get_role(roleid.role)

@@ -161,7 +161,33 @@ class BotConfiguration(Scale):
                 custom_id=f'{ctx.author.id}_timeout_off'
             )
         )
-
+        mem_roles_buttons: list[ActionRow] = spread_to_rows(
+            #unbaned
+            Button(
+                style=ButtonStyles.GREEN,
+                label="On",
+                custom_id=f'{ctx.author.id}_roles_on'
+            ),
+            Button(
+                style=ButtonStyles.RED,
+                label="Off",
+                custom_id=f'{ctx.author.id}_roles_off'
+            )
+        )
+        mem_nick_buttons: list[ActionRow] = spread_to_rows(
+            #unbaned
+            Button(
+                style=ButtonStyles.GREEN,
+                label="On",
+                custom_id=f'{ctx.author.id}_nick_on'
+            ),
+            Button(
+                style=ButtonStyles.RED,
+                label="Off",
+                custom_id=f'{ctx.author.id}_nick_off'
+            )
+        )
+        
         buttons = [
             deleted_messages_buttons,
             edited_messages_buttons,
@@ -170,7 +196,9 @@ class BotConfiguration(Scale):
             user_kicked_buttons,
             user_banned_buttons,
             user_unbanned_buttons,
-            mem_timeout_buttons
+            mem_timeout_buttons,
+            mem_roles_buttons,
+            mem_nick_buttons
         ]
 
         
@@ -225,6 +253,18 @@ class BotConfiguration(Scale):
             mem_timeout_status = 'Off'
         mem_ti_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log muting members: `{mem_timeout_status}`'), components=mem_timeout_buttons)
 
+        if 'member_roles' in events_log_list:
+            mem_roles_status = 'On'
+        else:
+            mem_roles_status = 'Off'
+        mem_ro_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log members roles add/remove: `{mem_roles_status}`'), components=mem_roles_buttons)
+
+        if 'member_nick' in events_log_list:
+            mem_nick_status = 'On'
+        else:
+            mem_nick_status = 'Off'
+        mem_ni_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `{mem_nick_status}`'), components=mem_nick_buttons)
+
         button_messages = [
             msg_de_msg,
             msg_ed_msg,
@@ -233,7 +273,9 @@ class BotConfiguration(Scale):
             mem_kck_msg,
             mem_bn_msg,
             mem_un_msg,
-            mem_ti_msg
+            mem_ti_msg,
+            mem_ro_msg,
+            mem_ni_msg
         ]
 
         def buttons_check(component: Button) -> bool:
@@ -255,7 +297,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Logging of deleted messages already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' message_deleted,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_deleted_messages_off':
@@ -263,7 +305,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Logging of deleted messages already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' message_deleted,', '')
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `Off`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_edited_messages_on':
@@ -271,7 +313,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Logging of edited messages already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' message_edited,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0xfcab5f, description=f'Log edited messages: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_edited_messages_off':
@@ -279,7 +321,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Logging of edited messages already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' message_edited,', '')
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0xfcab5f, description=f'Log edited messages: `Off`'))
                 
                 elif bctx.custom_id == f'{bctx.author.id}_join_on':
@@ -287,7 +329,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member join logs already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' member_join,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x4d9d54, description=f'Log members joining: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_join_off':
@@ -295,7 +337,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member join logs already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' member_join,', '')
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x4d9d54, description=f'Log members joining: `Off`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_left_on':
@@ -303,7 +345,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member leave logs already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' member_leave,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_left_off':
@@ -311,7 +353,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member leave logs already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' member_leave,', '')
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `On`'))
                 
                 elif bctx.custom_id == f'{bctx.author.id}_kicked_on':
@@ -319,7 +361,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member kick logs already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' member_kick,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x5c7fb0, description=f'Log kicking users: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_kicked_off':
@@ -327,7 +369,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member kick logs already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' member_kick,', '')
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x5c7fb0, description=f'Log kicking users: `Off`'))
                 
                 elif bctx.custom_id == f'{bctx.author.id}_ban_on':
@@ -335,7 +377,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member ban logs already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' member_ban,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x62285e, description=f'Log banning users: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_ban_off':
@@ -343,7 +385,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member ban logs already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' member_ban,', '')
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x62285e, description=f'Log banning users: `Off`'))
                 
                 elif bctx.custom_id == f'{bctx.author.id}_unban_on':
@@ -351,7 +393,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member unban logs already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' member_unban,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_unban_off':
@@ -359,7 +401,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member unban logs already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' member_unban,', '')
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `Off`'))
                 
                 elif bctx.custom_id == f'{bctx.author.id}_timeout_on':
@@ -367,7 +409,7 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member muting logs already turned on.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands+' member_timeout,'
-                        await db.save(events_logging)
+                        await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log muting users: `On`'))
 
                 elif bctx.custom_id == f'{bctx.author.id}_timeout_off':
@@ -375,8 +417,40 @@ class BotConfiguration(Scale):
                         await bctx.send(f'{bctx.author.mention} Member muting logs already turned off.', ephemeral=True)
                     else:
                         events_logging.activecommands = events_logging.activecommands.replace(' member_timeout,', '')
-                        await db.save(events_logging)
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log muting users: `Off`'))                  
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log muting users: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_roles_on':
+                    if 'member_roles' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Member roles add/remove logs already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' member_roles,'
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members roles add/remove: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_roles_off':
+                    if 'member_roles' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Member roles add/remove logs already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' member_roles,', '')
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members roles add/remove: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_nick_on':
+                    if 'member_nick' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Member nickname change logs already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' member_nick,'
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_nick_off':
+                    if 'member_nick' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Member nickname change logs already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' member_nick,', '')
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `Off`'))
 
 def setup(bot):
     BotConfiguration(bot)

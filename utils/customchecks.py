@@ -70,7 +70,7 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
         if ctx.author.has_permission(Permissions.ADMINISTRATOR) == True:
             return True
         
-        regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
+        regx = {'$regex':f"^{ctx.invoked_name}$", '$options':'i'}
         roleid = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
         if roleid is not None:
             role = ctx.guild.get_role(roleid.role)
@@ -86,7 +86,7 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
 async def has_role(ctx):
     # await ctx.defer()
     
-    regx = re.compile(f"^{ctx.invoked_name}$", re.IGNORECASE)
+    regx = {'$regex':f"^{ctx.invoked_name}$", '$options':'i'}
     roleid = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
     if roleid is not None:
         role = ctx.guild.get_role(roleid.role)

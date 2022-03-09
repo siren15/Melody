@@ -34,7 +34,7 @@ class Basic(Scale):
         if cmd.lower() in all_commands:
             
             
-            regx = re.compile(f"^{cmd}$", re.IGNORECASE)
+            regx = {'$regex': f"^{cmd}$", '$options':'i'}
             restricted_command = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
             if restricted_command is not None:
                 r_role = ctx.guild.get_role(restricted_command.role)
@@ -53,7 +53,7 @@ class Basic(Scale):
         if cmd.lower() in all_commands:
             
             
-            regx = re.compile(f"^{cmd}$", re.IGNORECASE)
+            regx = {'$regex': f"^{cmd}$", '$options':'i'}
             restricted_command = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
             if restricted_command is None:
                 return await ctx.send(f'`{cmd}` not restricted')

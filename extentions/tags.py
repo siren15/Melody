@@ -4,7 +4,7 @@ import asyncio
 
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timezone
-from dis_snek import Snake, Scale, slash_command, InteractionContext, OptionTypes, Embed, Button, ButtonStyles, ActionRow, spread_to_rows, check
+from dis_snek import Snake, Scale, slash_command, InteractionContext, OptionTypes, Embed, Button, ButtonStyles, ActionRow, spread_to_rows, check, AutocompleteContext
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -29,7 +29,7 @@ class Tags(Scale):
     @tagname()
     @check(role_lock())
     async def t(self, ctx:InteractionContext, tagname:str):
-        regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
         if tags is None:
             embed = Embed(
@@ -50,13 +50,25 @@ class Tags(Scale):
             else:
                 uses = tags.no_of_times_used
             tags.no_of_times_used = uses + 1
-            await db.save(tags)
+            await tags.save()
+    
+    # @t.autocomplete('tagname')
+    # async def t_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    #     choices = []
+    #     tags = db.tag.find({"guild_id":ctx.guild_id})
+    #     async for tag in tags:
+    #         if len(tag.names)>25:
+    #             tag_name = tag.names[0:25]
+    #         else:
+    #             tag_name = tag.names
+    #         choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+    #     await ctx.send(choices=choices)
 
     @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
     @tagname()
     @check(role_lock())
     async def tag(self, ctx:InteractionContext, tagname:str):
-        regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
         if tags is None:
             embed = Embed(
@@ -77,7 +89,7 @@ class Tags(Scale):
             else:
                 uses = tags.no_of_times_used
             tags.no_of_times_used = uses + 1
-            await db.save(tags)
+            await tags.save()
 
     @slash_command(name='tag', sub_cmd_name='create', sub_cmd_description="allow's me to store tags")
     @tagname()
@@ -101,7 +113,7 @@ class Tags(Scale):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         check = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if check==None:
             if attachment is not None:
@@ -172,7 +184,7 @@ class Tags(Scale):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_delete = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'author_id':ctx.author.id})
         if tag_to_delete is None:
             tag_to_delete = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
@@ -206,7 +218,7 @@ class Tags(Scale):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_delete = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_delete is None:
             embed = Embed(description=f":x: You don't own a tag called  `{tagname}`",
@@ -250,7 +262,7 @@ class Tags(Scale):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_edit = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'author_id':ctx.author.id})
         if tag_to_edit is None:
             tag_to_edit = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
@@ -308,7 +320,7 @@ class Tags(Scale):
                     if url.endswith('.png') or url.endswith('.apng') or url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.gif'):
                         tag_to_edit.attachment_url = None
                         tag_to_edit.content = content
-                        await db.save(tag_to_edit)
+                        await tag_to_edit.save()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
                                     color=0x0c73d3)
                         embed.set_image(url=url)
@@ -316,14 +328,14 @@ class Tags(Scale):
                     else:
                         tag_to_edit.attachment_url = None
                         tag_to_edit.content = content
-                        await db.save(tag_to_edit)
+                        await tag_to_edit.save()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
                                     color=0x0c73d3)
                         await ctx.send(embed=embed)
                 else:
                     tag_to_edit.attachment_url = None
                     tag_to_edit.content = content
-                    await db.save(tag_to_edit)
+                    await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
                                 color=0x0c73d3)
                     await ctx.send(embed=embed)
@@ -339,7 +351,7 @@ class Tags(Scale):
             return
 
         
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_view = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_view is None:
             embed = Embed(description=f":x: I couldn't find a tag called `{tagname}`",
@@ -452,7 +464,7 @@ class Tags(Scale):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_claim = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_claim is None:
             embed = Embed(description=f":x: I couldn't find a tag called `{tagname}`",
@@ -507,7 +519,7 @@ class Tags(Scale):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = re.compile(f"^{tagname}$", re.IGNORECASE)
+        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_claim = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
         if tag_to_claim is None:
             embed = Embed(description=f":x: You don't own a tag with that name",
