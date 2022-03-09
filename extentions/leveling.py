@@ -18,6 +18,13 @@ def find_member(ctx, userid):
             return m
     return None
 
+def find_role(ctx, roleid):
+    roles = [r for r in ctx.guild.roles if r.id == roleid]
+    if roles != []:
+        for r in roles:
+            return r
+    return None
+
 class Levels(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
@@ -152,22 +159,21 @@ class Levels(Scale):
 
             
             levels = db.leveling_roles.find({"guildid":ctx.guild_id})
+            level = []
+            roles = []
             async for l in levels:
-                level = [str(l.level)+"\n"]
+                level.append(f'{l.level}\n')
+                lvlrole = find_role(ctx, l.roleid)
+                if lvlrole is None:
+                    roles.append('[ROLE NOT FOUND]\n')
+                else:
+                    roles.append(f"{lvlrole.mention}\n")
 
-            if level == []:
+            if (level or roles) == []:
                 embed = Embed(description=f"There are no ranks for {ctx.guild.name}.",
                             color=0x0c73d3)
                 await ctx.send(embed=embed)
                 return
-            
-            roles = []
-            for lvl in levels:
-                lvlrole = ctx.guild.get_role(lvl.roleid)
-                if lvlrole == None:
-                    roles.append('[ROLE NOT FOUND]\n')
-                else:
-                    roles.append(f"{lvlrole.mention}\n")
 
             s = -1
             e = 0
@@ -180,7 +186,7 @@ class Levels(Scale):
                 e = e+1
                 embeds.append(newpage(f'List of ranks for {ctx.guild.name}', mlis(level, s, e), mlis(roles, s, e)))
                 embedcount = embedcount+1
-                
+            print(embeds)    
             paginator = Paginator(
                 client=self.bot, 
                 pages=embeds,
@@ -273,9 +279,9 @@ class Levels(Scale):
     
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
-    async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER='None'):
+    async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
         # assets: https://imgur.com/a/3Y6W7lZ
-        if member is 'None':
+        if member is None:
             member = ctx.author
         
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) 
@@ -430,10 +436,12 @@ class Levels(Scale):
             embed.add_field(name='Total XP', value=xp, inline=True)
             return embed
         
-        lvl_order = await db.leveling.find({'guildid':ctx.guild_id}).sort(-db.leveling.level, -db.leveling.total_xp).to_list()
+        lvl_order = db.leveling.find({'guildid':ctx.guild_id}).sort(-db.leveling.level, -db.leveling.total_xp)
         
         rank = 1
         members = []
+        lvls = []
+        tot_xp = []
         async for lvl in lvl_order:
             if rank == 1:
                 ranks = '🏆 1'
@@ -449,17 +457,14 @@ class Levels(Scale):
             else:
                 members.append(f'**{ranks}.** <@{lvl.memberid}>\n')
             rank = rank+1
+
+            tot_xp .append(f'{lvl.total_xp}\n')
+
+            lvls.append(f'{lvl.level}\n')
         
         if members == []:
             await ctx.send('Nobody has levels in this server yet')
-            return
-        
-        lvls = []
-        async for lvl in lvl_order:
-            lvls.append(f'{lvl.level}\n')
-        tot_xp = []
-        async for xp in lvl_order:
-            tot_xp .append(f'{xp.total_xp}\n')
+            return            
         
         s = -1
         e = 0
