@@ -124,14 +124,12 @@ class Tags(Scale):
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}",
                                 color=0x0c73d3)
                         embed.set_image(url=image_url)
-                        await ctx.send(embed=embed)
-                        return
+                        return await ctx.send(embed=embed)
                     else:
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=attachment.url, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {attachment.url}",
                                 color=0x0c73d3)
-                        await ctx.send(embed=embed)
-                        return
+                        return await ctx.send(embed=embed)
                 else:
                     if attachment.content_type == 'image/png':
                         image_url = attachment.url
@@ -139,14 +137,12 @@ class Tags(Scale):
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
                                 color=0x0c73d3)
                         embed.set_image(url=image_url)
-                        await ctx.send(embed=embed)
-                        return
+                        return await ctx.send(embed=embed)
                     else:
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=attachment.url, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {attachment.url}",
                                 color=0x0c73d3)
-                        await ctx.send(embed=embed)
-                        return
+                        return await ctx.send(embed=embed)
             else:
                 if content is not None:
                     url = geturl(content)
@@ -158,17 +154,17 @@ class Tags(Scale):
                             embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
                                         color=0x0c73d3)
                             embed.set_image(url=url)
-                            await ctx.send(embed=embed)
+                            return await ctx.send(embed=embed)
                         else:
                             await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=url, creation_date=datetime.utcnow()).insert()
                             embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
                                         color=0x0c73d3)
-                            await ctx.send(embed=embed)
+                            return await ctx.send(embed=embed)
                     else:
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=None, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
                                     color=0x0c73d3)
-                        await ctx.send(embed=embed)
+                        return await ctx.send(embed=embed)
         else:
             embed = Embed(description=f":x: The tag `{tagname}` already exists",
                         color=0xDD2222)
@@ -282,16 +278,14 @@ class Tags(Scale):
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}",
                             color=0x0c73d3)
                     embed.set_image(url=image_url)
-                    await ctx.send(embed=embed)
-                    return
+                    return await ctx.send(embed=embed)
                 else:
                     tag_to_edit.attachment_url = attachment.url
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {attachment.url}",
                             color=0x0c73d3)
-                    await ctx.send(embed=embed)
-                    return
+                    return await ctx.send(embed=embed)
             else:
                 if attachment.content_type == 'image/png':
                     image_url = attachment.url
@@ -301,16 +295,14 @@ class Tags(Scale):
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
                             color=0x0c73d3)
                     embed.set_image(url=image_url)
-                    await ctx.send(embed=embed)
-                    return
+                    return await ctx.send(embed=embed)
                 else:
                     tag_to_edit.attachment_url = attachment.url
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {attachment.url}",
                             color=0x0c73d3)
-                    await ctx.send(embed=embed)
-                    return
+                    return await ctx.send(embed=embed)
         else:
             if content is not None:
                 url = geturl(content)
@@ -324,21 +316,21 @@ class Tags(Scale):
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
                                     color=0x0c73d3)
                         embed.set_image(url=url)
-                        await ctx.send(embed=embed)
+                        return await ctx.send(embed=embed)
                     else:
                         tag_to_edit.attachment_url = None
                         tag_to_edit.content = content
                         await tag_to_edit.save()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
                                     color=0x0c73d3)
-                        await ctx.send(embed=embed)
+                        return await ctx.send(embed=embed)
                 else:
                     tag_to_edit.attachment_url = None
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
                                 color=0x0c73d3)
-                    await ctx.send(embed=embed)
+                    return await ctx.send(embed=embed)
     
     @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
     @tagname()
@@ -349,8 +341,7 @@ class Tags(Scale):
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
             return
-
-        
+ 
         tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_view = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_view is None:
