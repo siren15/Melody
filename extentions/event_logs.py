@@ -1,17 +1,13 @@
-from dataclasses import MISSING
 import math
 import random
 import re
 from datetime import datetime, timezone
-from types import NoneType
-from dateutil.relativedelta import relativedelta
 
-from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check, listen
-from dis_snek.models.discord.enums import AuditLogEventType
+from dis_snek import Snake, slash_command, OptionTypes, Permissions, Scale, Embed, check, listen
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.api.events.discord import MemberRemove, MessageDelete, MessageUpdate, MemberUpdate
+from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -47,7 +43,7 @@ def geturl(string):
             return url
     return None
 
-class Logging(Scale):
+class EventLogs(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
     
@@ -494,4 +490,4 @@ class Logging(Scale):
                     await db.strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Unban", day=daytime, reason=reason).insert()
 
 def setup(bot):
-    Logging(bot)
+    EventLogs(bot)

@@ -137,15 +137,14 @@ class BeanieDocuments():
         leavechannelid: Optional[int64] = None
         leavemsg: Optional[str] = None
 
-    class reactionroles(Document):
-        reactionid: Optional[str] = None
+    class button_roles(Document):
         guildid: Optional[int64] = None
+        button_id: Optional[str] = None
         channelid: Optional[int64] = None
-        reactionmsgid: Optional[str] = None
-        reactionemoji: Optional[str] = None
-        reactionroleid: Optional[int64] = None
-        requirementroleid: Optional[int64] = None
-        ignoredroleid: Optional[int64] = None
+        msg_id: Optional[int64] = None
+        roleid: Optional[int64] = None
+        requirement_role_id: Optional[int64] = None
+        ignored_role_id: Optional[int64] = None
         mode: Optional[int64] = None
 
     class levelingstats(Document):
@@ -188,7 +187,7 @@ def setup(bot):
     bot.add_model(BeanieDocuments.mutes)
     bot.add_model(BeanieDocuments.tag)
     bot.add_model(BeanieDocuments.tempbans)
-    bot.add_model(BeanieDocuments.reactionroles)
+    bot.add_model(BeanieDocuments.button_roles)
     bot.add_model(BeanieDocuments.persistentroles)
     bot.add_model(BeanieDocuments.userfilter)
     bot.add_model(BeanieDocuments.welcomer)

@@ -80,6 +80,21 @@ def role():
         return slash_option(name='role', description='Select a role', opt_type=OptionTypes.ROLE, required=True)(func)
     return wrapper
 
+def button_id():
+    def wrapper(func):
+        return slash_option(name='button_id', description='Type the button id', opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
+
+def bt_role_1():
+    def wrapper(func):
+        return slash_option(name='role_1', description='Select a role', opt_type=OptionTypes.ROLE, required=True)(func)
+    return wrapper
+
+def new_role():
+    def wrapper(func):
+        return slash_option(name='new_role', description='Select a role', opt_type=OptionTypes.ROLE, required=False)(func)
+    return wrapper
+
 def content():
     def wrapper(func):
         return slash_option(name='content', description='write the content', opt_type=OptionTypes.STRING, required=False)(func)
@@ -105,14 +120,9 @@ def embed_message_id():
         return slash_option(name='embed_message_id', description='Paste in the embed message ID', opt_type=OptionTypes.STRING, required=True)(func)
     return wrapper
 
-def rr_message_id():
+def message_id():
     def wrapper(func):
-        return slash_option(name='reaction_role_message_id', description='Paste in the reaction role message ID', opt_type=OptionTypes.STRING, required=True)(func)
-    return wrapper
-
-def rr_channel():
-    def wrapper(func):
-        return slash_option(name='reaction_role_channel', description='Select a channel in which the reaction role message is', opt_type=OptionTypes.CHANNEL, required=True)(func)
+        return slash_option(name='message_id', description='Paste in a message ID', opt_type=OptionTypes.STRING, required=True)(func)
     return wrapper
 
 def rrole():
