@@ -394,7 +394,7 @@ class Levels(Scale):
         await ctx.send(file=f'levelcard_{member.id}.png')
         os.remove(f'levelcard_{member.id}.png')
     
-    @slash_command(name='level', sub_cmd_name='background', sub_cmd_description='change the background of your level stats card(resolution should be min: 956x435, 16:9 aspect ratio)', scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='level', sub_cmd_name='background', sub_cmd_description='change the background of your level stats card(resolution should be min: 956x435)', scopes=[435038183231848449,149167686159564800])
     @attachment()
     @reset_to_default()
     @check(role_lock())
@@ -412,6 +412,18 @@ class Levels(Scale):
         levels.lc_background = attachment.url
         await levels.save()
         await ctx.send(f"{ctx.author.mention} Background set to\n{attachment.url}")
+    
+    @slash_command(name='reset_lvl_bg', description='[ADMIN]Reset members level card background)', scopes=[435038183231848449,149167686159564800])
+    @user()
+    @check(member_permissions(Permissions.ADMINISTRATOR))
+    async def level_bg(self, ctx: InteractionContext, user: OptionTypes.USER):
+        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':user.id})
+        if levels.lc_background is not None:
+            levels.lc_background = None
+            await levels.save()
+            return await ctx.send(f"Background is now set back to default")
+        elif levels.lc_background == None:
+            return await ctx.send(f"Member {user.mention} doeasn't have a custom background set")
 
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
