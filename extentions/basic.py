@@ -226,12 +226,14 @@ class Basic(Scale):
             modal.InputText(
                 label="Embed Title",
                 style=modal.TextStyles.SHORT,
-                custom_id=f'embed_title'
+                custom_id=f'embed_title',
+                required=False
             ),
             modal.InputText(
                 label="Embed Text",
                 style=modal.TextStyles.PARAGRAPH,
-                custom_id=f'embed_text'
+                custom_id=f'embed_text',
+                required=False
             )
         ],
         custom_id=f'{ctx.author.id}_embed_modal'
@@ -267,12 +269,14 @@ class Basic(Scale):
             modal.InputText(
                 label="Embed Title",
                 style=modal.TextStyles.SHORT,
-                custom_id=f'embed_title'
+                custom_id=f'embed_title',
+                required=False
             ),
             modal.InputText(
                 label="Embed Text",
                 style=modal.TextStyles.PARAGRAPH,
-                custom_id=f'embed_text'
+                custom_id=f'embed_text',
+                required=False
             )
         ],
         custom_id=f'{ctx.author.id}_embed_modal'
