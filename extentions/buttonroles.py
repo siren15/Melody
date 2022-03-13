@@ -131,7 +131,7 @@ class ButtonRoles(Scale):
         edits = ''
         message = await channel.fetch_message(message_id)
         if message is not None:
-            if (button_colour is not None) and (new_role is not None) and (name is not None):
+            if (button_colour is None) and (new_role is None) and (name is None):
                 return await ctx.send("`Name`, `Button colour` and `New Role` can't be edited together")
             if button_colour is not None:
                     if message.components != []:
