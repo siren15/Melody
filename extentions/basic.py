@@ -236,9 +236,7 @@ class Basic(Scale):
         ],
         custom_id=f'{ctx.author.id}_embed_modal'
         )
-
         await ctx.send_modal(modal=m)
-
         try:
             modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
         except asyncio.TimeoutError:
