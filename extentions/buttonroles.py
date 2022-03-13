@@ -107,7 +107,7 @@ class ButtonRoles(Scale):
             await db.button_roles.insert_many(documents)
             await message.edit(components=rows)
             for m in messages:
-                await ctx.send(embed=Embed(color=0x0c73d3, descritpion=m))
+                await ctx.send(embed=Embed(color=0x0c73d3, description=m))
     
     @slash_command(name='rolebuttons', sub_cmd_name='edit', sub_cmd_description="Edit a behaviour of a role button", scopes=[435038183231848449,149167686159564800])
     @message_id()
