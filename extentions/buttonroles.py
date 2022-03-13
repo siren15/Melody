@@ -52,27 +52,27 @@ class ButtonRoles(Scale):
             messages = []
             button_1_id = await button_id_generator(ctx, channel, message)
             components.append(Button(style=button_colour,label=f"{bt_role_1.name}",custom_id=button_1_id))
-            messages.append(f"Button for role `{bt_role_1.mention}` was added.\nButton ID: `{button_1_id}`\nMode: {mode}")
+            messages.append(f"Button for role {bt_role_1.mention} was added.\nButton ID: `{button_1_id}`\nMode: {mode}")
             documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_1_id, channelid=channel.id, msg_id=message.id, roleid=bt_role_1.id, mode=mode))
             if role_2 is not None:
                 button_2_id = await button_id_generator(ctx, channel, message)
                 components.append(Button(style=button_colour, label=f"{role_2.name}", custom_id=button_2_id))
-                messages.append(f"Button for role `{role_2.mention}` was added.\nButton ID: `{button_2_id}`\nMode: {mode}")
+                messages.append(f"Button for role {role_2.mention} was added.\nButton ID: `{button_2_id}`\nMode: {mode}")
                 documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_2_id, channelid=channel.id, msg_id=message.id, roleid=role_2.id, mode=mode))
             if role_3 is not None:
                 button_3_id = await button_id_generator(ctx, channel, message)
                 components.append(Button(style=button_colour, label=f"{role_3.name}", custom_id=button_3_id))
-                messages.append(f"Button for role `{role_3.mention}` was added.\nButton ID: `{button_3_id}`\nMode: {mode}")
+                messages.append(f"Button for role {role_3.mention} was added.\nButton ID: `{button_3_id}`\nMode: {mode}")
                 documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_3_id, channelid=channel.id, msg_id=message.id, roleid=role_3.id, mode=mode))
             if role_4 is not None:
                 button_4_id = await button_id_generator(ctx, channel, message)
                 components.append(Button(style=button_colour, label=f"{role_4.name}", custom_id=button_4_id))
-                messages.append(f"Button for role `{role_4.mention}` was added.\nButton ID: `{button_4_id}`\nMode: {mode}")
+                messages.append(f"Button for role {role_4.mention} was added.\nButton ID: `{button_4_id}`\nMode: {mode}")
                 documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_4_id, channelid=channel.id, msg_id=message.id, roleid=role_4.id, mode=mode))
             if role_5 is not None:
                 button_5_id = await button_id_generator(ctx, channel, message)
                 components.append(Button(style=button_colour, label=f"{role_5.name}", custom_id=button_5_id))
-                messages.append(f"Button for role `{role_5.mention}` was added.\nButton ID: `{button_5_id}`\nMode: {mode}")
+                messages.append(f"Button for role {role_5.mention} was added.\nButton ID: `{button_5_id}`\nMode: {mode}")
                 documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_5_id, channelid=channel.id, msg_id=message.id, roleid=role_5.id, mode=mode))
             if len(components) > 25:
                 return await ctx.send("There can't be more than 25 components on one message")
