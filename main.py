@@ -1,4 +1,4 @@
-from distutils import extension
+# props to proxy and his way to connect to database https://github.com/artem30801/SkyboxBot/blob/master/main.py
 import os
 import asyncio
 from typing import Optional
@@ -17,7 +17,7 @@ from dis_snek.client.errors import NotFound
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
-ad = AutoDefer(enabled=True, time_until_defer=0)
+ad = AutoDefer(enabled=True, time_until_defer=1.2)
 
 class CustomSnake(Snake):
     def __init__(self):
@@ -29,19 +29,17 @@ class CustomSnake(Snake):
             fetch_members=True, 
             auto_defer=ad
         )
-
         self.db: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
         self.models = list()
 
-    def startup(self):
+    async def startup(self):
         for filename in os.listdir('./extentions'):
             if filename.endswith('.py') and not filename.startswith('--'):
                 self.load_extension(f'extentions.{filename[:-3]}')
                 print(f'grew {filename[:-3]}')
-
         self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
-        self.loop.run_until_complete(init_beanie(database=self.db.giffany, document_models=self.models))
-        self.start(os.environ['pinetree_token'])
+        await init_beanie(database=self.db.giffany, document_models=self.models)
+        await self.astart(os.environ['tyrone_token'])
     
     @listen()
     async def on_ready(self):
@@ -118,9 +116,6 @@ class CustomSnake(Snake):
     def add_model(self, model):
         self.models.append(model)
 
-def main():
-    bot = CustomSnake()
-    bot.startup()
-
 if __name__ == "__main__":
-    main()
+    bot = CustomSnake()
+    asyncio.run(bot.startup())

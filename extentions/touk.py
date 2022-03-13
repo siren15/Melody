@@ -1,3 +1,4 @@
+# inspired by https://github.com/artem30801/SkyboxBot/blob/master/main.py
 from bson.int64 import Int64 as int64
 from dis_snek import Snake, Scale, slash_command, InteractionContext, Embed
 from typing import Optional
