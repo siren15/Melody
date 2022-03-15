@@ -208,9 +208,10 @@ class PersistentRoles(Scale):
                     async for role in level_roles:
                         roles.append(role.roleid)
                     if level_roles != []:
-                        role = guild.get_role(role.roleid)
-                        if role not in member.roles:
-                            await member.add_role(role)
+                        for role_id in roles:
+                            role = guild.get_role(role_id)
+                            if role not in member.roles:
+                                await member.add_role(role)
 
 def setup(bot):
     PersistentRoles(bot)
