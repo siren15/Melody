@@ -95,11 +95,14 @@ class Levels(Scale):
                 levels.messages = number_of_messages    #and number of messages
                 await levels.save()
 
-                roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':lvl})#get the role reward for the level if it exists
-                if roles is not None:#if it's not none
-                    role = message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
-                    if (role is not None) and (role not in message.author.roles):#if it exists and the member doesn't have it
-                        await message.author.add_role(role, '[bot]leveling role add')#give it to member
+                level_roles = db.leveling_roles.find({"guildid":message.guild.id, 'level':{'$lte':lvl}})
+                roles = []
+                async for role in level_roles:
+                    roles.append(role.roleid)
+                if level_roles != []:
+                    role = message.guild.get_role(role.roleid)
+                    if role not in message.author.roles:
+                        await message.author.add_role(role)
 
             await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert() #member gets put into the wait list
             await asyncio.sleep(60) #the commands gonna wait for 60 seconds
