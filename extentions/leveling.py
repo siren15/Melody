@@ -43,11 +43,11 @@ class Levels(Scale):
          #connect to database
         #check if enough time has passed since last message
         wait_mem = await db.levelwait.find_one({'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$gt':datetime.utcnow()}})
-        if wait_mem == None:
+        if wait_mem is None:
             #check what xp the user has
             levels = await db.leveling.find_one({'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
             
-            if levels == None: #if the member is not logged in db
+            if levels is None: #if the member is not logged in db
                 await db.leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0).insert() #member get's logged to db with level and xp set to 0
                 return
 
@@ -55,13 +55,13 @@ class Levels(Scale):
 
             total_xp = levels.total_xp #total xp the user has
             lvl = levels.level #the level the user has
-            if levels.xp_to_next_level == None:#if the xp to next level is not logged, due to migration from mee6
+            if levels.xp_to_next_level is None:#if the xp to next level is not logged, due to migration from mee6
                 xp = 0 #xp is set to 0
             else:
                 xp = levels.xp_to_next_level #xp that the user has towards next level, this counter resets every time a new level is acquired
 
             #level multiplier, it's gonna divide the xp needed towards the next level
-            #if level_settings.multiplier == None:#if the server doesn't have multiplier set up
+            #if level_settings.multiplier is None:#if the server doesn't have multiplier set up
                 #multiplier = 1#the default multiplier is set to 1
             #else:
                 #multiplier = level_settings.multiplier#otherwise get the multiplier from db
@@ -72,7 +72,7 @@ class Levels(Scale):
             import random
             xp_to_give = random.randint(15, 25) #xp that's given to member, a random number between 15-25
             new_total_xp = total_xp+xp_to_give #the new total xp, old total xp + xp to give
-            if levels.messages == None:  #if no messages logged in db
+            if levels.messages is None:  #if no messages logged in db
                 number_of_messages = 1 #number of xp messages is 1 for the current message
             else:
                 number_of_messages = levels.messages + 1 #otherwise the number of xp messages is logged no. of messages + 1 for the current message  
@@ -110,23 +110,15 @@ class Levels(Scale):
     @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles")
     @role()
     @role_level()
-    async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None, role_level:str=None):
-        
+    async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE, role_level:str): 
         perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
         if (perms == True):
-            if role == None:
-                await ctx.send('you have to include a role')
-                return
-            if role_level == None:
-                await ctx.send('you have to include a role level')
-                return
-            if (int(role_level) < 1) or (int(role_level) > 500):
+            if (int(role_level) < 1) or (int(role_level) > 300):
                 await ctx.send('role level has to be more than 0 and less than 300')
                 return
 
-            
             check = await db.leveling_roles.find_one({'guildid':ctx.guild.id, 'roleid':role.id})
-            if check == None:
+            if check is None:
                 await db.leveling_roles(guildid=ctx.guild.id, roleid=role.id, level=int(role_level)).insert()
                 await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} assigned to level {role_level}'))
             else:
@@ -200,13 +192,13 @@ class Levels(Scale):
         
         perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
         if (perms == True):
-            if role == None:
+            if role is None:
                 await ctx.send('you have to include a role')
                 return
 
             
             check = await db.leveling_roles.find_one({'guildid':ctx.guild.id, 'roleid':role.id})
-            if check == None:
+            if check is None:
                 await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is not assigned to a level'))
             else:
                 await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} removed from level {check.level}'))
@@ -216,21 +208,21 @@ class Levels(Scale):
     @member()
     async def oldrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
         
-        if member == None:
+        if member is None:
             member = ctx.author
         
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) 
-        if levels == None:
+        if levels is None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
 
         level_stats = await db.levelingstats.find_one({'lvl':levels.level})
 
         #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
-        #if lvl_set == None:
+        #if lvl_set is None:
             #await db.save(leveling_settings(guildid=ctx.guild.id))
 
-        #if lvl_set.multiplier == None:
+        #if lvl_set.multiplier is None:
             #multiplier = 1
         #else:
             #multiplier = lvl_set.multiplier
@@ -285,17 +277,17 @@ class Levels(Scale):
             member = ctx.author
         
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) 
-        if levels == None:
+        if levels is None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
 
         level_stats = await db.levelingstats.find_one({'lvl':levels.level})
 
         #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
-        #if lvl_set == None:
+        #if lvl_set is None:
             #await db.save(leveling_settings(guildid=ctx.guild.id))
 
-        #if lvl_set.multiplier == None:
+        #if lvl_set.multiplier is None:
             #multiplier = 1
         #else:
             #multiplier = lvl_set.multiplier
@@ -405,7 +397,7 @@ class Levels(Scale):
                 levels.lc_background = None
                 await levels.save()
                 return await ctx.send(f"{ctx.author.mention} Background is now set back to default")
-            elif levels.lc_background == None:
+            elif levels.lc_background is None:
                 return await ctx.send(f"{ctx.author.mention} You don't have a custom background set")
 
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
@@ -422,7 +414,7 @@ class Levels(Scale):
             levels.lc_background = None
             await levels.save()
             return await ctx.send(f"Background is now set back to default")
-        elif levels.lc_background == None:
+        elif levels.lc_background is None:
             return await ctx.send(f"Member {user.mention} doeasn't have a custom background set")
 
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
