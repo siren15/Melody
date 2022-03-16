@@ -455,7 +455,7 @@ class Levels(Scale):
             embed.add_field(name='Total XP', value=xp, inline=True)
             return embed
         
-        lvl_order = db.leveling.find({'guildid':ctx.guild_id}).sort(-db.leveling.level, -db.leveling.total_xp)
+        lvl_order = db.leveling.find({'guildid':ctx.guild_id}).sort(-db.leveling.total_xp)
         
         rank = 1
         members = []
