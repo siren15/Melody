@@ -7,7 +7,7 @@ from dis_snek import Snake, slash_command, OptionTypes, Permissions, Scale, Embe
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate
+from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -414,7 +414,7 @@ class EventLogs(Scale):
                     await db.strikes(strikeid=kickid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Kick", day=daytime, reason=reason).insert()
     
     @listen()
-    async def on_ban_create(self, event):
+    async def on_ban_create(self, event:BanCreate):
         member = event.user
         guild = event.guild
         audit_log_entry = await guild.fetch_audit_log(action_type=22, limit=1)
@@ -452,7 +452,7 @@ class EventLogs(Scale):
                     await db.strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Ban", day=daytime, reason=reason).insert()
 
     @listen()
-    async def on_ban_remove(self, event):
+    async def on_ban_remove(self, event: BanRemove):
         member = event.user
         guild = event.guild
         audit_log_entry = await guild.fetch_audit_log(action_type=23, limit=1)
