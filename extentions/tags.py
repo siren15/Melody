@@ -217,24 +217,23 @@ class Tags(Scale):
         tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tag_to_delete = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_delete is None:
-            embed = Embed(description=f":x: You don't own a tag called  `{tagname}`",
+            embed = Embed(description=f":x: There's not a tag with the name `{tagname}`",
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
             return
-        url = geturl(tag_to_delete.content)
-        for url in url:
-            url = url
-        if url:
-            embed = Embed(description=f"__**Tag deleted!**__ \n\n**Tag's name:** {tag_to_delete.names} \n**Tag's content:**{tag_to_delete.content}",
-                        color=0x0c73d3)
-            embed.set_image(url=url)
-            await ctx.send(embed=embed)
-            await tag_to_delete.delete()
-        else:
-            embed = Embed(description=f"__**Tag deleted!**__ \n\n**Tag's name:** {tag_to_delete.names} \n**Tag's content:**{tag_to_delete.content}",
-                        color=0x0c73d3)
-            await ctx.send(embed=embed)
-            await tag_to_delete.delete()
+        
+        content = ''
+        if tag_to_delete.content is None:
+            if tag_to_delete.attachment_url is not None:
+                content = content + f'{tag_to_delete.attachment_url}'
+        elif tag_to_delete.content is not None:
+            content = content + f'{tag_to_delete.content}'
+            if tag_to_delete.attachment_url is not None:
+                content = content + f'\n{tag_to_delete.attachment_url}'
+        embed = Embed(description=f"__**Tag deleted!**__ \n\n**Tag's name:** {tag_to_delete.names} \n**Tag's content:**{tag_to_delete.content}",
+                    color=0x0c73d3)
+        await ctx.send(embed=embed)
+        await tag_to_delete.delete()
 
     @slash_command(name='tag', sub_cmd_name='edit', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
