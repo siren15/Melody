@@ -348,7 +348,7 @@ class Tags(Scale):
             return
 
         if tag_to_view.owner_id is not None:
-            tag_owner = await self.bot.get_user(tag_to_view.owner_id)
+            tag_owner = self.bot.fetch_user(tag_to_view.owner_id)
         else:
             tag_owner = 'UNKNOWN'
 
