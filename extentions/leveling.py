@@ -423,7 +423,7 @@ class Levels(Scale):
     @slash_command(name='reset_lvl_bg', description='[ADMIN]Reset members level card background)', scopes=[435038183231848449,149167686159564800])
     @user()
     @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def level_bg(self, ctx: InteractionContext, user: OptionTypes.USER):
+    async def level_bg_reset(self, ctx: InteractionContext, user: OptionTypes.USER):
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':user.id})
         if levels.lc_background is not None:
             levels.lc_background = None

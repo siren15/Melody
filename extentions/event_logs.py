@@ -384,7 +384,7 @@ class EventLogs(Scale):
         for au_entry in audit_log_entry.entries:
             entry_created_at = snowflake_time(au_entry.id)
             cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-            if cdiff <= 60:
+            if cdiff <= 300:
                 reason = au_entry.reason
                 for au_user in audit_log_entry.users:
                     if au_entry.target_id == au_user.id:
@@ -421,7 +421,7 @@ class EventLogs(Scale):
         for au_entry in audit_log_entry.entries:
             entry_created_at = snowflake_time(au_entry.id)
             cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-            if int(cdiff) <= int(60):
+            if cdiff <= 300:
                 reason = au_entry.reason
                 for au_user in audit_log_entry.users:
                     if au_entry.target_id == au_user.id:
@@ -459,7 +459,7 @@ class EventLogs(Scale):
         for au_entry in audit_log_entry.entries:
             entry_created_at = snowflake_time(au_entry.id)
             cdiff = date_diff_in_Seconds(datetime.now(tz=timezone.utc), entry_created_at.replace(tzinfo=timezone.utc))
-            if int(cdiff) <= int(60):
+            if cdiff <= 300:
                 reason = au_entry.reason
                 for au_user in audit_log_entry.users:
                     if au_entry.target_id == au_user.id:
