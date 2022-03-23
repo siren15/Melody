@@ -684,7 +684,7 @@ class EventLogs(Scale):
                         if wm.channelid is not None:
                             wchannel = member.guild.get_channel(wm.channelid)
                             if (wchannel is not None) and (wm.message is not None):
-                                await wchannel.send(wm.message.format(user=user, member=member, guild=guild))
+                                return await wchannel.send(wm.message.format(user=user, member=member, guild=guild))
 
     @listen()
     async def leave_message(self, event: MemberRemove):
