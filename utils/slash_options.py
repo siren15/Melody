@@ -55,6 +55,16 @@ def text():
         return slash_option(name='text', description='Type some text', opt_type=OptionTypes.STRING, required=True)(func)
     return wrapper
 
+def welcome_message_text():
+    def wrapper(func):
+        return slash_option(name='welcome_message_text', description='The welcome message to be sent', opt_type=OptionTypes.STRING, required=False)(func)
+    return wrapper
+
+def leave_message_text():
+    def wrapper(func):
+        return slash_option(name='leave_message_text', description='The leave message to be sent', opt_type=OptionTypes.STRING, required=False)(func)
+    return wrapper
+
 def embed_text():
     def wrapper(func):
         return slash_option(name='embed_text', description='What secrets does this embed hold?', opt_type=OptionTypes.STRING, required=False)(func)

@@ -112,11 +112,11 @@ async def is_command_active(ctx):
     return True
 
 async def is_event_active(guild, event: str):
-    
-    commands = await db.prefixes.find_one({"guildid":guild.id})
-    if event.lower() not in commands.activecommands.lower():
-        raise EventNotActivatedInGuild(f'{event} not activated for {guild}')
-    return True
+    if guild is not None:
+        commands = await db.prefixes.find_one({"guildid":guild.id})
+        if event.lower() not in commands.activecommands.lower():
+            raise EventNotActivatedInGuild(f'{event} not activated for {guild}')
+        return True
 
 async def is_user_blacklisted_e(message):
     

@@ -1,13 +1,16 @@
 import math
 import random
 import re
-from datetime import datetime, timezone
+import os
+import requests
 
-from dis_snek import Snake, slash_command, OptionTypes, Permissions, Scale, Embed, check, listen
+from datetime import datetime, timezone
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from dis_snek import Snake, slash_command, OptionTypes, Permissions, Scale, Embed, check, listen, InteractionContext
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove
+from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -50,25 +53,150 @@ class EventLogs(Scale):
     @slash_command(name='logchannel', description="set up a logging channel")
     @channel()
     @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def logchannel(self, ctx, channel:OptionTypes.CHANNEL=None):
+    async def logchannel(self, ctx: InteractionContext, channel:OptionTypes.CHANNEL=None):
         if channel is None:
             embed = Embed(
                 description=":x: Please provide a channel",
                 color=0xDD2222)
             await ctx.send(embed=embed)
             return
-
         
-        log_entry = await db.logs.find_one({"guild_id":ctx.guild.id})
+        log_entry = await db.logs.find_one({"guild_id":ctx.guild_id})
         if log_entry is None:
-            await db.logs(guild_id=ctx.guild.id, channel_id=channel.id).save()
+            await db.logs(guild_id=ctx.guild_id, channel_id=channel.id).save()
             embed = Embed(description=f"I have assigned {channel.mention} as a log channel.",
                                   color=0x0c73d3)
             await ctx.send(embed=embed)
         else:
             log_entry.channel_id = channel.id
-            await db.save(log_entry)
+            await log_entry.save()
             embed = Embed(description=f"I have updated {channel.mention} as a log channel.",
+                                  color=0x0c73d3)
+            await ctx.send(embed=embed)
+    
+    @slash_command(name='welcomemessage', description="set up a welcome message and channel", scopes=[149167686159564800, 435038183231848449])
+    @welcome_message_text()
+    @channel()
+    @check(member_permissions(Permissions.ADMINISTRATOR))
+    async def welcome_message_cmd(self, ctx: InteractionContext, welcome_message_text:OptionTypes.STRING=None, channel:OptionTypes.CHANNEL=None):
+        if (channel is None) and (welcome_message_text is None):
+            embed = Embed(
+                description=":x: Please provide a channel or welcome message",
+                color=0xDD2222)
+            await ctx.send(embed=embed)
+            return
+        
+        log_entry = await db.welcome_msg.find_one({"guildid":ctx.guild_id})
+        if log_entry is None:
+            up_msg = ''
+            if welcome_message_text is not None:
+                up_msg = up_msg + f"I have updated `{welcome_message_text}` as a welcome message.\n"
+
+            if channel is not None:
+                up_msg = up_msg + f"I have updated {channel.mention} as a welcome channel."
+                channel = channel.id
+            elif channel is None:
+                channel = None
+            await db.welcome_msg(guildid=ctx.guild_id, channelid=channel, message=welcome_message_text).save()
+            embed = Embed(description=up_msg,
+                                  color=0x0c73d3)
+            await ctx.send(embed=embed)
+        else:
+            up_msg = ''
+            if welcome_message_text is not None:
+                log_entry.message = welcome_message_text
+                up_msg = up_msg + f"I have updated `{welcome_message_text}` as a welcome message.\n"
+
+            if channel is not None:
+                log_entry.channelid = channel.id
+                up_msg = up_msg + f"I have updated {channel.mention} as a welcome channel."
+
+            await log_entry.save()
+            embed = Embed(description=up_msg,
+                                  color=0x0c73d3)
+            await ctx.send(embed=embed)
+
+    @slash_command(name='leavemessage', description="set up a leave message and channel", scopes=[149167686159564800, 435038183231848449])
+    @leave_message_text()
+    @channel()
+    @check(member_permissions(Permissions.ADMINISTRATOR))
+    async def leave_message_cmd(self, ctx: InteractionContext, leave_message_text:OptionTypes.STRING=None, channel:OptionTypes.CHANNEL=None):
+        if (channel is None) and (leave_message_text is None):
+            embed = Embed(
+                description=":x: Please provide a channel or leave message",
+                color=0xDD2222)
+            await ctx.send(embed=embed)
+            return
+        
+        log_entry = await db.leave_msg.find_one({"guildid":ctx.guild_id})
+        if log_entry is None:
+            up_msg = ''
+            if leave_message_text is not None:
+                up_msg = up_msg + f"I have updated `{leave_message_text}` as a leave message.\n"
+
+            if channel is not None:
+                up_msg = up_msg + f"I have updated {channel.mention} as a leave channel."
+                channel = channel.id
+            elif channel is None:
+                channel = None
+            await db.leave_msg(guildid=ctx.guild_id, channelid=channel, message=leave_message_text).save()
+            embed = Embed(description=up_msg,
+                                  color=0x0c73d3)
+            await ctx.send(embed=embed)
+        else:
+            up_msg = ''
+            if leave_message_text is not None:
+                log_entry.message = leave_message_text
+                up_msg = up_msg + f"I have updated `{leave_message_text}` as a leave message.\n"
+
+            if channel is not None:
+                log_entry.channelid = channel.id
+                up_msg = up_msg + f"I have updated {channel.mention} as a leave channel."
+
+            await log_entry.save()
+            embed = Embed(description=up_msg,
+                                  color=0x0c73d3)
+            await ctx.send(embed=embed)
+    
+    @slash_command(name='specialwelcomemsg', description="set up a special welcome message and channel", scopes=[149167686159564800, 435038183231848449])
+    @welcome_message_text()
+    @channel()
+    @check(member_permissions(Permissions.ADMINISTRATOR))
+    async def specialwelcome_message_cmd(self, ctx: InteractionContext, welcome_message_text:OptionTypes.STRING=None, channel:OptionTypes.CHANNEL=None):
+        if (channel is None) and (welcome_message_text is None):
+            embed = Embed(
+                description=":x: Please provide a channel or welcome message",
+                color=0xDD2222)
+            await ctx.send(embed=embed)
+            return
+        
+        log_entry = await db.special_welcome_msg.find_one({"guildid":ctx.guild_id})
+        if log_entry is None:
+            up_msg = ''
+            if welcome_message_text is not None:
+                up_msg = up_msg + f"I have updated `{welcome_message_text}` as a special welcome message.\n"
+
+            if channel is not None:
+                up_msg = up_msg + f"I have updated {channel.mention} as a special welcome channel."
+                channel = channel.id
+            elif channel is None:
+                channel = None
+            await db.special_welcome_msg(guildid=ctx.guild_id, channelid=channel, message=welcome_message_text).save()
+            embed = Embed(description=up_msg,
+                                  color=0x0c73d3)
+            await ctx.send(embed=embed)
+        else:
+            up_msg = ''
+            if welcome_message_text is not None:
+                log_entry.message = welcome_message_text
+                up_msg = up_msg + f"I have updated `{welcome_message_text}` as special a welcome message.\n"
+
+            if channel is not None:
+                log_entry.channelid = channel.id
+                up_msg = up_msg + f"I have updated {channel.mention} as a special welcome channel."
+
+            await log_entry.save()
+            embed = Embed(description=up_msg,
                                   color=0x0c73d3)
             await ctx.send(embed=embed)
     
@@ -213,7 +341,7 @@ class EventLogs(Scale):
             await log_channel.send(embed=embed)
     
     @listen()
-    async def on_member_add(self, event):
+    async def on_member_join(self, event: MemberAdd):
         member = event.member
         
         if await is_event_active(member.guild, 'member_join') == True:
@@ -488,6 +616,88 @@ class EventLogs(Scale):
                             continue
                     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
                     await db.strikes(strikeid=kickid, guildid=guild.id, user=target.id, moderator=moderator.id, action="Unban", day=daytime, reason=reason).insert()
+
+    @listen()
+    async def welcome_message(self, event: MemberAdd):
+        member = event.member
+        user = event.member
+        guild = event.member.guild
+        if await is_event_active(member.guild, 'welcome_msg') == True:
+            wm = await db.welcome_msg.find_one({"guildid":member.guild.id})
+            if wm is not None:
+                if wm.channelid is not None:
+                    wchannel = member.guild.get_channel(wm.channelid)
+                    if wchannel is not None:
+                        if await is_event_active(member.guild, 'welcome_msg_card') == True:
+                            def round(im):
+                                im = im.resize((210*16,210*16), resample=Image.ANTIALIAS)
+                                mask = Image.new("L", im.size, 0)
+                                draw = ImageDraw.Draw(mask)
+                                draw.ellipse((0,0)+im.size, fill=255)
+                                out = ImageOps.fit(im, mask.size, centering=(0,0))
+                                out.putalpha(mask)
+                                image = out.resize((210,210), resample=Image.ANTIALIAS).convert("RGBA")
+                                return image
+
+                            IW, IH = (956, 435)
+
+                            if wm.background_url is not None:
+                                background = Image.open(requests.get(f'{wm.background_url}', stream=True).raw).crop((0,0,IW,IH)).convert("RGBA")
+                            else:
+                                background = Image.open(requests.get('https://i.imgur.com/5FL6qEm.png', stream=True).raw).convert("RGBA")
+
+                            overlay = Image.open(requests.get('https://i.imgur.com/Bu4STJz.png', stream=True).raw).convert("RGBA")
+                            background.paste(overlay, (0, 0), overlay)
+
+                            pfp = round(Image.open(requests.get(f'{event.member.avatar.url}.png', stream=True).raw).resize((230,230)).convert("RGBA"))
+                            background.paste(pfp, (373, 42), pfp)
+
+                            font = ImageFont.truetype('Everson-Mono-Bold.ttf', 45)
+                            card = ImageDraw.Draw(background)
+                            memname = f"{member.display_name}\nMember #{len(member.guild.members)}"
+                            tw, th = card.textsize(memname, font)
+                            card.text((((IW-tw)/2),283), memname, font=font, stroke_width=2, align="center", stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+                            background.save(f'welcomecard_{member.id}.png')
+                            if wm.message  is not None:
+                                await wchannel.send(wm.message.format(user=user, member=member, guild=guild), file=f'welcomecard_{member.id}.png')
+                            elif wm.message is None:
+                                await wchannel.send(file=f'welcomecard_{member.id}.png')
+                            os.remove(f'welcomecard_{member.id}.png')
+                        else:
+                            if wm.message is not None:
+                                await wchannel.send(wm.message.format(user=user, member=member, guild=guild))
+    
+    @listen()
+    async def special_welcome_message(self, event: MemberUpdate):
+        member = event.after
+        user = event.after
+        guild = event.after.guild
+        if await is_event_active(member.guild, 'special_welcome_msg') == True:
+            before_roles = event.before.roles
+            after_roles = event.after.roles
+            ignore_roles = [role for role in before_roles if role.name in ['Muted', 'Limbo']]
+            if ignore_roles == []:
+                roles_list = [role for role in after_roles if role not in before_roles if role.name == 'Gravity Falls Citizens']
+                if roles_list != []:
+                    wm = await db.special_welcome_msg.find_one({"guildid":member.guild.id})
+                    if wm is not None:
+                        if wm.channelid is not None:
+                            wchannel = member.guild.get_channel(wm.channelid)
+                            if (wchannel is not None) and (wm.message is not None):
+                                await wchannel.send(wm.message.format(user=user, member=member, guild=guild))
+
+    @listen()
+    async def leave_message(self, event: MemberRemove):
+        member = event.member
+        user = event.member
+        guild = event.member.guild
+        if await is_event_active(member.guild, 'leave_msg') == True:
+            lm = await db.leave_msg.find_one({"guildid":member.guild.id})
+            if lm is not None:
+                if lm.channelid is not None:
+                    lchannel = member.guild.get_channel(lm.channelid)
+                    if (lm.message and lchannel) is not None:
+                        await lchannel.send(lm.message.format(user=user, member=member, guild=guild))
 
 def setup(bot):
     EventLogs(bot)

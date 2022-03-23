@@ -187,6 +187,45 @@ class BotConfiguration(Scale):
                 custom_id=f'{ctx.author.id}_nick_off'
             )
         )
+        welcome_msg_buttons: list[ActionRow] = spread_to_rows(
+            #unbaned
+            Button(
+                style=ButtonStyles.GREEN,
+                label="On",
+                custom_id=f'{ctx.author.id}_welcome_msg_on'
+            ),
+            Button(
+                style=ButtonStyles.RED,
+                label="Off",
+                custom_id=f'{ctx.author.id}_welcome_msg_off'
+            )
+        )
+        welcome_msg_card_buttons: list[ActionRow] = spread_to_rows(
+            #unbaned
+            Button(
+                style=ButtonStyles.GREEN,
+                label="On",
+                custom_id=f'{ctx.author.id}_welcome_msg_card_on'
+            ),
+            Button(
+                style=ButtonStyles.RED,
+                label="Off",
+                custom_id=f'{ctx.author.id}_welcome_msg_card_off'
+            )
+        )
+        leave_msg_buttons: list[ActionRow] = spread_to_rows(
+            #unbaned
+            Button(
+                style=ButtonStyles.GREEN,
+                label="On",
+                custom_id=f'{ctx.author.id}_leave_msg_on'
+            ),
+            Button(
+                style=ButtonStyles.RED,
+                label="Off",
+                custom_id=f'{ctx.author.id}_leave_msg_off'
+            )
+        )
         
         buttons = [
             deleted_messages_buttons,
@@ -198,7 +237,10 @@ class BotConfiguration(Scale):
             user_unbanned_buttons,
             mem_timeout_buttons,
             mem_roles_buttons,
-            mem_nick_buttons
+            mem_nick_buttons,
+            welcome_msg_buttons,
+            welcome_msg_card_buttons,
+            leave_msg_buttons
         ]
 
         
@@ -265,6 +307,24 @@ class BotConfiguration(Scale):
             mem_nick_status = 'Off'
         mem_ni_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `{mem_nick_status}`'), components=mem_nick_buttons)
 
+        if 'welcome_msg' in events_log_list:
+            welcome_msg_status = 'On'
+        else:
+            welcome_msg_status = 'Off'
+        wel_m_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Welcome message: `{welcome_msg_status}`'), components=welcome_msg_buttons)
+
+        if 'welcome_msg_card' in events_log_list:
+            welcome_msg_card_status = 'On'
+        else:
+            welcome_msg_card_status = 'Off'
+        wel_m_c_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Welcome message card: `{welcome_msg_card_status}`'), components=welcome_msg_card_buttons)
+
+        if 'leave_msg' in events_log_list:
+            leave_msg_status = 'On'
+        else:
+            leave_msg_status = 'Off'
+        lea_m_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Leave message: `{leave_msg_status}`'), components=leave_msg_buttons)
+
         button_messages = [
             msg_de_msg,
             msg_ed_msg,
@@ -275,8 +335,33 @@ class BotConfiguration(Scale):
             mem_un_msg,
             mem_ti_msg,
             mem_ro_msg,
-            mem_ni_msg
+            mem_ni_msg,
+            wel_m_msg,
+            wel_m_c_msg,
+            lea_m_msg
         ]
+
+        if ctx.guild_id in [149167686159564800, 435038183231848449]:
+            special_welcome_msg_buttons: list[ActionRow] = spread_to_rows(
+                #unbaned
+                Button(
+                    style=ButtonStyles.GREEN,
+                    label="On",
+                    custom_id=f'{ctx.author.id}_special_welcome_msg_on'
+                ),
+                Button(
+                    style=ButtonStyles.RED,
+                    label="Off",
+                    custom_id=f'{ctx.author.id}_special_welcome_msg_off'
+                )
+            )
+            buttons = buttons + [special_welcome_msg_buttons]
+            if 'special_welcome_msg' in events_log_list:
+                s_welcome_msg_status = 'On'
+            else:
+                s_welcome_msg_status = 'Off'
+            s_wel_m_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Special welcome message: `{s_welcome_msg_status}`'), components=special_welcome_msg_buttons)
+            button_messages = button_messages + [s_wel_m_msg]
 
         def buttons_check(component: Button) -> bool:
             return (component.context.author == ctx.author)
@@ -287,7 +372,7 @@ class BotConfiguration(Scale):
                 button_used = await self.bot.wait_for_component(components=buttons, check=buttons_check, timeout=120)
             except asyncio.TimeoutError:
                 await ctx.channel.delete_messages(button_messages)
-                return await ctx.send(f'{ctx.author.mention} Timed out after 2 minutes of inactivity')
+                return await ctx.send(f'{ctx.author.mention} Events config closed due to 2 minutes of inactivity')
             else:
                 bctx = button_used.context
                 events_logging = await db.prefixes.find_one({'guildid':ctx.guild_id})
@@ -451,6 +536,70 @@ class BotConfiguration(Scale):
                         events_logging.activecommands = events_logging.activecommands.replace(' member_nick,', '')
                         await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_on':
+                    if 'welcome_msg' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Welcome message already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' welcome_msg,'
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_off':
+                    if 'welcome_msg' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Welcome message already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' welcome_msg,', '')
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_card_on':
+                    if 'welcome_msg_card' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Welcome message card already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' welcome_msg_card,'
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message card: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_card_off':
+                    if 'welcome_msg_card' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Welcome message card already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' welcome_msg_card,', '')
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message card: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_special_welcome_msg_on':
+                    if 'special_welcome_msg' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Special welcome message already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' special_welcome_msg,'
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Special welcome message: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_special_welcome_msg_off':
+                    if 'special_welcome_msg' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Special welcome message already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' special_welcome_msg,', '')
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Special welcome message: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_leave_msg_on':
+                    if 'leave_msg' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Leave message already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' leave_msg,'
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Leave message: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_leave_msg_off':
+                    if 'leave_msg' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Leave message already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' leave_msg,', '')
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Leave message: `Off`'))
 
 def setup(bot):
     BotConfiguration(bot)

@@ -129,14 +129,23 @@ class BeanieDocuments():
         guild: Optional[int64] = None
         userid: Optional[int64] = None
 
-    class welcomer(Document):
+    class welcome_msg(Document):
         guildid: Optional[int64] = None
         channelid: Optional[int64] = None
-        msg: Optional[str] = None
-        achannelid: Optional[int64] = None
-        amsg: Optional[str] = None
-        leavechannelid: Optional[int64] = None
-        leavemsg: Optional[str] = None
+        message: Optional[str] = None
+        role: Optional[int64] = None
+        background_url: Optional[str] = None
+    
+    class special_welcome_msg(Document):
+        guildid: Optional[int64] = None
+        channelid: Optional[int64] = None
+        message: Optional[str] = None
+        background_url: Optional[str] = None
+    
+    class leave_msg(Document):
+        guildid: Optional[int64] = None
+        channelid: Optional[int64] = None
+        message: Optional[str] = None
 
     class button_roles(Document):
         guildid: Optional[int64] = None
@@ -191,5 +200,7 @@ def setup(bot):
     bot.add_model(BeanieDocuments.button_roles)
     bot.add_model(BeanieDocuments.persistentroles)
     bot.add_model(BeanieDocuments.userfilter)
-    bot.add_model(BeanieDocuments.welcomer)
+    bot.add_model(BeanieDocuments.welcome_msg)
+    bot.add_model(BeanieDocuments.special_welcome_msg)
+    bot.add_model(BeanieDocuments.leave_msg)
     bot.add_model(BeanieDocuments.strikes)

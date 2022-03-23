@@ -1,6 +1,4 @@
 import asyncio
-from ctypes.wintypes import RGB
-from types import NoneType
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import requests
