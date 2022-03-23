@@ -332,7 +332,10 @@ class Levels(Scale):
         IW, IH = (956, 435)
 
         if levels.lc_background is not None:
-            background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((0,0,IW,IH)).convert("RGBA")
+            try:
+                background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((0,0,IW,IH)).convert("RGBA")
+            except:
+                background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
         else:
             background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
 
@@ -415,7 +418,7 @@ class Levels(Scale):
             elif levels.lc_background is None:
                 return await ctx.send(f"{ctx.author.mention} You don't have a custom background set")
 
-        if str(attachment.content_type) not in ['image/jpeg', 'image/png']:
+        if str(attachment.content_type) not in ['image/jpeg', 'image/jpg', 'image/png']:
             return await ctx.send('The background has to be an image, .png or .jpg/.jpeg are allowed')
 
         bg_url = cb.url_upload(attachment.url)
