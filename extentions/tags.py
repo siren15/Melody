@@ -2,6 +2,7 @@ import math
 import re
 import asyncio
 
+from utils.catbox import CatBox as catbox
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timezone
 from dis_snek import Snake, Scale, slash_command, InteractionContext, OptionTypes, Embed, Button, ButtonStyles, ActionRow, spread_to_rows, check, AutocompleteContext
@@ -117,30 +118,33 @@ class Tags(Scale):
         check = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if check==None:
             if attachment is not None:
+                for at in ['exe', 'scr', 'cpl', 'doc', 'jar']:
+                    if at in attachment.content_type:
+                        return await ctx.send(f'`{at}` attachment file type is not allowed to be uploaded to our host site')
                 if content is None:
-                    if attachment.content_type == 'image/png':
-                        image_url = attachment.url
+                    if (attachment.content_type == 'image/png') or (attachment.content_type == 'image/jpg') or (attachment.content_type == 'image/jpeg') or (attachment.content_type == 'image/gif'):
+                        image_url = catbox.url_upload(attachment.url)
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=image_url, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}",
                                 color=0x0c73d3)
                         embed.set_image(url=image_url)
                         return await ctx.send(embed=embed)
                     else:
-                        await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=attachment.url, creation_date=datetime.utcnow()).insert()
-                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {attachment.url}",
+                        await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=catbox.url_upload(attachment.url), creation_date=datetime.utcnow()).insert()
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {catbox.url_upload(attachment.url)}",
                                 color=0x0c73d3)
                         return await ctx.send(embed=embed)
                 else:
-                    if attachment.content_type == 'image/png':
-                        image_url = attachment.url
+                    if (attachment.content_type == 'image/png') or (attachment.content_type == 'image/jpg') or (attachment.content_type == 'image/jpeg') or (attachment.content_type == 'image/gif'):
+                        image_url = catbox.url_upload(attachment.url)
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=image_url, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
                                 color=0x0c73d3)
                         embed.set_image(url=image_url)
                         return await ctx.send(embed=embed)
                     else:
-                        await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=attachment.url, creation_date=datetime.utcnow()).insert()
-                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {attachment.url}",
+                        await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=catbox.url_upload(attachment.url), creation_date=datetime.utcnow()).insert()
+                        embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {catbox.url_upload(attachment.url)}",
                                 color=0x0c73d3)
                         return await ctx.send(embed=embed)
             else:
@@ -149,6 +153,9 @@ class Tags(Scale):
                     for url in url:
                         url = url
                     if url:
+                        for at in ['.exe', '.scr', '.cpl', '.doc', '.jar']:
+                            if url.endswith(at):
+                                return await ctx.send(f'`{at}` url file type is not allowed to be stored in my database')
                         if url.endswith('.png') or url.endswith('.apng') or url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.gif'):
                             await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=url, creation_date=datetime.utcnow()).insert()
                             embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
@@ -266,10 +273,13 @@ class Tags(Scale):
                 return
 
         if attachment is not None:
+            for at in ['exe', 'scr', 'cpl', 'doc', 'jar']:
+                if at in attachment.content_type:
+                    return await ctx.send(f'`{at}` attachment file type is not allowed to be uploaded to our host site')
             if content is None:
-                if attachment.content_type == 'image/png':
-                    image_url = attachment.url
-                    tag_to_edit.attachment_url = attachment.url
+                if (attachment.content_type == 'image/png') or (attachment.content_type == 'image/jpg') or (attachment.content_type == 'image/jpeg') or (attachment.content_type == 'image/gif'):
+                    image_url = catbox.url_upload(attachment.url)
+                    tag_to_edit.attachment_url = catbox.url_upload(attachment.url)
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}",
@@ -277,16 +287,16 @@ class Tags(Scale):
                     embed.set_image(url=image_url)
                     return await ctx.send(embed=embed)
                 else:
-                    tag_to_edit.attachment_url = attachment.url
+                    tag_to_edit.attachment_url = catbox.url_upload(attachment.url)
                     tag_to_edit.content = content
                     await tag_to_edit.save()
-                    embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {attachment.url}",
+                    embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {catbox.url_upload(attachment.url)}",
                             color=0x0c73d3)
                     return await ctx.send(embed=embed)
             else:
-                if attachment.content_type == 'image/png':
-                    image_url = attachment.url
-                    tag_to_edit.attachment_url = attachment.url
+                if (attachment.content_type == 'image/png') or (attachment.content_type == 'image/jpg') or (attachment.content_type == 'image/jpeg') or (attachment.content_type == 'image/gif'):
+                    image_url = catbox.url_upload(attachment.url)
+                    tag_to_edit.attachment_url = catbox.url_upload(attachment.url)
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
@@ -294,10 +304,10 @@ class Tags(Scale):
                     embed.set_image(url=image_url)
                     return await ctx.send(embed=embed)
                 else:
-                    tag_to_edit.attachment_url = attachment.url
+                    tag_to_edit.attachment_url = catbox.url_upload(attachment.url)
                     tag_to_edit.content = content
                     await tag_to_edit.save()
-                    embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {attachment.url}",
+                    embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {catbox.url_upload(attachment.url)}",
                             color=0x0c73d3)
                     return await ctx.send(embed=embed)
         else:
@@ -306,6 +316,9 @@ class Tags(Scale):
                 for url in url:
                     url = url
                 if url:
+                    for at in ['.exe', '.scr', '.cpl', '.doc', '.jar']:
+                            if url.endswith(at):
+                                return await ctx.send(f'`{at}` url file type is not allowed to be stored in my database')
                     if url.endswith('.png') or url.endswith('.apng') or url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.gif'):
                         tag_to_edit.attachment_url = None
                         tag_to_edit.content = content
