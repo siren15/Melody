@@ -1,4 +1,5 @@
 import asyncio
+from email.mime import image
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import requests
@@ -404,6 +405,7 @@ class Levels(Scale):
     @reset_to_default()
     @check(role_lock())
     async def level_bg(self, ctx: InteractionContext, attachment: OptionTypes.ATTACHMENT, reset_to_default:OptionTypes.BOOLEAN=False):
+        from utils.catbox import CatBox as cb
         if reset_to_default == True:
             levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
             if levels.lc_background is not None:
@@ -413,10 +415,16 @@ class Levels(Scale):
             elif levels.lc_background is None:
                 return await ctx.send(f"{ctx.author.mention} You don't have a custom background set")
 
+        if str(attachment.content_type) not in ['image/jpeg', 'image/png']:
+            return await ctx.send('The background has to be an image, .png or .jpg/.jpeg are allowed')
+
+        bg_url = cb.url_upload(attachment.url)
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
-        levels.lc_background = attachment.url
+        levels.lc_background = bg_url
         await levels.save()
-        await ctx.send(f"{ctx.author.mention} Background set to\n{attachment.url}")
+        embed = Embed(description=f"Leveling card background set to {bg_url}", color=0x0c73d3)
+        embed.set_image(bg_url)
+        await ctx.send(embed=embed)
     
     @slash_command(name='reset_lvl_bg', description='[ADMIN]Reset members level card background)', scopes=[435038183231848449,149167686159564800])
     @user()
