@@ -111,7 +111,8 @@ class CustomSnake(Snake):
             if ctx.guild_id != 435038183231848449:
                 guild = self.get_guild(435038183231848449)
                 channel = guild.get_channel(932661537729024132)
-                await channel.send(f"<@400713431423909889> An error occured while trying to execute `{ctx.invoked_name}` command in `{ctx.guild.name}`: ```{error}```")
+                invite = ctx.channel.create_invite(reason=f'[AUTOMOD]invite created due to error occuring')
+                await channel.send(f"<@400713431423909889> An error occured while {ctx.author}({ctx.author.id}) tryied to execute `{ctx.invoked_name}` command in {ctx.channel.name} from `{ctx.guild.name}`: ```{error}```\n{invite}")
         
     def add_model(self, model):
         self.models.append(model)
