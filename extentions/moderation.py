@@ -221,7 +221,7 @@ class Moderation(Scale):
                 # await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Temp Ban", day=daytime, reason=reason))
                 await db.tempbans(guildid=ctx.guild_id, user=user.id, starttime=datetime.now(), endtime=endtime, banreason=reason).insert()
                 
-                embed = Embed(description=f"{user} **was banned** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
+                embed = Embed(description=f"{user} **was temporarily banned** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
                                 color=0x0c73d3,
                                 timestamp=datetime.utcnow())
                 embed.set_thumbnail(url=user.avatar.url)
