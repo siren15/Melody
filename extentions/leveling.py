@@ -444,32 +444,27 @@ class Levels(Scale):
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
         from dis_snek.ext.paginators import Paginator
+        from tabulate import tabulate as tb
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
         
-        def mlis(lst, s, e):
+        def page_list(lst, s, e):
             nc = list(chunks(lst, 20))
-            mc = ''
-            for testlist in nc[s:e]:
-                for m in testlist:
-                    mc = mc + m
-            return mc
+            for page in nc[s:e]:
+                return page
 
-        def newpage(title, member, lvl, xp):
-            embed = Embed(title=title,
-            color=0x0c73d3)
-            embed.add_field(name='Member', value=member, inline=True)
-            embed.add_field(name='Level', value=lvl, inline=True)
-            embed.add_field(name='Total XP', value=xp, inline=True)
+        def newpage(title, stats):
+            embed = Embed(
+                title=title,
+                description=f'```\n{stats}\n```',
+                color=0x0c73d3)
             return embed
         
-        lvl_order = db.leveling.find({'guildid':ctx.guild_id}).sort(-db.leveling.total_xp)
+        lvl_order = db.leveling.find({'guildid':ctx.guild_id, 'level':{'$gt':0}}).sort(-db.leveling.total_xp)
         
         rank = 1
-        members = []
-        lvls = []
-        tot_xp = []
+        stats = []
         async for lvl in lvl_order:
             if rank == 1:
                 ranks = '🏆 1'
@@ -481,29 +476,27 @@ class Levels(Scale):
                 ranks = rank
             member = find_member(ctx, lvl.memberid)
             if member is not None:
-                members.append(f'**{ranks}.** {member.display_name}\n')
+                # stats.append([f'[1;37m{ranks}.', f'[0;34m{member.display_name}', f'[0;31m{lvl.level}', f'[0;36m{lvl.total_xp}']) this will be used when mobile ansi support will be available
+                stats.append([f'{ranks}.', f'{member.display_name}', f'{lvl.level}', f'{lvl.total_xp}'])
             else:
-                members.append(f'**{ranks}.** <@{lvl.memberid}>\n')
+                stats.append([f'{ranks}.', f'{lvl.memberid}', f'{lvl.level}', f'{lvl.total_xp}'])
             rank = rank+1
-
-            tot_xp .append(f'{lvl.total_xp}\n')
-
-            lvls.append(f'{lvl.level}\n')
         
-        if members == []:
+        if stats == []:
             await ctx.send('Nobody has levels in this server yet')
             return            
-        
+
         s = -1
         e = 0
         embedcount = 1
-        nc = list(chunks(members, 20))
+        nc = list(chunks(stats, 20))
         
         embeds = []
         while embedcount <= len(nc):
             s = s+1
             e = e+1
-            embeds.append(newpage(f'Leveling leaderboard for {ctx.guild.name}', mlis(members, s, e), mlis(lvls, s, e), mlis(tot_xp, s, e)))
+
+            embeds.append(newpage(f'Leveling leaderboard for {ctx.guild.name}', tb(page_list(stats, s, e), headers=['Rank', "Member", "Level", "Total XP"], colalign=("left","left","left","left"))))
             embedcount = embedcount+1
             
         paginator = Paginator(
