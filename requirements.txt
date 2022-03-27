@@ -6,3 +6,4 @@ motor
 Pillow
 python-dateutil
 dnspython
+tabulate
