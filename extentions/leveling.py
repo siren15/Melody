@@ -1,5 +1,4 @@
 import asyncio
-from email.mime import image
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import requests
@@ -330,6 +329,7 @@ class Levels(Scale):
             return image
 
         IW, IH = (956, 435)
+        aspect_ratio = IW/IH
 
         if levels.lc_background is not None:
             try:
@@ -477,7 +477,7 @@ class Levels(Scale):
             member = find_member(ctx, lvl.memberid)
             if member is not None:
                 # stats.append([f'[1;37m{ranks}.', f'[0;34m{member.display_name}', f'[0;31m{lvl.level}', f'[0;36m{lvl.total_xp}']) this will be used when mobile ansi support will be available
-                stats.append([f'{ranks}.', f'{member.display_name}', f'{lvl.level}', f'{lvl.total_xp}'])
+                stats.append([f'{ranks}.', f'{member}', f'{lvl.level}', f'{lvl.total_xp}'])
             else:
                 stats.append([f'{ranks}.', f'{lvl.memberid}', f'{lvl.level}', f'{lvl.total_xp}'])
             rank = rank+1
