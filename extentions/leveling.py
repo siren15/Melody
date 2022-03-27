@@ -467,17 +467,17 @@ class Levels(Scale):
         stats = []
         async for lvl in lvl_order:
             if rank == 1:
-                ranks = '🏆 1'
+                ranks = '🏆1'
             elif rank == 2:
-                ranks = '🥈 2'
+                ranks = '🥈2'
             elif rank == 3:
-                ranks = '🥉 3'
+                ranks = '🥉3'
             else:
                 ranks = rank
             member = find_member(ctx, lvl.memberid)
             if member is not None:
                 # stats.append([f'[1;37m{ranks}.', f'[0;34m{member.display_name}', f'[0;31m{lvl.level}', f'[0;36m{lvl.total_xp}']) this will be used when mobile ansi support will be available
-                stats.append([f'{ranks}.', f'{member}', f'{lvl.level}', f'{lvl.total_xp}'])
+                stats.append([f'{ranks}.', f'{member.display_name}', f'{lvl.level}', f'{lvl.total_xp}'])
             else:
                 stats.append([f'{ranks}.', f'{lvl.memberid}', f'{lvl.level}', f'{lvl.total_xp}'])
             rank = rank+1
