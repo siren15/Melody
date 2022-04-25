@@ -103,6 +103,10 @@ class Levels(Scale):
                         if role not in message.author.roles:
                             await message.author.add_role(role)
 
+            if (levels.display_name is None) or (levels.display_name != member.display_name):
+                levels.display_name = member.display_name
+                await levels.save()
+
             await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert() #member gets put into the wait list
             await asyncio.sleep(60) #the commands gonna wait for 60 seconds
             level_wait = db.levelwait.find({'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$lte':datetime.utcnow()}}) #find member in the wait list
@@ -231,6 +235,10 @@ class Levels(Scale):
 
         level_stats = await db.levelingstats.find_one({'lvl':levels.level})
 
+        if (levels.display_name is None) or (levels.display_name != member.display_name):
+            levels.display_name = member.display_name
+            await levels.save()
+
         #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
         #if lvl_set is None:
             #await db.save(leveling_settings(guildid=ctx.guild.id))
@@ -295,6 +303,9 @@ class Levels(Scale):
             return
 
         level_stats = await db.levelingstats.find_one({'lvl':levels.level})
+        if (levels.display_name is None) or (levels.display_name != member.display_name):
+            levels.display_name = member.display_name
+            await levels.save()
 
         #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
         #if lvl_set is None:
@@ -477,6 +488,9 @@ class Levels(Scale):
             member = find_member(ctx, lvl.memberid)
             if member is not None:
                 # stats.append([f'[1;37m{ranks}.', f'[0;34m{member.display_name}', f'[0;31m{lvl.level}', f'[0;36m{lvl.total_xp}']) this will be used when mobile ansi support will be available
+                if (lvl.display_name is None) or (lvl.display_name != member.display_name):
+                    lvl.display_name = member.display_name
+                    await lvl.save()
                 stats.append([f'{ranks}.', f'{member.display_name}', f'{lvl.level}', f'{lvl.total_xp}'])
             else:
                 stats.append([f'{ranks}.', f'{lvl.memberid}', f'{lvl.level}', f'{lvl.total_xp}'])

@@ -1,7 +1,8 @@
 import math
-import re
+from tabulate import tabulate as tb
 import random
 
+from dis_snek.models.discord.timestamp import Timestamp
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
 from dis_snek import Snake, Scale, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check
@@ -10,7 +11,7 @@ from dis_snek.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.client.errors import NotFound
+from dis_snek.client.errors import NotFound, BadRequest, HTTPException
 
 
 def random_string_generator():
@@ -436,7 +437,7 @@ class Moderation(Scale):
     @user()
     @reason()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
-    async def warn(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
+    async def warn(self, ctx:InteractionContext, user:OptionTypes.USER, reason:str=None):
         # if user is None:
         #     await ctx.send('You have to include a user', ephemeral=True)
         #     return
@@ -481,7 +482,7 @@ class Moderation(Scale):
                 embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild.name} for:** {reason}",
                         color=0x0c73d3)
                 await user.send(embed=embed)
-            except:
+            except HTTPException:
                 embed = Embed(description=f"Couldn't dm {user.mention}, warn logged and user was given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                         color=0x0c73d3)
                 await ctx.send(embed=embed)
@@ -556,11 +557,20 @@ class Moderation(Scale):
                 color=0x0c73d3)
             return embed
         
-        
         warnings = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'})
         warns = []
         async for warn in warnings:
-            warns.append(f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n")
+            moderator = ctx.guild.get_member(warn.moderator)
+            if moderator is None:
+                moderator = warn.moderator
+            warns.append(f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {moderator} | **Day:** {warn.day}\n\n")
+            # moderator = ctx.guild.get_member(warn.moderator)
+            # if moderator is None:
+            #     moderator = warn.moderator
+            # time = warn.day.replace('<t:','')
+            # time = day.replace('>','')
+            # day = Timestamp.utcfromtimestamp(time)
+            # warns.append([f"{warn.strikeid}", f"{warn.reason}", f"{moderator}", f"{day}"])
         if warns == []:
             embed = Embed(description=f"There are no warnings for {user}.",
                         color=0x0c73d3)
@@ -615,7 +625,10 @@ class Moderation(Scale):
         all_strikes = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id})
         allstrikes = []
         async for s in all_strikes:
-            allstrikes.append(f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n")
+            moderator = ctx.guild.get_member(s.moderator)
+            if moderator is None:
+                moderator = s.moderator
+            allstrikes.append(f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {moderator} | **Day:** {s.day}\n\n")
         if allstrikes == []:
             embed = Embed(description=f"There are no strikes for {user}.",
                         color=0x0c73d3)
@@ -770,19 +783,21 @@ class Moderation(Scale):
     async def unban_task(self):
         endtimes = db.tempbans.find({'endtime':{'$lte':datetime.now()}})
         async for m in endtimes:
-            try:
-                guild = await self.bot.get_guild(m.guildid)
-            except NotFound:
-                print(f"[automod]|[unban_task]{m.guildid} not found in the guild list")
-                await m.delete()
-                return
-            banned = await guild.fetch_ban(m.user)
-            if banned is None:
-                print(f"[automod]|[unban_task]{m.user} not found in the ban list")
-                await m.delete()
-                return
-            await guild.unban(m.user, '[automod]|[unban_task] ban time expired')
-            await m.delete()
+            if m is not None:
+                guild = self.bot.get_guild(m.guildid)
+                if guild is None:
+                    if self.bot.user.id != 785122198247178260:
+                        print(f"[automod]|[unban_task]{m.guildid} not found in the guild list")
+                        await m.delete()
+                        return
+                elif guild is not None:
+                    banned = await guild.fetch_ban(m.user)
+                    if banned is None:
+                        print(f"[automod]|[unban_task]{m.user} not found in the ban list")
+                        await m.delete()
+                        return
+                    await guild.unban(m.user, '[automod]|[unban_task] ban time expired')
+                    await m.delete()
 
 def setup(bot):
     Moderation(bot)

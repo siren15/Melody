@@ -148,7 +148,7 @@ class GiveRoles(Scale):
         if roles is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
 
-        raw_mem_list = members.split(' ')
+        raw_mem_list = members.split(',')
         member_list =[]
         for m in raw_mem_list:
             m = m.replace('<', '')
@@ -158,7 +158,7 @@ class GiveRoles(Scale):
             m = m.replace('>', '')
             member_list.append(m)
 
-        raw_roles_list = roles.split(' ')
+        raw_roles_list = roles.split(',')
         roles_list = []
         for r in raw_roles_list:
             r = r.replace('<', '')
