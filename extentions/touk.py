@@ -3,19 +3,24 @@ from bson.int64 import Int64 as int64
 from dis_snek import Snake, Scale, slash_command, InteractionContext, Embed
 from typing import Optional
 from datetime import datetime
+from pydantic import BaseModel
 from beanie import Document as BeanieDocument
 
 class Document(BeanieDocument):
     def __hash__(self):
         return hash(self.id)
 
+class violation_settings(BaseModel):
+    violation_count: Optional[int64] = None
+    violation_punishment: Optional[str] = None
+    class Config:
+        orm_mode = True
+
 class BeanieDocuments():
     class banned_words(Document):
         guildid: Optional[int64] = None
-        words_exact: Optional[str] = None
-        words_wildcard: Optional[str] = None
-        links_blacklist: Optional[str] = None
-        links_whitelist: Optional[str] = None
+        exact: Optional[str] = None
+        partial: Optional[str] = None
 
     class giveaways(Document):
         giveawaynum: Optional[str] = None
@@ -49,6 +54,7 @@ class BeanieDocuments():
 
     class leveling(Document):
         guildid: Optional[int64] = None
+        display_name: Optional[str] = None
         memberid: Optional[int64] = None
         level: Optional[int64] = None
         xp_to_next_level: Optional[int64] = None
@@ -107,6 +113,7 @@ class BeanieDocuments():
         action: Optional[str] = None
         reason: Optional[str] = None
         day: Optional[str] = None
+        automod: Optional[bool] = False
 
     class tag(Document):
         guild_id: Optional[int64] = None
@@ -167,6 +174,16 @@ class BeanieDocuments():
         user: Optional[int64] = None
         starttime: Optional[datetime] = None
         endtime: Optional[datetime] = None
+    
+    class automod_config(Document):
+        guildid: Optional[int64] = None
+        ignored_channels: Optional[str] = None
+        ignored_roles: Optional[str] = None
+        ignored_users: Optional[str] = None
+        phishing: violation_settings
+        banned_words: violation_settings
+        ban_time: Optional[int64] = None
+        mute_time: Optional[int64] = None
 
 class BeanieDocumentsScale(Scale):
     def __init__(self, bot: Snake):
@@ -179,6 +196,7 @@ class BeanieDocumentsScale(Scale):
 
 def setup(bot):
     BeanieDocumentsScale(bot)
+    bot.add_model(BeanieDocuments.automod_config)
     bot.add_model(BeanieDocuments.banned_words)
     bot.add_model(BeanieDocuments.giveaways)
     bot.add_model(BeanieDocuments.giveyou)

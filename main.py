@@ -7,7 +7,7 @@ import motor
 from beanie import Indexed, init_beanie
 from dis_snek import Snake, Intents, listen, Embed, InteractionContext, AutoDefer
 from utils.customchecks import *
-from extentions.touk import BeanieDocuments as db
+from extentions.touk import BeanieDocuments as db, violation_settings
 from dis_snek.client.errors import NotFound
 
 # import logging
@@ -17,7 +17,7 @@ from dis_snek.client.errors import NotFound
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
-ad = AutoDefer(enabled=True, time_until_defer=0)
+ad = AutoDefer(enabled=True, time_until_defer=1.5)
 
 class CustomSnake(Snake):
     def __init__(self):
@@ -27,7 +27,8 @@ class CustomSnake(Snake):
             delete_unused_application_cmds=True, 
             default_prefix='p.', 
             fetch_members=True, 
-            auto_defer=ad
+            auto_defer=ad,
+            # asyncio_debug=True
         )
         self.db: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
         self.models = list()
@@ -50,13 +51,15 @@ class CustomSnake(Snake):
 
     @listen()
     async def on_guild_join(self, event):
-        checkserver = await db.prefixes.find_one({'guildid':event.guild.id})
-        if checkserver is None:
-            #add server to database
+        #add guild to database
+        if await db.prefixes.find_one({'guildid':event.guild.id}) is None:
             await db.prefixes(guildid=event.guild.id, prefix='p.').insert()
             guild = self.get_guild(435038183231848449)
             channel = guild.get_channel(932661537729024132)
             await channel.send(f'I was added to {event.guild.name}|{event.guild.id}')
+        if await db.automod_config.find_one({'guildid':event.guild.id}) is None:
+            violations = violation_settings(violation_count=None, violation_punishment=None)
+            await db.automod_config(guildid=event.guild.id, banned_words=violations, phishing=violations).insert()
 
     async def on_command_error(self, ctx: InteractionContext, error:Exception):
         if isinstance(error, MissingPermissions):

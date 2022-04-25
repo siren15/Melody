@@ -172,7 +172,12 @@ def cmd():
 
 def roles():
     def wrapper(func):
-        return slash_option(name='roles', description='Roles, seperated by a comma(,)', opt_type=OptionTypes.STRING, required=True)(func)
+        return slash_option(name='roles', description='Roles, seperated by a comma(,)', opt_type=OptionTypes.STRING, required=False)(func)
+    return wrapper
+
+def channels():
+    def wrapper(func):
+        return slash_option(name='channels', description='channels, seperated by a comma(,)', opt_type=OptionTypes.STRING, required=False)(func)
     return wrapper
 
 def members():

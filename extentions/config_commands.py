@@ -18,7 +18,7 @@ class BotConfiguration(Scale):
     def __init__(self, bot: Snake):
         self.bot = bot
 
-    @slash_command(name='config', sub_cmd_name='logging', sub_cmd_description="[ADMIN]Configure how should pinetree behave", scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='config', sub_cmd_name='logging', sub_cmd_description="[ADMIN]Configure what the bot logs")
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def logging_settings(self, ctx:InteractionContext):
         # events_selects = Select(
@@ -226,6 +226,18 @@ class BotConfiguration(Scale):
                 custom_id=f'{ctx.author.id}_leave_msg_off'
             )
         )
+        automod_buttons: list[ActionRow] = spread_to_rows(
+            Button(
+                style=ButtonStyles.GREEN,
+                label="On",
+                custom_id=f'{ctx.author.id}_automod_on'
+            ),
+            Button(
+                style=ButtonStyles.RED,
+                label="Off",
+                custom_id=f'{ctx.author.id}_automodg_off'
+            )
+        )
         
         buttons = [
             deleted_messages_buttons,
@@ -240,7 +252,8 @@ class BotConfiguration(Scale):
             mem_nick_buttons,
             welcome_msg_buttons,
             welcome_msg_card_buttons,
-            leave_msg_buttons
+            leave_msg_buttons,
+            automod_buttons
         ]
 
         
@@ -325,6 +338,12 @@ class BotConfiguration(Scale):
             leave_msg_status = 'Off'
         lea_m_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Leave message: `{leave_msg_status}`'), components=leave_msg_buttons)
 
+        if 'automod' in events_log_list:
+            automod_status = 'On'
+        else:
+            automod_status = 'Off'
+        automod_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Automod: `{automod_status}`'), components=automod_buttons)
+
         button_messages = [
             msg_de_msg,
             msg_ed_msg,
@@ -338,7 +357,8 @@ class BotConfiguration(Scale):
             mem_ni_msg,
             wel_m_msg,
             wel_m_c_msg,
-            lea_m_msg
+            lea_m_msg,
+            automod_msg
         ]
 
         if ctx.guild_id in [149167686159564800, 435038183231848449]:
@@ -600,6 +620,22 @@ class BotConfiguration(Scale):
                         events_logging.activecommands = events_logging.activecommands.replace(' leave_msg,', '')
                         await events_logging.save()
                         await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Leave message: `Off`'))
+                
+                elif bctx.custom_id == f'{bctx.author.id}_automod_on':
+                    if 'automod' in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Automod already turned on.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands+' automod, banned_words, phishing_filter'
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Automod: `On`'))
+
+                elif bctx.custom_id == f'{bctx.author.id}_automod_off':
+                    if 'automod' not in events_log_list:
+                        await bctx.send(f'{bctx.author.mention} Automod already turned off.', ephemeral=True)
+                    else:
+                        events_logging.activecommands = events_logging.activecommands.replace(' automod, banned_words, phishing_filter', '')
+                        await events_logging.save()
+                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Automod: `Off`'))
 
 def setup(bot):
     BotConfiguration(bot)
