@@ -19,6 +19,12 @@ from utils.customchecks import *
 from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageCreate
 from dis_snek.client.errors import NotFound, BadRequest, HTTPException
 
+def geturl(string):
+    url = re.compile(r"(?:https?:\/\/(?:www\.)?)?(?P<domain>[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9()]{1,6})\b(?:[-a-z0-9()@:%_\+.~#?&//=]*)",flags=re.IGNORECASE,)
+    url = url.findall(string)
+    if url != []:
+        return url
+    return None
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -454,7 +460,7 @@ class AutoMod(Scale):
         elif automod_options == 'ignored_roles':
             settings = await db.automod_config.find_one({'guildid':ctx.guild_id})
             if settings.ignored_roles is None:
-                channels_prefill = MISSING
+                roles_prefill = MISSING
             else:
                 if (settings.ignored_roles is None) or (settings.ignored_roles == ''):
                     roles_prefill = MISSING
@@ -630,41 +636,45 @@ class AutoMod(Scale):
             if settings.ignored_users is not None:
                 if (user.id in settings.ignored_users.split(',')):
                     return
-            elif settings.ignored_channels is not None:
+            if settings.ignored_channels is not None:
                 if (channel.id in settings.ignored_channels.split(',')):
                     return
-            elif settings.ignored_roles is not None:
+            if settings.ignored_roles is not None:
                 if any(role for role in user.roles if role.id in settings.ignored_roles.split(',')):
                     return
-            elif (user.has_permission(Permissions.ADMINISTRATOR) == True):
+            if (user.has_permission(Permissions.ADMINISTRATOR) == True):
                 return
-            if any(link for link in self.phishing_links if link in message.content):
-                await message.delete()
-                automod_reply = await channel.send(f"Hey {user.mention}! That link is banned here!", ephemeral=True)
-    
-                await automod_strike(self, event, "Automod Log (Phishing Links)", reason)
-                        
-                channelid = await db.logs.find_one({"guild_id":guild.id})
-                log_channel = guild.get_channel(channelid.channel_id)
+            urls = geturl(message.content)
+            if urls is not None:
+                for url in urls:
+                    for link in self.phishing_links:
+                        if link == url:
+                            await message.delete()
+                            automod_reply = await channel.send(f"Hey {user.mention}! That link is banned here!", ephemeral=True)
                 
-                violation_entries = []
-                async for entry in db.strikes.find({'guildid':guild.id, 'user':user.id, 'action':"Automod Log (Phishing Links)", 'automod':True}):
-                    violation_entries.append(entry.user)
-                if settings.phishing.violation_count is not None:
-                    if len(violation_entries) > settings.phishing.violation_count:
-                        if 'warn' in settings.phishing.violation_punishment:
-                            await automod_warn(event, log_channel, reason)
-                        
-                        if 'mute' in settings.phishing.violation_punishment:
-                            await automod_mute(event, settings, reason)
+                            await automod_strike(self, event, "Automod Log (Phishing Links)", reason)
+                                    
+                            channelid = await db.logs.find_one({"guild_id":guild.id})
+                            log_channel = guild.get_channel(channelid.channel_id)
                             
-                        if 'kick' in settings.phishing.violation_punishment:
-                            await guild.kick(user, reason)
-                
-                        if 'ban' in settings.phishing.violation_punishment:
-                            await automod_ban(event, settings, reason)
-                await asyncio.sleep(3)
-                await automod_reply.delete()
+                            violation_entries = []
+                            async for entry in db.strikes.find({'guildid':guild.id, 'user':user.id, 'action':"Automod Log (Phishing Links)", 'automod':True}):
+                                violation_entries.append(entry.user)
+                            if settings.phishing.violation_count is not None:
+                                if len(violation_entries) > settings.phishing.violation_count:
+                                    if 'warn' in settings.phishing.violation_punishment:
+                                        await automod_warn(event, log_channel, reason)
+                                    
+                                    if 'mute' in settings.phishing.violation_punishment:
+                                        await automod_mute(event, settings, reason)
+                                        
+                                    if 'kick' in settings.phishing.violation_punishment:
+                                        await guild.kick(user, reason)
+                            
+                                    if 'ban' in settings.phishing.violation_punishment:
+                                        await automod_ban(event, settings, reason)
+                            await asyncio.sleep(3)
+                            await automod_reply.delete()
 
 def setup(bot):
     AutoMod(bot)

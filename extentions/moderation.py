@@ -530,14 +530,10 @@ class Moderation(Scale):
         else:
             raise UserNotFound()
     
-    @slash_command(name='warnings', description="[MOD]shows you a users warn list")
+    @slash_command(name='warnings', description="[MOD]shows you a users warn list", scopes=[435038183231848449,149167686159564800])
     @user()
     @check(member_permissions(Permissions.MODERATE_MEMBERS))
-    async def warn_list(self, ctx:InteractionContext, user:OptionTypes.USER=None):
-        # if user is None:
-        #     await ctx.send('You have to include a user', ephemeral=True)
-        #     return
-
+    async def warn_list(self, ctx:InteractionContext, user:OptionTypes.USER):
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -560,10 +556,7 @@ class Moderation(Scale):
         warnings = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'})
         warns = []
         async for warn in warnings:
-            moderator = ctx.guild.get_member(warn.moderator)
-            if moderator is None:
-                moderator = warn.moderator
-            warns.append(f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {moderator} | **Day:** {warn.day}\n\n")
+            warns.append(f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n")
             # moderator = ctx.guild.get_member(warn.moderator)
             # if moderator is None:
             #     moderator = warn.moderator
@@ -625,10 +618,7 @@ class Moderation(Scale):
         all_strikes = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id})
         allstrikes = []
         async for s in all_strikes:
-            moderator = ctx.guild.get_member(s.moderator)
-            if moderator is None:
-                moderator = s.moderator
-            allstrikes.append(f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {moderator} | **Day:** {s.day}\n\n")
+            allstrikes.append(f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n")
         if allstrikes == []:
             embed = Embed(description=f"There are no strikes for {user}.",
                         color=0x0c73d3)

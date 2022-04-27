@@ -17,7 +17,7 @@ from dis_snek.client.errors import NotFound
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
-ad = AutoDefer(enabled=True, time_until_defer=1.5)
+ad = AutoDefer(enabled=True, time_until_defer=0)
 
 class CustomSnake(Snake):
     def __init__(self):
@@ -40,7 +40,7 @@ class CustomSnake(Snake):
                 print(f'grew {filename[:-3]}')
         self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
         await init_beanie(database=self.db.giffany, document_models=self.models)
-        await self.astart(os.environ['tyrone_token'])
+        await self.astart(os.environ['pinetree_token'])
     
     @listen()
     async def on_ready(self):
@@ -114,7 +114,7 @@ class CustomSnake(Snake):
             if ctx.guild_id != 435038183231848449:
                 guild = self.get_guild(435038183231848449)
                 channel = guild.get_channel(932661537729024132)
-                invite = ctx.channel.create_invite(reason=f'[AUTOMOD]invite created due to error occuring')
+                invite = await ctx.channel.create_invite(reason=f'[AUTOMOD]invite created due to error occuring')
                 await channel.send(f"<@400713431423909889> An error occured while {ctx.author}({ctx.author.id}) tryied to execute `{ctx.invoked_name}` command in {ctx.channel.name} from `{ctx.guild.name}`: ```{error}```\n{invite}")
         
     def add_model(self, model):
