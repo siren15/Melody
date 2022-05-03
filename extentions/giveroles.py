@@ -86,11 +86,11 @@ class GiveRoles(Scale):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
         
-        def mlis(lst, s, e):
+        def page_list(lst, s, e):
             nc = list(chunks(lst, 20))
             mc = ''
-            for l in nc[s:e]:
-                for m in l:
+            for testlist in nc[s:e]:
+                for m in testlist:
                     mc = mc + m
             return mc
 
@@ -104,21 +104,19 @@ class GiveRoles(Scale):
         
         gy = db.giveyou.find({"guildid":ctx.guild_id})
         names = []
+        roles = []
         async for g in gy:
             names.append(f"{g.name}\n")
+            role = ctx.guild.get_role(g.roleid)
+            if role is None:
+                roles.append(f'[ROLE NOT FOUND]({g.roleid})\n')
+            else:
+                roles.append(f"{role.mention}\n")
         if names == []:
             embed = Embed(description=f"There are no giveyous for {ctx.guild.name}.",
                         color=0x0c73d3)
             await ctx.send(embed=embed)
             return
-        roles = []
-        async for g in gy:
-            role = ctx.guild.get_role(g.roleid)
-            if role is None:
-                roles.append('[ROLE NOT FOUND]\n')
-            else:
-                roles.append(f"{role.mention}\n")
-
         s = -1
         e = 0
         embedcount = 1
@@ -128,7 +126,7 @@ class GiveRoles(Scale):
         while embedcount <= len(nc):
             s = s+1
             e = e+1
-            embeds.append(newpage(f'List of giveyous for {ctx.guild.name}', mlis(names, s, e), mlis(roles, s, e)))
+            embeds.append(newpage(f'List of giveyous for {ctx.guild.name}', page_list(names, s, e), page_list(roles, s, e)))
             embedcount = embedcount+1
             
         paginator = Paginator(
