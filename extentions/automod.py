@@ -2,7 +2,6 @@ import asyncio
 import json
 import math
 import random
-from tkinter import N
 import requests
 
 from dis_snek.client.const import MISSING
