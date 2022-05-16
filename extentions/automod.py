@@ -542,35 +542,53 @@ class AutoMod(Scale):
                 return
             
             banned_words = await db.banned_words.find_one({'guildid':guild.id})
-            for bw in banned_words.exact.split(','):
-                if bw.lower() in event.message.content.lower():
-                    await message.delete()
-                    automod_reply = await channel.send(f"Hey {user.mention}! Watch your language!", ephemeral=True)
-                    
-                    reason = f'[AUTOMOD]banned words sent in {channel.name}'
-                    
-                    await automod_strike(self, event, "Automod Log (Banned Words)", reason)
-                    
-                    channelid = await db.logs.find_one({"guild_id":guild.id})
-                    log_channel = guild.get_channel(channelid.channel_id)
-                    
-                    violation_entries = []
-                    async for entry in db.strikes.find({'guildid':guild.id, 'user':user.id, 'action':"Automod Log (Banned Words)", 'automod':True}):
-                        violation_entries.append(entry.user)
-                    if (settings.phishing.violation_count is not None) and len(violation_entries) > settings.banned_words.violation_count:
-                        if 'warn' in settings.banned_words.violation_punishment:
-                            await automod_warn(event, log_channel, reason)
-                        
-                        if 'mute' in settings.banned_words.violation_punishment:
-                            await automod_mute(event, settings, reason)
-                            
-                        if 'kick' in settings.banned_words.violation_punishment:
-                            await guild.kick(user, reason)
+            for bw in banned_words.exact.lower().split(','):
+                if bw.startswith('*') and bw.endswith('*'):
+                    cbw = bw.replace('*', '')
+                    if cbw in event.message.content.lower():
+                        is_banned_word = True
+                elif bw.startswith('*') and not bw.endswith('*'):
+                    cbw = bw.replace('*', '')
+                    for cmw in event.message.content.lower().split(','):
+                        if cmw.startswith(cbw):
+                            is_banned_word = True
+                elif bw.endswith('*') and not bw.startswith('*'):
+                    cbw = bw.replace('*', '')
+                    for cmw in event.message.content.lower().split(','):
+                        if cmw.endswith(cbw):
+                            is_banned_word = True
+                for mw in event.message.content.lower().split(','):
+                    ratio = fuzz.partial_ratio(bw, mw)
+                    if ratio >= 100:
+                        is_banned_word = True
+            if is_banned_word == True:
+                await message.delete()
+                automod_reply = await channel.send(f"Hey {user.mention}! Watch your language!", ephemeral=True)
                 
-                        if 'ban' in settings.banned_words.violation_punishment:
-                            await automod_ban(event, settings, log_channel, reason)
-                    await asyncio.sleep(3)
-                    await automod_reply.delete()
+                reason = f'[AUTOMOD]banned words sent in {channel.name}'
+                
+                await automod_strike(self, event, "Automod Log (Banned Words)", reason)
+                
+                channelid = await db.logs.find_one({"guild_id":guild.id})
+                log_channel = guild.get_channel(channelid.channel_id)
+                
+                violation_entries = []
+                async for entry in db.strikes.find({'guildid':guild.id, 'user':user.id, 'action':"Automod Log (Banned Words)", 'automod':True}):
+                    violation_entries.append(entry.user)
+                if (settings.phishing.violation_count is not None) and len(violation_entries) > settings.banned_words.violation_count:
+                    if 'warn' in settings.banned_words.violation_punishment:
+                        await automod_warn(event, log_channel, reason)
+                    
+                    if 'mute' in settings.banned_words.violation_punishment:
+                        await automod_mute(event, settings, reason)
+                        
+                    if 'kick' in settings.banned_words.violation_punishment:
+                        await guild.kick(user, reason)
+            
+                    if 'ban' in settings.banned_words.violation_punishment:
+                        await automod_ban(event, settings, log_channel, reason)
+                await asyncio.sleep(3)
+                await automod_reply.delete()
 
     @listen()
     async def partial_match_banned_words(self, event: MessageCreate):
