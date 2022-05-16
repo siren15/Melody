@@ -17,7 +17,7 @@ from dis_snek.client.errors import NotFound
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
-ad = AutoDefer(enabled=True, time_until_defer=0)
+ad = AutoDefer(enabled=True, time_until_defer=1.5)
 
 class CustomSnake(Snake):
     def __init__(self):
@@ -40,7 +40,7 @@ class CustomSnake(Snake):
                 print(f'grew {filename[:-3]}')
         self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
         await init_beanie(database=self.db.giffany, document_models=self.models)
-        await self.astart(os.environ['pinetree_token'])
+        await self.astart(os.environ['tyrone_token'])
     
     @listen()
     async def on_ready(self):
