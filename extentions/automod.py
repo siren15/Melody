@@ -540,7 +540,7 @@ class AutoMod(Scale):
             settings = await db.automod_config.find_one({'guildid':guild.id})
             if (settings.ignored_users is not None) and (user.id in settings.ignored_users.split(',')) or ((settings.ignored_channels is not None) and (channel.id in settings.ignored_channels.split(','))) or ((settings.ignored_roles is not None) and any(role for role in user.roles if role.id in settings.ignored_roles.split(','))) or ((user.has_permission(Permissions.ADMINISTRATOR) == True)):
                 return
-            
+            is_banned_word = False
             banned_words = await db.banned_words.find_one({'guildid':guild.id})
             for bw in banned_words.exact.lower().split(','):
                 if bw.startswith('*') and bw.endswith('*'):
