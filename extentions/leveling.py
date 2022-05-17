@@ -293,6 +293,7 @@ class Levels(Scale):
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
     async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
+        await ctx.defer()
         # assets: https://imgur.com/a/3Y6W7lZ
         if member is None:
             member = ctx.author
