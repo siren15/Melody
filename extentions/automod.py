@@ -543,6 +543,8 @@ class AutoMod(Scale):
             is_banned_word = False
             banned_words = await db.banned_words.find_one({'guildid':guild.id})
             for bw in banned_words.exact.lower().split(','):
+                bw = bw.replace(' ', '')
+                bw = bw.replace('_', ' ')
                 if bw.startswith('*') and bw.endswith('*'):
                     cbw = bw.replace('*', '')
                     if cbw in event.message.content.lower():
@@ -558,8 +560,7 @@ class AutoMod(Scale):
                         if cmw.endswith(cbw):
                             is_banned_word = True
                 for mw in event.message.content.lower().split(','):
-                    ratio = fuzz.partial_ratio(bw, mw)
-                    if ratio >= 100:
+                    if mw == bw:
                         is_banned_word = True
             if is_banned_word == True:
                 await message.delete()

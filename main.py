@@ -17,7 +17,7 @@ from dis_snek.client.errors import NotFound
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
-ad = AutoDefer(enabled=True, time_until_defer=0)
+ad = AutoDefer(enabled=True, time_until_defer=1)
 
 class CustomSnake(Snake):
     def __init__(self):
