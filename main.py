@@ -25,7 +25,7 @@ class CustomSnake(Snake):
             intents=intents, 
             sync_interactions=True, 
             delete_unused_application_cmds=True, 
-            default_prefix='p.', 
+            default_prefix='+', 
             fetch_members=True, 
             auto_defer=ad,
             # asyncio_debug=True

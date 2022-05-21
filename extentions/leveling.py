@@ -4,7 +4,7 @@ import os
 import requests
 
 from datetime import datetime, timedelta
-from dis_snek import Snake, Scale, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles
+from dis_snek import Snake, Scale, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles, message_command, MessageContext
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -289,6 +289,16 @@ class Levels(Scale):
         description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n{boxes}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
         embed.set_thumbnail(url=member.avatar.url)
         await ctx.send(embed=embed)
+    
+    @message_command()
+    async def gmnis(ctx: MessageContext):
+        leveling = await db.leveling.find_one({'guildid': ctx.guild_id})
+        userid = leveling.memberid
+        if (leveling.display_name is None):
+            user = await ctx.guild.fetch_member(userid)
+            leveling.display_name = user.display_name
+            await leveling.save()
+            print(f'{user.display_name}|{user.id} was saved')
     
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
