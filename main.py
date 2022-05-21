@@ -40,7 +40,7 @@ class CustomSnake(Snake):
                 print(f'grew {filename[:-3]}')
         self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
         await init_beanie(database=self.db.giffany, document_models=self.models)
-        await self.astart(os.environ['tyrone_token'])
+        await self.astart(os.environ['pinetree_token'])
     
     @listen()
     async def on_ready(self):
