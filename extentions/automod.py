@@ -4,19 +4,19 @@ import math
 import random
 import requests
 
-from dis_snek.client.const import MISSING
-from dis_snek.models.discord import modal
+from naff.client.const import MISSING
+from naff.models.discord import modal
 from rapidfuzz import fuzz, process
 from dateutil.relativedelta import *
 from datetime import date, datetime, timedelta
-from dis_snek import Snake, Scale, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, ModalContext, SlashCommandChoice
-from dis_snek.ext.paginators import Paginator
-from dis_snek.models.discord.base import DiscordObject
+from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, ModalContext, SlashCommandChoice
+from naff.ext.paginators import Paginator
+from naff.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageCreate
-from dis_snek.client.errors import NotFound, BadRequest, HTTPException
+from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageCreate
+from naff.client.errors import NotFound, BadRequest, HTTPException
 
 def geturl(string):
     url = re.compile(r"(?:https?:\/\/(?:www\.)?)?(?P<domain>[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9()]{1,6})\b(?:[-a-z0-9()@:%_\+.~#?&//=]*)",flags=re.IGNORECASE,)
@@ -220,8 +220,8 @@ async def automod_strike(self, event, action_msg, reason):
     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
     await db.strikes(strikeid=avid, guildid=guild.id, user=user.id, moderator=self.bot.user.id, action=action_msg, day=daytime, reason=reason, automod=True).insert()
 
-class AutoMod(Scale):
-    def __init__(self, bot: Snake):
+class AutoMod(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
         self.phishing_links = list()
         plinks = requests.get('https://raw.githubusercontent.com/Discord-AntiScam/scam-links/main/urls.json')

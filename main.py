@@ -5,21 +5,22 @@ from typing import Optional
 import motor
 
 from beanie import Indexed, init_beanie
-from dis_snek import Snake, Intents, listen, Embed, InteractionContext, AutoDefer
+from naff import Client, Intents, listen, Embed, InteractionContext, AutoDefer
 from utils.customchecks import *
 from extentions.touk import BeanieDocuments as db, violation_settings
-from dis_snek.client.errors import NotFound
+from naff.client.errors import NotFound
+from naff.api.events.discord import GuildLeft
 
 # import logging
-# import dis_snek
+# import naff
 # logging.basicConfig()
-# cls_log = logging.getLogger(dis_snek.const.logger_name)
+# cls_log = logging.getLogger(naff.const.logger_name)
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
 ad = AutoDefer(enabled=True, time_until_defer=1)
 
-class CustomSnake(Snake):
+class CustomClient(Client):
     def __init__(self):
         super().__init__(
             intents=intents, 
@@ -40,7 +41,7 @@ class CustomSnake(Snake):
                 print(f'grew {filename[:-3]}')
         self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
         await init_beanie(database=self.db.giffany, document_models=self.models)
-        await self.astart(os.environ['pinetree_token'])
+        await self.astart(os.environ['tyrone_token'])
     
     @listen()
     async def on_ready(self):
@@ -60,6 +61,15 @@ class CustomSnake(Snake):
         if await db.automod_config.find_one({'guildid':event.guild.id}) is None:
             violations = violation_settings(violation_count=None, violation_punishment=None)
             await db.automod_config(guildid=event.guild.id, banned_words=violations, phishing=violations).insert()
+    
+    @listen()
+    async def on_guild_leave(self, event:  GuildLeft):
+        for document in self.models:
+            async for entry in document.find({'guildid': event.guild_id}):
+                await entry.delete()
+            async for entry in document.find({'guild_id': event.guild_id}):
+                await entry.delete()
+        print(f'Guild {event.guild_id} was removed.')
 
     async def on_command_error(self, ctx: InteractionContext, error:Exception):
         if isinstance(error, MissingPermissions):
@@ -121,5 +131,5 @@ class CustomSnake(Snake):
         self.models.append(model)
 
 if __name__ == "__main__":
-    bot = CustomSnake()
+    bot = CustomClient()
     asyncio.run(bot.startup())

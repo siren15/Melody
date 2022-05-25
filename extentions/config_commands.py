@@ -6,16 +6,16 @@ from time import time
 
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
-from dis_snek import Snake, Scale, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, Select, SelectOption,  Button, ButtonStyles, ActionRow, spread_to_rows
-from dis_snek.models.discord.base import DiscordObject
+from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, Select, SelectOption,  Button, ButtonStyles, ActionRow, spread_to_rows
+from naff.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.client.errors import NotFound
-from dis_snek.api.events.internal import Component
+from naff.client.errors import NotFound
+from naff.api.events.internal import Component
 
-class BotConfiguration(Scale):
-    def __init__(self, bot: Snake):
+class BotConfiguration(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
 
     @slash_command(name='config', sub_cmd_name='logging', sub_cmd_description="[ADMIN]Configure what the bot logs")

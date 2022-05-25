@@ -1,5 +1,5 @@
 requests
-git+https://github.com/Discord-Snake-Pit/Dis-Snek.git
+git+https://github.com/NAFTeam/NAFF.git
 pymongo
 beanie
 motor

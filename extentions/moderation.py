@@ -2,16 +2,16 @@ import math
 from tabulate import tabulate as tb
 import random
 
-from dis_snek.models.discord.timestamp import Timestamp
+from naff.models.discord.timestamp import Timestamp
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
-from dis_snek import Snake, Scale, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check
-from dis_snek.ext.paginators import Paginator
-from dis_snek.models.discord.base import DiscordObject
+from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check
+from naff.ext.paginators import Paginator
+from naff.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.client.errors import NotFound, BadRequest, HTTPException
+from naff.client.errors import NotFound, BadRequest, HTTPException
 
 
 def random_string_generator():
@@ -60,8 +60,8 @@ h = ['h', 'hour', 'hours']
 m = ['m', 'min', 'minute', 'minutes']
 s = ['s', 'sec', 'second', 'seconds']
 
-class Moderation(Scale):
-    def __init__(self, bot: Snake):
+class Moderation(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @listen()
@@ -766,8 +766,8 @@ class Moderation(Scale):
     #                 embed.set_footer(text=f'User ID: {message.author.id}')
     #                 await log_channel.send(embed=embed)
 
-    from dis_snek.models.snek.tasks import Task
-    from dis_snek.models.snek.tasks.triggers import IntervalTrigger
+    from naff.models.naff.tasks import Task
+    from naff.models.naff.tasks.triggers import IntervalTrigger
 
     @Task.create(IntervalTrigger(seconds=60))
     async def unban_task(self):

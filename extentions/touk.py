@@ -1,6 +1,6 @@
 # inspired by https://github.com/artem30801/SkyboxBot/blob/master/main.py
 from bson.int64 import Int64 as int64
-from dis_snek import Snake, Scale, slash_command, InteractionContext, Embed
+from naff import Client, Extension, slash_command, InteractionContext, Embed
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -185,8 +185,8 @@ class BeanieDocuments():
         ban_time: Optional[int64] = None
         mute_time: Optional[int64] = None
 
-class BeanieDocumentsScale(Scale):
-    def __init__(self, bot: Snake):
+class BeanieDocumentsExtension(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
 
     @slash_command(name='btest', description='beanie test', scopes=[435038183231848449,149167686159564800])
@@ -195,7 +195,7 @@ class BeanieDocumentsScale(Scale):
         await ctx.send(f'{doc.activecommands}\n{doc.activecogs}')
 
 def setup(bot):
-    BeanieDocumentsScale(bot)
+    BeanieDocumentsExtension(bot)
     bot.add_model(BeanieDocuments.automod_config)
     bot.add_model(BeanieDocuments.banned_words)
     bot.add_model(BeanieDocuments.giveaways)

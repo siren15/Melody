@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timezone
 import math
 from dateutil.relativedelta import relativedelta
-from dis_snek import Snake, Scale, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild
+from naff import Client, Extension, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild
 # from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -16,8 +16,8 @@ async def guild_owner(ctx) -> bool:
             return member
 
 
-class Basic(Scale):
-    def __init__(self, bot: Snake):
+class Basic(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @slash_command(name='command', sub_cmd_name='restrict', sub_cmd_description='Restrict a commands usage to a specific role', scopes=[435038183231848449, 149167686159564800])
@@ -177,11 +177,11 @@ class Basic(Scale):
         embed.add_field(name="Joined server on:", value=f"<t:{math.ceil(member.joined_at.timestamp())}> `{join_time} ago`", inline=False)
         embed.add_field(name=f"Roles: [{rolecount}]", value=roles, inline=False)
         embed.add_field(name="Highest role:", value=toprole, inline=False)
-        embed.add_field(name="Library:", value="[dis-snek](https://dis-snek.readthedocs.io/)")
+        embed.add_field(name="Library:", value="[dis-snek](https://naff-docs.readthedocs.io/)")
         embed.add_field(name="Servers:", value=len(self.bot.user.guilds))
         embed.add_field(name="Bot Latency:", value=f"{self.bot.latency * 1000:.0f} ms")
-        embed.add_field(name='GitHub: https://github.com/siren15/pinetree-dis-snek', value='‎')
-        embed.set_footer(text="pinetree | Powered by Sneks")
+        embed.add_field(name='GitHub: https://github.com/siren15/melody', value='‎')
+        embed.set_footer(text="Melody | powered by NAFF")
         await ctx.send(embed=embed)
     
     @slash_command(name='avatar', description="Show's you your avatar, or members, if provided")
@@ -221,7 +221,7 @@ class Basic(Scale):
     @slash_command(name='embed', sub_cmd_name='create' , sub_cmd_description='[admin]Create embeds', description="[admin]Create and edit embeds")
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def embed(self, ctx:InteractionContext):
-        from dis_snek.models.discord import modal
+        from naff.models.discord import modal
         m = modal.Modal(title='Create an embed', components=[
             modal.InputText(
                 label="Embed Title",
@@ -264,7 +264,7 @@ class Basic(Scale):
             return
         elif channel is None:
             channel = ctx.channel
-        from dis_snek.models.discord import modal
+        from naff.models.discord import modal
         m = modal.Modal(title='Create an embed', components=[
             modal.InputText(
                 label="Embed Title",

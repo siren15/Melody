@@ -2,10 +2,10 @@
 import logging
 import datetime
 
-from dis_snek import Scale, slash_command, InteractionContext, Embed
+from naff import Extension, slash_command, InteractionContext, Embed
 
 
-class Uptime(Scale):
+class Uptime(Extension):
     """Shows you how long the bot has been online"""
     def __init__(self, bot):
         self.bot = bot

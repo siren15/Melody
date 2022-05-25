@@ -1,12 +1,12 @@
 import re
 
-from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check
+from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
 
-class GiveRoles(Scale):
-    def __init__(self, bot: Snake):
+class GiveRoles(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @slash_command(name='giveyou', sub_cmd_name='_', sub_cmd_description="Give members a role from predefined list of roles")
@@ -81,7 +81,7 @@ class GiveRoles(Scale):
     @check(member_permissions(Permissions.BAN_MEMBERS))
     async def giveyourole_list(self, ctx: InteractionContext):
         
-        from dis_snek.ext.paginators import Paginator
+        from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))

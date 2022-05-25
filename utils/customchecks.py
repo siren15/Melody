@@ -1,9 +1,9 @@
-from dis_snek.client.errors import *
+from naff.client.errors import *
 import re
 from typing import Awaitable, Callable, Union
-from dis_snek import Permissions
-from dis_snek.models.discord.snowflake import Snowflake_Type, to_snowflake
-from dis_snek.models.snek.context import Context
+from naff import Permissions
+from naff.models.discord.snowflake import Snowflake_Type, to_snowflake
+from naff.models.naff.context import Context
 from extentions.touk import BeanieDocuments as db
 
 TYPE_CHECK_FUNCTION = Callable[[Context], Awaitable[bool]]

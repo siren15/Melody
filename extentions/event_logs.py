@@ -6,11 +6,11 @@ import requests
 
 from datetime import datetime, timezone
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from dis_snek import Snake, slash_command, OptionTypes, Permissions, Scale, Embed, check, listen, InteractionContext
+from naff import Client, slash_command, OptionTypes, Permissions, Extension, Embed, check, listen, InteractionContext
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd
+from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -46,8 +46,8 @@ def geturl(string):
             return url
     return None
 
-class EventLogs(Scale):
-    def __init__(self, bot: Snake):
+class EventLogs(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @slash_command(name='logchannel', description="set up a logging channel")

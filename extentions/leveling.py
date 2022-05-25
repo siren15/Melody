@@ -4,7 +4,7 @@ import os
 import requests
 
 from datetime import datetime, timedelta
-from dis_snek import Snake, Scale, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles
+from naff import Client, Extension, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -23,8 +23,8 @@ def find_role(ctx, roleid):
             return r
     return None
 
-class Levels(Scale):
-    def __init__(self, bot: Snake):
+class Levels(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @listen()
@@ -144,7 +144,7 @@ class Levels(Scale):
     
     @slash_command(name='ranklist', description="leveling roles list")
     async def ranks_list(self, ctx:InteractionContext):
-        from dis_snek.ext.paginators import Paginator
+        from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -469,7 +469,7 @@ class Levels(Scale):
             )
             await ctx.send("A button to the web leaderboard!", components=components)
         elif web_or_local == 'local':
-            from dis_snek.ext.paginators import Paginator
+            from naff.ext.paginators import Paginator
             from tabulate import tabulate as tb
             def chunks(l, n):
                 n = max(1, n)
