@@ -6,6 +6,7 @@ oauthlib
 Authlib
 starlette
 httpx
+itsdangerous
 django
 requests
 pymongo
