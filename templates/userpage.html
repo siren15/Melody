@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+  {% if user %}
+    <a href="/melody/user">
+    <img class = "custom-border rounded-circle" style="width: auto; height: 60px;" src = "https://cdn.discordapp.com/avatars/{{user.id}}/{{user.avatar}}.png">{{user.username}}#{{user.discriminator}}</img>
+    </a>
+  {% endif %}
+  <ol></ol>
+  <a  href="{{login_button_url}}">
+    <button class="{{button_style}}" style="color: white;">{{login_button_text}}</button>
+  </a>
+{% endblock %}
+
+{% block content %}
+    <h1 class="text-white">Servers</h1>
+    <ol></ol>
+    <div class="row row-cols-auto justify-content-md-center">
+      {% for guild in shared_guilds %}
+      <div class="col col-lg-2">
+        <a href="/melody/user/{{guild.id}}" >
+          <img class = "custom-border rounded-circle" src = "https://cdn.discordapp.com/icons/{{guild.id}}/{{guild.icon}}.png">
+          <ol></ol>{{guild.name}}
+          </img>
+        </a>
+        <ol></ol>
+      </div>
+      {% endfor %}
+      <ol></ol>
+    </div>
+{% endblock %}

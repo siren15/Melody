@@ -1,12 +1,12 @@
 from email import message
 import random
-from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check, listen, Button, ButtonStyles, spread_to_rows, SlashCommandChoice
-from dis_snek.models.discord.components import ActionRow, spread_to_rows
+from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check, listen, Button, ButtonStyles, spread_to_rows, SlashCommandChoice
+from naff.models.discord.components import ActionRow, spread_to_rows
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.api.events.internal import Component
-from dis_snek.models.discord.enums import ButtonStyles, ComponentTypes
+from naff.api.events.internal import Component
+from naff.models.discord.enums import ButtonStyles, ComponentTypes
 
 async def button_id_generator(ctx, channel, message):
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -18,8 +18,8 @@ async def button_id_generator(ctx, channel, message):
         else:
             continue
 
-class ButtonRoles(Scale):
-    def __init__(self, bot: Snake):
+class ButtonRoles(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @slash_command(name='rolebuttons', sub_cmd_name='add', sub_cmd_description="Add role buttons to a message", scopes=[435038183231848449,149167686159564800])
@@ -268,7 +268,7 @@ class ButtonRoles(Scale):
 
     @slash_command(name='rolebuttons', sub_cmd_name='list', sub_cmd_description="List all role buttons on this server", scopes=[435038183231848449,149167686159564800])
     async def rb_list(self, ctx: InteractionContext):
-        from dis_snek.ext.paginators import Paginator
+        from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))

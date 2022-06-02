@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+  {% if user %}
+    <a href="/melody/user">
+    <img class = "custom-border rounded-circle" style="width: auto; height: 60px;" src = "https://cdn.discordapp.com/avatars/{{user.id}}/{{user.avatar}}.png">{{user.username}}#{{user.discriminator}}</img>
+    </a>
+  {% endif %}
+  <ol></ol>
+  <a  href="{{login_button_url}}">
+    <button class="{{button_style}}" style="color: white;">{{login_button_text}}</button>
+  </a>
+{% endblock %}
+
+{% block content %}
+<h1 class="text-white">Extensions</h1>
+<ol></ol>
+<div class="row row-cols-1 justify-content-md-center">
+  {% for extension in extensions %}
+    <div class="shadow-sm p-3 mb-5 rounded py-3 px-3 mx-1 my-1 w-50" style="background-color: #211f25;">
+      <div class="d-flex container-fluid">
+        <h4 class="text-white me-auto mx-2 my-2">{{extension.name}}</h4>
+        {% if extension.can_be_disabled %}
+          {% if extension.is_disabled %}
+            <button class="btn btn-outline-danger mx-1 my-1" data-bs-toggle="modal" data-bs-target="#{{extension.url}}modal">Disable</button>
+          {% else %}
+            <button class="btn btn-outline-danger mx-1 my-1" data-bs-toggle="modal" data-bs-target="#{{extension.url}}modal">Enable</button>
+          {% endif %}
+        {% endif %}
+        <a href="/melody/user/{{guild_id}}/{{extension.url}}">
+          <button class="btn btn-outline-warning mx-1 my-1">
+            <i class="fa fa-cog"></i>
+          </button>
+        </a>
+      </div>
+    </div>
+    {% if extension.can_be_disabled %}
+      <!-- Modal -->
+      <div class="modal fade" id="{{extension.url}}modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div style="background-color: #211f25;" class="modal-body">
+              <h5 class="modal-title text-white mx-1 my-1" id="staticBackdropLabel">Do you really want to disable {{extension.name}}?</h5>
+              <button type="button" class="btn btn-outline-warning mx-1 my-1" data-bs-dismiss="modal">No.</button>
+              {% if extension.can_be_disabled %}
+                {% if extension.is_disabled %}
+                  <form action="/melody/user/{{guild_id}}/change" method="post">
+                    <input type="hidden" id="event" name="event" value="{{extension.event_name}}">
+                    <button type="submit" class="btn btn-outline-danger mx-1 my-1">Yep! Disable it.</button>
+                  </form>
+                {% else %}
+                  <form action="/melody/user/{{guild_id}}/change" method="post">
+                    <input type="hidden" id="event" name="event" value="{{extension.event_name}}">
+                    <button type="submit" class="btn btn-outline-success mx-1 my-1">Yep! Enable it.</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endblock %}

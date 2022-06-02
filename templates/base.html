@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head> 
+    <meta charset="utf-8">
+    <title>{% block title %}beni2am{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bootstrap.css') }}" type="text/css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+  </head>
+  <body style="background-color: rgb(37, 37, 42)">
+
+    <nav class="navbar navbar-expand-lg navbar-dark nav-border-bottom border-2" style="background-color: #211f25;">
+      <div class="d-flex container-fluid">
+        <a class="navbar-brand me-auto" href="/">beni2am</a>
+        {% block navbar %}
+        {% endblock %}
+      </div>
+    </nav>
+
+    <div class="container py-3" align="center">
+      <ol>
+        {% block breadcrumb %}
+        {% endblock %}
+      </ol>
+      <div class="container py-3 container-border rounded" style="background-color: rgb(58, 55, 65);">
+          {% block content %}
+          {% endblock %}
+      </div>
+    </div>
+    
+    <div class="footer" style="background-color: rgb(37, 37, 42);">
+      <div class="contain">
+        <div class="col">
+          <h1>Melody</h1>
+          <ul>
+            <li>Melody Bot</li>
+            <li>Bot Commands</li>
+            <li>r/GravityFalls Discord Server</li>
+          </ul>
+        </div>
+      <div class="clearfix"></div>
+      </div>
+    </div>
+    <script src="{{ url_for('static', path='js/bootstrap.bundle.js') }}"></script>
+  </body>
+
+</html>

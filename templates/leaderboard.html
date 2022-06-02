@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+  {% if user %}
+    <a href="/melody/user">
+    <img class = "custom-border rounded-circle" style="width: auto; height: 60px;" src = "https://cdn.discordapp.com/avatars/{{user.id}}/{{user.avatar}}.png">{{user.username}}#{{user.discriminator}}</img>
+    </a>
+  {% endif %}
+  <ol></ol>
+  <a  href="{{login_button_url}}">
+    <button class="{{button_style}}" style="color: white;">{{login_button_text}}</button>
+  </a>
+{% endblock %}
+
+{% block content %}
+  <table class="table table-dark table-hover" style="--bs-table-bg: rgb(58, 55, 65); --bs-table-hover-bg: #25252a; border-color: #3a3741;">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Rank</th>
+        <th scope="col">Member</th>
+        <th scope="col">Level</th>
+        <th scope="col">XP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <th scope="row" class="align-middle">{{user.rank}}</th>
+          <td class="align-middle">{{user.username}}</td>
+          <th scope="row" class="align-middle">{{user.level}}</th>
+          <td class="align-middle">{{user.xp}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% if users %}
+  {% if users.has_other_pages %}
+    <div class="btn-group" role="group" aria-label="Item pagination" align="center">
+        {% if users.has_previous %}
+            <a href="?page={{ users.previous_page_number }}" class="btn btn-outline-light">&laquo;</a>
+        {% endif %}
+
+        {% for page_number in users.paginator.page_range %}
+            {% if users.number == page_number %}
+                <button class="btn btn-outline-light active">
+                    <span>{{ page_number }} <span class="sr-only">(current)</span></span>
+                </button>
+            {% else %}
+                <a href="?page={{ page_number }}" class="btn btn-outline-light">
+                    {{ page_number }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if users.has_next %}
+            <a href="?page={{ users.next_page_number }}" class="btn btn-outline-light">&raquo;</a>
+        {% endif %}
+    </div>
+  {% endif %}
+  {% else %}
+      <p>Nobody from this server has levels.</p>
+  {% endif %}
+{% endblock %}

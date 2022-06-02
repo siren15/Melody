@@ -2,22 +2,21 @@ import asyncio
 import json
 import math
 import random
-from tkinter import N
 import requests
 
-from dis_snek.client.const import MISSING
-from dis_snek.models.discord import modal
+from naff.client.const import MISSING
+from naff.models.discord import modal
 from rapidfuzz import fuzz, process
 from dateutil.relativedelta import *
 from datetime import date, datetime, timedelta
-from dis_snek import Snake, Scale, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, ModalContext, SlashCommandChoice
-from dis_snek.ext.paginators import Paginator
-from dis_snek.models.discord.base import DiscordObject
+from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, ModalContext, SlashCommandChoice
+from naff.ext.paginators import Paginator
+from naff.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from dis_snek.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageCreate
-from dis_snek.client.errors import NotFound, BadRequest, HTTPException
+from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageCreate
+from naff.client.errors import NotFound, BadRequest, HTTPException
 
 def geturl(string):
     url = re.compile(r"(?:https?:\/\/(?:www\.)?)?(?P<domain>[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9()]{1,6})\b(?:[-a-z0-9()@:%_\+.~#?&//=]*)",flags=re.IGNORECASE,)
@@ -221,8 +220,8 @@ async def automod_strike(self, event, action_msg, reason):
     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
     await db.strikes(strikeid=avid, guildid=guild.id, user=user.id, moderator=self.bot.user.id, action=action_msg, day=daytime, reason=reason, automod=True).insert()
 
-class AutoMod(Scale):
-    def __init__(self, bot: Snake):
+class AutoMod(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
         self.phishing_links = list()
         plinks = requests.get('https://raw.githubusercontent.com/Discord-AntiScam/scam-links/main/urls.json')
@@ -541,37 +540,56 @@ class AutoMod(Scale):
             settings = await db.automod_config.find_one({'guildid':guild.id})
             if (settings.ignored_users is not None) and (user.id in settings.ignored_users.split(',')) or ((settings.ignored_channels is not None) and (channel.id in settings.ignored_channels.split(','))) or ((settings.ignored_roles is not None) and any(role for role in user.roles if role.id in settings.ignored_roles.split(','))) or ((user.has_permission(Permissions.ADMINISTRATOR) == True)):
                 return
-            
+            is_banned_word = False
             banned_words = await db.banned_words.find_one({'guildid':guild.id})
-            for bw in banned_words.exact.split(','):
-                if bw.lower() in event.message.content.lower():
-                    await message.delete()
-                    automod_reply = await channel.send(f"Hey {user.mention}! Watch your language!", ephemeral=True)
-                    
-                    reason = f'[AUTOMOD]banned words sent in {channel.name}'
-                    
-                    await automod_strike(self, event, "Automod Log (Banned Words)", reason)
-                    
-                    channelid = await db.logs.find_one({"guild_id":guild.id})
-                    log_channel = guild.get_channel(channelid.channel_id)
-                    
-                    violation_entries = []
-                    async for entry in db.strikes.find({'guildid':guild.id, 'user':user.id, 'action':"Automod Log (Banned Words)", 'automod':True}):
-                        violation_entries.append(entry.user)
-                    if (settings.phishing.violation_count is not None) and len(violation_entries) > settings.banned_words.violation_count:
-                        if 'warn' in settings.banned_words.violation_punishment:
-                            await automod_warn(event, log_channel, reason)
-                        
-                        if 'mute' in settings.banned_words.violation_punishment:
-                            await automod_mute(event, settings, reason)
-                            
-                        if 'kick' in settings.banned_words.violation_punishment:
-                            await guild.kick(user, reason)
+            for bw in banned_words.exact.lower().split(','):
+                bw = bw.replace(' ', '')
+                bw = bw.replace('_', ' ')
+                if bw.startswith('*') and bw.endswith('*'):
+                    cbw = bw.replace('*', '')
+                    if cbw in event.message.content.lower():
+                        is_banned_word = True
+                elif bw.startswith('*') and not bw.endswith('*'):
+                    cbw = bw.replace('*', '')
+                    for cmw in event.message.content.lower().split(','):
+                        if cmw.startswith(cbw):
+                            is_banned_word = True
+                elif bw.endswith('*') and not bw.startswith('*'):
+                    cbw = bw.replace('*', '')
+                    for cmw in event.message.content.lower().split(','):
+                        if cmw.endswith(cbw):
+                            is_banned_word = True
+                for mw in event.message.content.lower().split(','):
+                    if mw == bw:
+                        is_banned_word = True
+            if is_banned_word == True:
+                await message.delete()
+                automod_reply = await channel.send(f"Hey {user.mention}! Watch your language!", ephemeral=True)
                 
-                        if 'ban' in settings.banned_words.violation_punishment:
-                            await automod_ban(event, settings, log_channel, reason)
-                    await asyncio.sleep(3)
-                    await automod_reply.delete()
+                reason = f'[AUTOMOD]banned words sent in {channel.name}'
+                
+                await automod_strike(self, event, "Automod Log (Banned Words)", reason)
+                
+                channelid = await db.logs.find_one({"guild_id":guild.id})
+                log_channel = guild.get_channel(channelid.channel_id)
+                
+                violation_entries = []
+                async for entry in db.strikes.find({'guildid':guild.id, 'user':user.id, 'action':"Automod Log (Banned Words)", 'automod':True}):
+                    violation_entries.append(entry.user)
+                if (settings.phishing.violation_count is not None) and len(violation_entries) > settings.banned_words.violation_count:
+                    if 'warn' in settings.banned_words.violation_punishment:
+                        await automod_warn(event, log_channel, reason)
+                    
+                    if 'mute' in settings.banned_words.violation_punishment:
+                        await automod_mute(event, settings, reason)
+                        
+                    if 'kick' in settings.banned_words.violation_punishment:
+                        await guild.kick(user, reason)
+            
+                    if 'ban' in settings.banned_words.violation_punishment:
+                        await automod_ban(event, settings, log_channel, reason)
+                await asyncio.sleep(3)
+                await automod_reply.delete()
 
     @listen()
     async def partial_match_banned_words(self, event: MessageCreate):

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+  {% if user %}
+      <a href="/melody/user">
+      <img class = "custom-border rounded-circle" style="width: auto; height: 60px;" src = "https://cdn.discordapp.com/avatars/{{user.id}}/{{user.avatar}}.png">{{user.username}}#{{user.discriminator}}</img>
+      </a>
+  {% endif %}
+  <ol></ol>
+  <a  href="{{login_button_url}}">
+    <button class="{{button_style}}" style="color: white;">{{login_button_text}}</button>
+  </a>
+{% endblock %}
+
+{% block content %}
+<iframe width="420" height="315"
+  src={{url}}>
+</iframe> 
+{% endblock %}

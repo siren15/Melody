@@ -5,7 +5,7 @@ import asyncio
 from utils.catbox import CatBox as catbox
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, timezone
-from dis_snek import Snake, Scale, slash_command, InteractionContext, OptionTypes, Embed, Button, ButtonStyles, ActionRow, spread_to_rows, check, AutocompleteContext
+from naff import Client, Extension, slash_command, InteractionContext, OptionTypes, Embed, Button, ButtonStyles, ActionRow, spread_to_rows, check, AutocompleteContext
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -22,8 +22,8 @@ def find_member(ctx, userid):
             return m
     return None
 
-class Tags(Scale):
-    def __init__(self, bot: Snake):
+class Tags(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @slash_command(name='t', description="allow's me to recall tags")
@@ -405,7 +405,7 @@ class Tags(Scale):
     @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
     @check(role_lock())
     async def tag_list(self, ctx:InteractionContext):
-        from dis_snek.ext.paginators import Paginator
+        from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))

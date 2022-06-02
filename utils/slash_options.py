@@ -1,4 +1,4 @@
-from dis_snek import slash_option, OptionTypes
+from naff import slash_option, OptionTypes
 
 def user():
     def wrapper(func):

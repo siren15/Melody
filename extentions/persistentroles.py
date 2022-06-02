@@ -1,10 +1,10 @@
-from dis_snek import Snake, slash_command, InteractionContext, OptionTypes, Permissions, Scale, Embed, check, listen, AutoDefer
+from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check, listen, AutoDefer
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
 
-class PersistentRoles(Scale):
-    def __init__(self, bot: Snake):
+class PersistentRoles(Extension):
+    def __init__(self, bot: Client):
         self.bot = bot
     
     @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent", scopes=[435038183231848449, 149167686159564800])
@@ -63,7 +63,7 @@ class PersistentRoles(Scale):
     
     @slash_command(name='persistentroles', sub_cmd_name='list', sub_cmd_description="List all the persistent roles")
     async def persistent_roles_list(self, ctx):
-        from dis_snek.ext.paginators import Paginator
+        from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
