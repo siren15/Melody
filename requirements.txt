@@ -18,3 +18,4 @@ Pillow
 python-dateutil
 dnspython
 tabulate
+rapidfuzz
