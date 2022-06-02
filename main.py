@@ -1,5 +1,4 @@
 # props to proxy and his way to connect to database https://github.com/artem30801/SkyboxBot/blob/master/main.py
-# props to proxy and his way to connect to database https://github.com/artem30801/SkyboxBot/blob/master/main.py
 import os
 import asyncio
 from typing import Optional
@@ -132,7 +131,7 @@ class CustomClient(Client):
         self.models.append(model)
         
 bot = CustomClient()
-asyncio.ensure_future(bot.startup())
+
 
 ###############################################
 # Here starts FastAPI stuff for the dashboard #
@@ -405,3 +404,5 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
         'button_style':button_style,
         'user':user
         })
+
+asyncio.ensure_future(bot.startup())
