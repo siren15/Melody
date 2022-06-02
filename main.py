@@ -3,6 +3,8 @@ import os
 import asyncio
 from typing import Optional
 import motor
+import aiohttp
+import pymongo
 
 from beanie import Indexed, init_beanie
 from naff import Client, Intents, listen, Embed, InteractionContext, AutoDefer
@@ -11,6 +13,23 @@ from extentions.touk import BeanieDocuments as db, violation_settings
 from naff.client.errors import NotFound
 from naff.api.events.discord import GuildLeft
 
+from jose import jwt, JWTError
+from oauthlib.common import generate_token
+from authlib.integrations.starlette_client import OAuth, OAuthError
+from fastapi import Depends, FastAPI, status, Form
+from starlette.config import Config
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from dependencies import get_token, is_logged_in
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from pydantic import BaseModel
+
+
+app = FastAPI()
+
 # import logging
 # import naff
 # logging.basicConfig()
@@ -18,17 +37,15 @@ from naff.api.events.discord import GuildLeft
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
-ad = AutoDefer(enabled=True, time_until_defer=1)
 
 class CustomClient(Client):
     def __init__(self):
         super().__init__(
             intents=intents, 
-            sync_interactions=True, 
-            delete_unused_application_cmds=True, 
+            sync_interactions=False, 
+            delete_unused_application_cmds=False, 
             default_prefix='+', 
-            fetch_members=True, 
-            auto_defer=ad,
+            fetch_members=True,
             # asyncio_debug=True
         )
         self.db: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
@@ -45,88 +62,11 @@ class CustomClient(Client):
     
     @listen()
     async def on_ready(self):
-        print(f"[Logged in]: {self.user}")
+        print(f"[Web Dash Logged in]: {self.user}")
         guild = self.get_guild(435038183231848449)
         channel = guild.get_channel(932661537729024132)
-        await channel.send(f'[Logged in]: {self.user}')
-
-    @listen()
-    async def on_guild_join(self, event):
-        #add guild to database
-        if await db.prefixes.find_one({'guildid':event.guild.id}) is None:
-            await db.prefixes(guildid=event.guild.id, prefix='p.').insert()
-            guild = self.get_guild(435038183231848449)
-            channel = guild.get_channel(932661537729024132)
-            await channel.send(f'I was added to {event.guild.name}|{event.guild.id}')
-        if await db.automod_config.find_one({'guildid':event.guild.id}) is None:
-            violations = violation_settings(violation_count=None, violation_punishment=None)
-            await db.automod_config(guildid=event.guild.id, banned_words=violations, phishing=violations).insert()
+        await channel.send(f'[Web Dash Logged in]: {self.user}')
     
-    @listen()
-    async def on_guild_leave(self, event:  GuildLeft):
-        for document in self.models:
-            async for entry in document.find({'guildid': event.guild_id}):
-                await entry.delete()
-            async for entry in document.find({'guild_id': event.guild_id}):
-                await entry.delete()
-        print(f'Guild {event.guild_id} was removed.')
-
-    async def on_command_error(self, ctx: InteractionContext, error:Exception):
-        if isinstance(error, MissingPermissions):
-            embed = Embed(description=f":x: {ctx.author.mention} You don't have permissions to perform that action",
-                          color=0xdd2e44)
-            await ctx.send(embed=embed, ephemeral=True)
-
-        elif isinstance(error, MissingRole):
-            
-            regx = {'$regex':f"^{ctx.invoked_name}$", '$options':'i'}
-            roleid = await db.hasrole.find_one({"guildid":ctx.guild.id, "command":regx})
-            if roleid is not None:
-                role = ctx.guild.get_role(roleid.role)
-                embed = Embed(description=f":x: {ctx.author.mention} You don't have role {role.mention} that's required to use this command.",
-                              color=0xDD2222)
-                await ctx.send(embed=embed, ephemeral=True)
-
-        elif isinstance(error, RoleNotFound):
-            embed = Embed(description=f":x: Couldn't find that role",
-                          color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-
-        elif isinstance(error, UserNotFound):
-            embed = Embed(description=f":x: User is not a member of this server ",
-                          color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-
-        elif isinstance(error, CommandOnCooldown):
-            embed = Embed(
-                description=f":x: Command **{ctx.invoked_name}** on cooldown, try again later.",
-                color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-
-        elif isinstance(error, ExtensionNotActivatedInGuild):
-            embed = Embed(description=f":x: Module for this command is not activated in the server.",
-                          color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-
-        elif isinstance(error, CommandNotActivatedInGuild):
-            embed = Embed(description=f":x: Command is not activated in the server.",
-                          color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-
-        elif isinstance(error, UserInBlacklist):
-            embed = Embed(description=f":x: {ctx.author.mention} You are not allowed to use this command",
-                          color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
-        else:
-        #     embed = Embed(description=f":x: An error occured while trying to execute `{ctx.invoked_name}` command: ```{error}```",
-        #                   color=0xDD2222)
-        #     await ctx.send(embed=embed, ephemeral=True)
-            if ctx.guild_id != 435038183231848449:
-                guild = self.get_guild(435038183231848449)
-                channel = guild.get_channel(932661537729024132)
-                invite = await ctx.channel.create_invite(reason=f'[AUTOMOD]invite created due to error occuring')
-                await channel.send(f"<@400713431423909889> An error occured while {ctx.author}({ctx.author.id}) tryied to execute `{ctx.invoked_name}` command in {ctx.channel.name} from `{ctx.guild.name}`: ```{error}```\n{invite}")
-        
     def add_model(self, model):
         self.models.append(model)
         
@@ -137,24 +77,6 @@ bot = CustomClient()
 # Here starts FastAPI stuff for the dashboard #
 ###############################################
 
-import aiohttp
-import uvicorn
-import pymongo
-
-from jose import jwt, JWTError
-from oauthlib.common import generate_token
-from authlib.integrations.starlette_client import OAuth, OAuthError
-from fastapi import Depends, FastAPI, status, Form
-from starlette.config import Config
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
-from starlette.responses import RedirectResponse
-from extentions.touk import BeanieDocuments as db
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from dependencies import get_token, is_logged_in
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from pydantic import BaseModel
 
 def paginate(request, lst, page):
     paginator = Paginator(lst, 100)
@@ -173,9 +95,6 @@ CLIENT_ID = os.environ['melody_id']
 CLIENT_SECRET = os.environ['melody_secret']
 SESSION_SECRET = os.environ['sesh_secret']
 ALGORITHM = os.environ['sesh_algo']
-
-
-app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -405,4 +324,4 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
         'user':user
         })
 
-asyncio.ensure_future(bot.startup())
+asyncio.run(bot.startup())
