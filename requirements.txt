@@ -2,6 +2,8 @@ git+https://github.com/NAFTeam/NAFF.git
 fastapi
 uvicorn
 python-jose
+oauthlib
+django
 requests
 pymongo
 beanie
