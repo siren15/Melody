@@ -324,4 +324,4 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
         'user':user
         })
 
-asyncio.run(bot.startup())
+asyncio.ensure_future(bot.startup())
