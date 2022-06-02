@@ -23,25 +23,25 @@
       </tr>
     </thead>
     <tbody>
-      {% for user in users %}
+      {% for member in members %}
         <tr>
-          <th scope="row" class="align-middle">{{user.rank}}</th>
-          <td class="align-middle">{{user.username}}</td>
-          <th scope="row" class="align-middle">{{user.level}}</th>
-          <td class="align-middle">{{user.xp}}</td>
+          <th scope="row" class="align-middle">{{member.rank}}</th>
+          <td class="align-middle"><img class = "rounded-circle" style="width: auto; height: 40px;" src = "{{member.avatar_url}}"></img>     {{member.username}}</td>
+          <th scope="row" class="align-middle">{{member.level}}</th>
+          <td class="align-middle">{{member.xp}}</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
-{% if users %}
-  {% if users.has_other_pages %}
+{% if members %}
+  {% if members.has_other_pages %}
     <div class="btn-group" role="group" aria-label="Item pagination" align="center">
-        {% if users.has_previous %}
-            <a href="?page={{ users.previous_page_number }}" class="btn btn-outline-light">&laquo;</a>
+        {% if members.has_previous %}
+            <a href="?page={{ members.previous_page_number }}" class="btn btn-outline-light">&laquo;</a>
         {% endif %}
 
-        {% for page_number in users.paginator.page_range %}
-            {% if users.number == page_number %}
+        {% for page_number in members.paginator.page_range %}
+            {% if members.number == page_number %}
                 <button class="btn btn-outline-light active">
                     <span>{{ page_number }} <span class="sr-only">(current)</span></span>
                 </button>
@@ -52,8 +52,8 @@
             {% endif %}
         {% endfor %}
 
-        {% if users.has_next %}
-            <a href="?page={{ users.next_page_number }}" class="btn btn-outline-light">&raquo;</a>
+        {% if members.has_next %}
+            <a href="?page={{ members.next_page_number }}" class="btn btn-outline-light">&raquo;</a>
         {% endif %}
     </div>
   {% endif %}

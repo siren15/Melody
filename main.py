@@ -130,14 +130,6 @@ class CustomClient(Client):
         
     def add_model(self, model):
         self.models.append(model)
-
-if __name__ == "__main__":
-    bot = CustomClient()
-    asyncio.run(bot.startup())
-
-if __name__ == "__main__":
-    bot = CustomClient()
-    asyncio.run(bot.startup())
         
 bot = CustomClient()
 asyncio.ensure_future(bot.startup())
@@ -386,31 +378,28 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
         login_button_text = 'Login with Discord'
         button_style = 'btn btn-outline-warning'
 
-    melody_guilds = bot.user.guilds
-    for guild in melody_guilds:
-        print(guild.members)
-
     guild_users = db.leveling.find({'guildid':int(guild_id), 'level':{'$gt':0}}).sort([('total_xp', pymongo.DESCENDING)])
     user_list = list()
     ranknum = 1
     async for guser in guild_users:
-        if guser.display_name is not None:
-            username = guser.display_name
-        elif guser.display_name is None:
-            username = guser.memberid
-        if ranknum == 1:
-            rank = '🏆1.'
-        elif ranknum == 2:
-            rank = '🥈2.'
-        elif ranknum == 3:
-            rank = '🥉3.'
-        else:
-            rank = f'{ranknum}.'
-        ranknum = ranknum+1
-        user_list.append({'rank':rank, 'username':username, 'level':guser.level, 'xp':guser.total_xp})
+        melody_guilds = bot.user.guilds
+        for guild in [guild for guild in melody_guilds if guild.id == int(guild_id)]:
+            members = [guild.get_member(guser.memberid)]
+            for member in members:
+                if member is not None:
+                    if ranknum == 1:
+                        rank = '🏆1.'
+                    elif ranknum == 2:
+                        rank = '🥈2.'
+                    elif ranknum == 3:
+                        rank = '🥉3.'
+                    else:
+                        rank = f'{ranknum}.'
+                    ranknum = ranknum+1
+                    user_list.append({'rank':rank, 'username':member.display_name, 'level':guser.level, 'xp':guser.total_xp, 'avatar_url':member.display_avatar.url})
     return templates.TemplateResponse('leaderboard.html', {
         'request':request,
-        'users':paginate(request, user_list, page),
+        'members':paginate(request, user_list, page),
         'login_button_url':login_button_url,
         'login_button_text':login_button_text,
         'button_style':button_style,
