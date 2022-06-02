@@ -5,6 +5,7 @@ python-jose
 oauthlib
 Authlib
 starlette
+httpx
 django
 requests
 pymongo
