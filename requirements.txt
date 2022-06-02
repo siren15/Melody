@@ -1,4 +1,6 @@
-git+https://github.com/Discord-Snake-Pit/Dis-Snek.git@dev
+https://github.com/NAFTeam/NAFF.git
+fastapi
+uvicorn
 requests
 pymongo
 beanie
