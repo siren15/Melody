@@ -3,6 +3,8 @@ fastapi
 uvicorn
 python-jose
 oauthlib
+Authlib
+starlette
 django
 requests
 pymongo
