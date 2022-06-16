@@ -81,7 +81,7 @@ class Moderation(Extension):
                 max_length=100
             ),
             modal.InputText(
-                label="Can you deal uneasy/difficult situations?",
+                label="Can you handle uneasy/difficult situations?",
                 style=modal.TextStyles.SHORT,
                 custom_id=f'wimp',
                 placeholder="Can you handle uncomfortable and difficult situations?",
