@@ -94,7 +94,7 @@ class Moderation(Extension):
                 custom_id=f'situation',
                 placeholder="How would you handle the situation described in the announcement?(https://pastebin.com/raw/MSa1Gbjn)",
                 required=True,
-                max_length=1500
+                max_length=1024
             ),
             modal.InputText(
                 label="Why do you want to be part of our staff?",
@@ -102,7 +102,7 @@ class Moderation(Extension):
                 custom_id=f'reason',
                 placeholder="Why do you want to be part of our staff?",
                 required=True,
-                max_length=1500
+                max_length=1024
             )
         ],custom_id=f'{ctx.author.id}_modapp_modal')
     
