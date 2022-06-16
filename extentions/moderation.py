@@ -1,3 +1,4 @@
+import asyncio
 import math
 from tabulate import tabulate as tb
 import random
@@ -5,7 +6,7 @@ import random
 from naff.models.discord.timestamp import Timestamp
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check
+from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, modal, ModalContext
 from naff.ext.paginators import Paginator
 from naff.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
@@ -68,6 +69,67 @@ class Moderation(Extension):
     async def on_ready(self):
         self.unban_task.start()
     
+    @slash_command(name='modapp', description="Apply to be a moderator", scopes=[435038183231848449,149167686159564800])
+    async def modapps_modal(self, ctx:InteractionContext):
+        m = modal.Modal(title='Mod Application', components=[
+            modal.InputText(
+                label="Age & Country (Looking for variety!)",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'age_country',
+                placeholder="What is your age and what country are you from?",
+                required=True,
+                max_length=100
+            ),
+            modal.InputText(
+                label="Can you deal uneasy/difficult situations?",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'wimp',
+                placeholder="Can you handle uncomfortable and difficult situations?",
+                required=True,
+                max_length=100
+            ),
+            modal.InputText(
+                label="How yould you handle this?",
+                style=modal.TextStyles.PARAGRAPH,
+                custom_id=f'situation',
+                placeholder="How would you handle the situation described in the announcement?(https://pastebin.com/raw/MSa1Gbjn)",
+                required=True,
+                max_length=1500
+            ),
+            modal.InputText(
+                label="Why do you want to be part of our staff?",
+                style=modal.TextStyles.PARAGRAPH,
+                custom_id=f'reason',
+                placeholder="Why do you want to be part of our staff?",
+                required=True,
+                max_length=1500
+            )
+        ],custom_id=f'{ctx.author.id}_modapp_modal')
+    
+        await ctx.send_modal(modal=m)
+        try:
+            modal_recived: ModalContext = await ctx.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
+        except asyncio.TimeoutError:
+            return await ctx.author.send(f":x: You took longer than 10 minutes to respond to the mod application modal. Please try again.")
+        age_country = modal_recived.responses.get('age_country')
+        wimp = modal_recived.responses.get('wimp')
+        situation = modal_recived.responses.get('situation')
+        reason = modal_recived.responses.get('reason')
+
+        embed = Embed(title=f"Mod Application - {ctx.author.display_name}",
+                      thumbnail=ctx.author.display_avatar.url,
+                      color=0xf6cd4f)
+        embed.add_field(name='Age & Country (Looking for variety!)', value=age_country, inline=False)
+        embed.add_field(name='Can you handle uncomfortable and difficult situations?', value=wimp, inline=False)
+        embed.add_field(name='How yould you handle the situation described in the announcement?', value=situation, inline=False)
+        embed.add_field(name='Why do you want to be part of our staff?', value=reason, inline=False)
+        embed.set_footer(text=f"{ctx.author}|{ctx.author.id}")
+        channel = await self.bot.fetch_channel(639258147734683659)
+        await channel.send(embed=embed)
+        await modal_recived.author.send(f"Your mod application has been sent to the staff team.", embed=embed)
+        await modal_recived.send(f"Your mod application has been sent to the staff team.", ephemeral=True)
+
+
     @slash_command(name='delete', description="[MOD]allows me to delete messages")
     @amount()
     @reason()
