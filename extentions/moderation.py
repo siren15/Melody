@@ -104,7 +104,7 @@ class Moderation(Extension):
                 required=True,
                 max_length=1024
             )
-        ],custom_id=f'{ctx.author.id}_modapp_modal')
+        ],custom_id=f'{random_string_generator()}_modapp_modal')
     
         await ctx.send_modal(modal=m)
         try:
