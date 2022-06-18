@@ -538,7 +538,16 @@ class AutoMod(Extension):
         channel = message.channel
         if await is_event_active(guild, 'banned_words'):
             settings = await db.automod_config.find_one({'guildid':guild.id})
-            if (settings.ignored_users is not None) and (user.id in settings.ignored_users.split(',')) or ((settings.ignored_channels is not None) and (channel.id in settings.ignored_channels.split(','))) or ((settings.ignored_roles is not None) and any(role for role in user.roles if role.id in settings.ignored_roles.split(','))) or ((user.has_permission(Permissions.ADMINISTRATOR) == True)):
+            if settings.ignored_users is not None:
+                if (user.id in settings.ignored_users.split(',')):
+                    return
+            elif settings.ignored_channels is not None:
+                if (channel.id in settings.ignored_channels.split(',')):
+                    return
+            elif settings.ignored_roles is not None:
+                if any(role for role in user.roles if role.id in settings.ignored_roles.split(',')):
+                    return
+            elif (user.has_permission(Permissions.ADMINISTRATOR) == True):
                 return
             is_banned_word = False
             banned_words = await db.banned_words.find_one({'guildid':guild.id})
