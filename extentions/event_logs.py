@@ -540,7 +540,7 @@ class EventLogs(Extension):
                             continue
                     daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
                     await db.strikes(strikeid=kickid, guildid=event.guild_id, user=target.id, moderator=moderator.id, action="Kick", day=daytime, reason=reason).insert()
-    
+                    
     @listen()
     async def on_ban_create(self, event:BanCreate):
         member = event.user

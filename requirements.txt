@@ -1,5 +1,5 @@
-requests
 git+https://github.com/NAFTeam/NAFF.git
+requests
 pymongo
 beanie
 motor

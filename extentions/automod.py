@@ -568,7 +568,7 @@ class AutoMod(Extension):
                     for cmw in event.message.content.lower().split(','):
                         if cmw.endswith(cbw):
                             is_banned_word = True
-                for mw in event.message.content.lower().split(','):
+                for mw in event.message.content.lower().split(' '):
                     if mw == bw:
                         is_banned_word = True
             if is_banned_word == True:
