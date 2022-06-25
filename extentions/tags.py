@@ -26,9 +26,8 @@ class Tags(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
     
-    @slash_command(name='t', description="allow's me to recall tags")
+    @slash_command(name='t', description="allow's me to recall tags", scopes=[435038183231848449, 149167686159564800])
     @tagname()
-    @check(role_lock())
     async def t(self, ctx:InteractionContext, tagname:str):
         regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
@@ -53,21 +52,18 @@ class Tags(Extension):
             tags.no_of_times_used = uses + 1
             await tags.save()
     
-    # @t.autocomplete('tagname')
-    # async def t_autocomplete(self, ctx: AutocompleteContext, tagname: str):
-    #     choices = []
-    #     tags = db.tag.find({"guild_id":ctx.guild_id})
-    #     async for tag in tags:
-    #         if len(tag.names)>25:
-    #             tag_name = tag.names[0:25]
-    #         else:
-    #             tag_name = tag.names
-    #         choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
-    #     await ctx.send(choices=choices)
+    @t.autocomplete('tagname')
+    async def t_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
 
     @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
     @tagname()
-    @check(role_lock())
     async def tag(self, ctx:InteractionContext, tagname:str):
         regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
@@ -93,10 +89,9 @@ class Tags(Extension):
             await tags.save()
 
     @slash_command(name='tag', sub_cmd_name='create', sub_cmd_description="allow's me to store tags")
-    @tagname()
+    @slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionTypes.STRING, required=True, autocomplete=False)
     @content()
     @attachment()
-    @check(role_lock())
     async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -179,7 +174,6 @@ class Tags(Extension):
     
     @slash_command(name='tag', sub_cmd_name='delete', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
-    @check(role_lock())
     async def tag_delete(self, ctx:InteractionContext, tagname:str=None):
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -244,7 +238,6 @@ class Tags(Extension):
     @tagname()
     @content()
     @attachment()
-    @check(role_lock())
     async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -344,7 +337,6 @@ class Tags(Extension):
     
     @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
     @tagname()
-    @check(role_lock())
     async def tag_info(self, ctx:InteractionContext, tagname:str=None):
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -403,7 +395,6 @@ class Tags(Extension):
         await ctx.send(embed=embed)
     
     @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
-    @check(role_lock())
     async def tag_list(self, ctx:InteractionContext):
         from naff.ext.paginators import Paginator
         def chunks(l, n):
@@ -458,7 +449,6 @@ class Tags(Extension):
     
     @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
     @tagname()
-    @check(role_lock())
     async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -501,7 +491,6 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='gift', sub_cmd_description="gift your tags")
     @tagname()
     @member()
-    @check(role_lock())
     async def tag_gift(self, ctx:InteractionContext, tagname:str=None, member:OptionTypes.USER=None):
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -572,5 +561,75 @@ class Tags(Extension):
             elif (reaction.context.custom_id == cancel_button_id) and (ctx.author != reaction.context.author):
                 await ctx.send(f"{reaction.context.author.mention} Only owners can cancel gifting!", ephemeral=True)
 
+    @tag.autocomplete('tagname')
+    async def tag_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
+    
+    @tag_admin_delete.autocomplete('tagname')
+    async def tag_admin_delete_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
+    
+    @tag_claim.autocomplete('tagname')
+    async def tag_claim_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
+    
+    @tag_gift.autocomplete('tagname')
+    async def tag_gift_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
+    
+    @tag_info.autocomplete('tagname')
+    async def tag_info_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
+    
+    @tag_edit.autocomplete('tagname')
+    async def tag_edit_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
+    
+    @tag_delete.autocomplete('tagname')
+    async def tag_delete_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+        choices = []
+        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
+        async for tag in tags:
+            tag_name = tag.names
+            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        await ctx.send(choices=choices)
+        
 def setup(bot):
     Tags(bot)

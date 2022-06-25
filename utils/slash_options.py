@@ -47,7 +47,7 @@ def member():
 
 def tagname():
     def wrapper(func):
-        return slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionTypes.STRING, required=True)(func)
+        return slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionTypes.STRING, required=True, autocomplete=True)(func)
     return wrapper
 
 def text():
