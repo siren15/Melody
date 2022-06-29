@@ -1,13 +1,18 @@
 import asyncio
+import random
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import requests
 
 from datetime import datetime, timedelta
 from naff import Client, Extension, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles
+from naff.models.naff.tasks import Task
+from naff.models.naff.tasks.triggers import IntervalTrigger
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
+
+cooldown_task_ongoing = list()
 
 def find_member(ctx, userid):
     members = [m for m in ctx.guild.members if m.id == userid]
@@ -28,91 +33,71 @@ class Levels(Extension):
         self.bot = bot
     
     @listen()
+    async def on_ready(self):
+        self.lvl_cooldown_task.start()
+    
+    @listen()
     async def on_message_create(self, event):
         message = event.message
         if message.author.bot:
             return
-        #if (iscogactive(message.guild, 'leveling') == True) and (is_event_active(message.guild, 'leveling')):
         
-        #level_settings = await db.find_one(leveling_settings, {'guildid':message.guild.id})
-        #if level_settings is not None:
-            #if message.channel.id in level_settings.no_xp_channel:
-                #return
-         #connect to database
-        #check if enough time has passed since last message
-        wait_mem = await db.levelwait.find_one({'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$gt':datetime.utcnow()}})
-        if wait_mem is None:
-            #check what xp the user has
-            levels = await db.leveling.find_one({'guildid':message.guild.id, 'memberid':message.author.id}) #find the member in the db
-            
-            if levels is None: #if the member is not logged in db
-                await db.leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0).insert() #member get's logged to db with level and xp set to 0
-                return
+        cooldown = await db.leveling_cooldown.find_one({'guildid':message.guild.id, 'user':message.author.id})
+        if cooldown:
+            return
+        await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert()
+        
+        member = await db.leveling.find_one({'guildid':message.guild.id, 'memberid':message.author.id})
+        if not member:
+            await db.leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0, messages=1).insert()
+            return
+        
+        level_stats = await db.levelingstats.find_one( {'lvl':member.level})
 
-            level_stats = await db.levelingstats.find_one( {'lvl':levels.level}) #get level stats from db
+        if member.xp_to_next_level is None:
+            xp = random.randint(15, 25)
+        else:
+            xp = member.xp_to_next_level + random.randint(15, 25)
 
-            total_xp = levels.total_xp #total xp the user has
-            lvl = levels.level #the level the user has
-            if levels.xp_to_next_level is None:#if the xp to next level is not logged, due to migration from mee6
-                xp = 0 #xp is set to 0
-            else:
-                xp = levels.xp_to_next_level #xp that the user has towards next level, this counter resets every time a new level is acquired
+        member.total_xp = member.total_xp+xp
+        member.messages = member.messages+1
 
-            #level multiplier, it's gonna divide the xp needed towards the next level
-            #if level_settings.multiplier is None:#if the server doesn't have multiplier set up
-                #multiplier = 1#the default multiplier is set to 1
-            #else:
-                #multiplier = level_settings.multiplier#otherwise get the multiplier from db
+        if xp >= level_stats.xptolevel:
+            member.level = member.level+1
+            member.xp_to_next_level = 0
+            roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':member.level})
+            if roles:
+                role = message.guild.get_role(roles.roleid)
+                if (role is not None) and (role not in message.author.roles):
+                    await message.author.add_role(role, f'[Melody][LEVELUP]Added a role assoiciated with level {member.level}')
+        else:
+            member.xp_to_next_level = xp
+        await member.save()
 
-            #xp_to_next_level = math.ceil(((4*((lvl*max) + (min+lvl)) - xp)/multiplier)*decimal) #count the xp to next level, now unused since it's better to have it all already calculated and ready to check in db
-            xp_to_next_level = level_stats.xptolevel#/multiplier #the xp expected for next level
-
-            import random
-            xp_to_give = random.randint(15, 25) #xp that's given to member, a random number between 15-25
-            new_total_xp = total_xp+xp_to_give #the new total xp, old total xp + xp to give
-            if levels.messages is None:  #if no messages logged in db
-                number_of_messages = 1 #number of xp messages is 1 for the current message
-            else:
-                number_of_messages = levels.messages + 1 #otherwise the number of xp messages is logged no. of messages + 1 for the current message  
-
-            if xp_to_next_level <= (xp+xp_to_give): # if the members xp towards the next level equals or is higher than xp expected for next level, member levels up
-                levels.level = lvl+1 #members level gets updated
-                levels.xp_to_next_level = 0 #members xp towards next level gets reset to 0
-                levels.total_xp = new_total_xp #total xp gets updated
-                levels.messages = number_of_messages #no. of messages that made xp get updated
-                await levels.save()
-                
-                roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':lvl+1})#get the role reward for the level if it exists
-                if roles is not None:#if it's not none
-                    role = message.guild.get_role(roles.roleid)#find the role in the guild by the id stored in the db
-                    if (role is not None) and (role not in message.author.roles):#if it exists and the member doesn't have it
-                        await message.author.add_role(role, '[bot]leveling role add')#give it to member
-            else:                                       # if the members xp towards the next level equals or is not higher than xp expected for next level
-                levels.xp_to_next_level = xp+xp_to_give #members xp towards the next level gets updated
-                levels.total_xp = new_total_xp          #with total xp
-                levels.messages = number_of_messages    #and number of messages
-                await levels.save()
-
-                level_roles = db.leveling_roles.find({"guildid":message.guild.id, 'level':{'$lte':lvl}})
-                roles = []
-                async for role in level_roles:
-                    roles.append(role.roleid)
-                if level_roles != []:
-                    for role_id in roles:
-                        role = message.guild.get_role(role_id)
-                        if role not in message.author.roles:
-                            await message.author.add_role(role)
-
-            await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert() #member gets put into the wait list
-            await asyncio.sleep(60) #the commands gonna wait for 60 seconds
-            level_wait = db.levelwait.find({'guildid':message.guild.id, 'user':message.author.id, 'endtime':{'$lte':datetime.utcnow()}}) #find member in the wait list
-            async for instance in level_wait:
-                await instance.delete() #member gets removed from wait list
-            
-            if (levels.display_name is None) or (levels.display_name != message.author.display_name):
-                levels.display_name = message.author.display_name
-                await levels.save()
+        level_roles = db.leveling_roles.find({"guildid":message.guild.id, 'level':{'$lte':member.level}})
+        roles = []
+        async for role in level_roles:
+            roles.append(role.roleid)
+        if level_roles != []:
+            for role_id in roles:
+                role = message.guild.get_role(role_id)
+                if role not in message.author.roles:
+                    await message.author.add_role(role)
+        
+        if (member.display_name is None) or (member.display_name != message.author.display_name):
+            member.display_name = message.author.display_name
+            await member.save()
     
+    @Task.create(IntervalTrigger(seconds=5))
+    async def lvl_cooldown_task(self):
+        level_wait = db.levelwait.find({'endtime':{'$lte':datetime.utcnow()}})
+        async for instance in level_wait:
+            mem = int(f'{instance.guildid}{instance.user}')
+            if mem not in cooldown_task_ongoing:
+                cooldown_task_ongoing.append(mem)
+                await instance.delete()
+                cooldown_task_ongoing.remove(mem)
+
     @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles",
         default_member_permissions=Permissions.MANAGE_ROLES
     )

@@ -1,4 +1,4 @@
-git+https://github.com/NAFTeam/NAFF.git
+naff
 requests
 pymongo
 beanie

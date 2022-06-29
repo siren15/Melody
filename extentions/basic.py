@@ -1,8 +1,9 @@
 import asyncio
 from datetime import datetime, timezone
+from email.policy import default
 import math
 from dateutil.relativedelta import relativedelta
-from naff import Client, Extension, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild, listen
+from naff import Client, Extension, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild, listen, SlashCommand, modal
 # from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -218,10 +219,10 @@ class Basic(Extension):
         
         await ctx.send(f"Pong! \nBot's latency: {self.bot.latency * 1000} ms")
     
-    @slash_command(name='embed', sub_cmd_name='create' , sub_cmd_description='[admin]Create embeds', description="[admin]Create and edit embeds")
-    @check(member_permissions(Permissions.ADMINISTRATOR))
+    create_embed = SlashCommand(name='embed', description='Create and edit embeds.', default_member_permissions=Permissions.ADMINISTRATOR)
+    
+    @create_embed.subcommand(sub_cmd_name='create', sub_cmd_description='Create embeds')
     async def embed(self, ctx:InteractionContext):
-        from naff.models.discord import modal
         m = modal.Modal(title='Create an embed', components=[
             modal.InputText(
                 label="Embed Title",
@@ -254,10 +255,9 @@ class Basic(Extension):
         title=embed_title)
         await modal_recived.send(embed=embed)
 
-    @embed.subcommand(sub_cmd_name='edit' ,sub_cmd_description='[admin]Edit embeds')
+    @create_embed.subcommand(sub_cmd_name='edit', sub_cmd_description='Edit embeds')
     @embed_message_id()
     @channel()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def embed_edit(self, ctx:InteractionContext, embed_message_id:str=None, channel:OptionTypes.CHANNEL=None):
         if embed_message_id is None:
             await ctx.send('You have to include the embed message ID, so that I can edit the embed', ephemeral=True)
