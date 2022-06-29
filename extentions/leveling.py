@@ -113,34 +113,34 @@ class Levels(Extension):
                 levels.display_name = message.author.display_name
                 await levels.save()
     
-    @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles")
+    @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles",
+        default_member_permissions=Permissions.MANAGE_ROLES
+    )
     @role()
     @role_level()
     async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE, role_level:str): 
-        perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
-        if (perms == True):
-            if (int(role_level) < 1) or (int(role_level) > 300):
-                await ctx.send('role level has to be more than 0 and less than 300')
-                return
+        if (int(role_level) < 1) or (int(role_level) > 300):
+            await ctx.send('role level has to be more than 0 and less than 300')
+            return
 
-            check = await db.leveling_roles.find_one({'guildid':ctx.guild_id, 'roleid':role.id})
-            if check is None:
-                await db.leveling_roles(guildid=ctx.guild_id, roleid=role.id, level=int(role_level)).insert()
-                await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} assigned to level {role_level}'))
-            else:
-                await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is already assigned to level {check.level}'))
-            
-            for member in ctx.guild.members:
-                mem = await db.leveling.find_one({'guildid':ctx.guild.id, 'memberid':member.id})
-                level_roles = db.leveling_roles.find({"guildid":ctx.guild_id, 'level':{'$lte':mem.level}})
-                roles = []
-                async for role in level_roles:
-                    roles.append(role.roleid)
-                if level_roles != []:
-                    for role_id in roles:
-                        role = ctx.guild.get_role(role_id)
-                        if role not in member.roles:
-                            await member.add_role(role)
+        check = await db.leveling_roles.find_one({'guildid':ctx.guild_id, 'roleid':role.id})
+        if check is None:
+            await db.leveling_roles(guildid=ctx.guild_id, roleid=role.id, level=int(role_level)).insert()
+            await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} assigned to level {role_level}'))
+        else:
+            await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is already assigned to level {check.level}'))
+        
+        for member in ctx.guild.members:
+            mem = await db.leveling.find_one({'guildid':ctx.guild.id, 'memberid':member.id})
+            level_roles = db.leveling_roles.find({"guildid":ctx.guild_id, 'level':{'$lte':mem.level}})
+            roles = []
+            async for role in level_roles:
+                roles.append(role.roleid)
+            if level_roles != []:
+                for role_id in roles:
+                    role = ctx.guild.get_role(role_id)
+                    if role not in member.roles:
+                        await member.add_role(role)
     
     @slash_command(name='ranklist', description="leveling roles list")
     async def ranks_list(self, ctx:InteractionContext):
@@ -201,94 +201,25 @@ class Levels(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles")
+    @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles",
+        default_member_permissions=Permissions.MANAGE_ROLES
+    )
     @role()
     async def leveling_remove_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):
-        perms = await has_perms(ctx.author, Permissions.ADMINISTRATOR)
-        if (perms == True):
-            if role is None:
-                await ctx.send('you have to include a role')
-                return
-            
-            check = await db.leveling_roles.find_one({'guildid':ctx.guild.id, 'roleid':role.id})
-            if check is None:
-                await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is not assigned to a level'))
-            else:
-                await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} removed from level {check.level}'))
-                await check.delete()
-            
-            for member in ctx.guild.members:
-                if role in member.roles:
-                    await member.remove_role(role)
-
-    @slash_command(name='oldrank', description='check your leveling statistics')
-    @member()
-    async def oldrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
-        
-        if member is None:
-            member = ctx.author
-        
-        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) 
-        if levels is None:
-            await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
+        if role is None:
+            await ctx.send('you have to include a role')
             return
-
-        level_stats = await db.levelingstats.find_one({'lvl':levels.level})
-
-        if (levels.display_name is None) or (levels.display_name != member.display_name):
-            levels.display_name = member.display_name
-            await levels.save()
-
-        #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
-        #if lvl_set is None:
-            #await db.save(leveling_settings(guildid=ctx.guild.id))
-
-        #if lvl_set.multiplier is None:
-            #multiplier = 1
-        #else:
-            #multiplier = lvl_set.multiplier
         
-        def getPercent(first, second, integer = False):
-            percent = first / second * 100
-            if integer:
-                return int(percent)
-            return percent
-
-        percent = getPercent(levels.xp_to_next_level,level_stats.xptolevel)
-        if percent <= 5:
-            boxes = '□□□□□□□□□□'
-        elif percent <= 10:
-            boxes = '■□□□□□□□□□'
-        elif percent <= 20:
-            boxes = '■■□□□□□□□□'
-        elif percent <= 30:
-            boxes = '■■■□□□□□□□'
-        elif percent <= 40:
-            boxes = '■■■■□□□□□□'
-        elif percent <= 50:
-            boxes = '■■■■■□□□□□'
-        elif percent <= 60:
-            boxes = '■■■■■■□□□□'
-        elif percent <= 70:
-            boxes = '■■■■■■■□□□'
-        elif percent <= 80:
-            boxes = '■■■■■■■■□□'
-        elif percent <= 90:
-            boxes = '■■■■■■■■■□'
-        elif percent <= 95:
-            boxes = '■■■■■■■■■□'
-        elif percent <= 100:
-            boxes = '■■■■■■■■■■'
-
-        if member.top_role.color.value == 0:
-            color = 0x0c73d3
+        check = await db.leveling_roles.find_one({'guildid':ctx.guild.id, 'roleid':role.id})
+        if check is None:
+            await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is not assigned to a level'))
         else:
-            color = member.top_role.color
-
-        embed = Embed(color=color,
-        description=f"__**Leveling stats for {member.mention}**__\n\n**Level:** {levels.level}\n**XP:** {levels.xp_to_next_level}**/**{level_stats.xptolevel}\n{boxes}\n**Total XP:** {levels.total_xp}\n**Messages sent:** {levels.messages}")
-        embed.set_thumbnail(url=member.avatar.url)
-        await ctx.send(embed=embed)
+            await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} removed from level {check.level}'))
+            await check.delete()
+        
+        for member in ctx.guild.members:
+            if role in member.roles:
+                await member.remove_role(role)
     
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
@@ -441,9 +372,10 @@ class Levels(Extension):
         embed.set_image(bg_url)
         await ctx.send(embed=embed)
     
-    @slash_command(name='reset_lvl_bg', description='[ADMIN]Reset members level card background)', scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='reset_lvl_bg', description='[ADMIN]Reset members level card background)', scopes=[435038183231848449,149167686159564800],
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
     @user()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def level_bg_reset(self, ctx: InteractionContext, user: OptionTypes.USER):
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':user.id})
         if levels.lc_background is not None:

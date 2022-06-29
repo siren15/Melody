@@ -1,6 +1,6 @@
 # inspired by https://github.com/artem30801/SkyboxBot/blob/master/main.py
 from bson.int64 import Int64 as int64
-from naff import Client, Extension, slash_command, InteractionContext, Embed
+from naff import Client, Extension, slash_command, InteractionContext, Embed, check, is_owner, Permissions
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -106,6 +106,7 @@ class BeanieDocuments():
         activecommands: Optional[str] = None
 
     class strikes(Document):
+        type: Optional[str] = None
         strikeid: Optional[str] = None
         guildid: Optional[int64] = None
         user: Optional[int64] = None
@@ -189,7 +190,10 @@ class BeanieDocumentsExtension(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
 
-    @slash_command(name='btest', description='beanie test', scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='btest', description='beanie test', scopes=[435038183231848449],
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
+    @check(is_owner())
     async def beanie_test(self, ctx:InteractionContext):
         doc = await BeanieDocuments.prefixes.find_one({'guildid':ctx.guild_id})
         await ctx.send(f'{doc.activecommands}\n{doc.activecogs}')

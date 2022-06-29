@@ -9,10 +9,11 @@ class GiveRoles(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
     
-    @slash_command(name='giveyou', sub_cmd_name='_', sub_cmd_description="Give members a role from predefined list of roles")
+    @slash_command(name='give', sub_cmd_name='you', sub_cmd_description="Give members a role from predefined list of roles",
+        default_member_permissions=Permissions.BAN_MEMBERS
+    )
     @user()
     @giveyou_name()
-    @check(member_permissions(Permissions.BAN_MEMBERS))
     async def giveyourole(self, ctx: InteractionContext, user:OptionTypes.USER=None, giveyou_name:str=None):
         if user is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
@@ -40,10 +41,11 @@ class GiveRoles(Extension):
                 color=0x0c73d3)
         await ctx.send(embed=embed)
     
-    @slash_command(name='giveyou', sub_cmd_name='create', sub_cmd_description="Create giveyou's")
+    @slash_command(name='giveyou', sub_cmd_name='create', sub_cmd_description="Create giveyou's",
+        default_member_permissions=Permissions.MANAGE_ROLES
+    )
     @giveyou_name()
     @role()
-    @check(member_permissions(Permissions.MANAGE_ROLES))
     async def giveyourole_create(self, ctx: InteractionContext, giveyou_name:str=None, role:OptionTypes.ROLE=None):
         if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
@@ -60,9 +62,10 @@ class GiveRoles(Extension):
         await db.giveyou(guildid=ctx.guild_id, name=giveyou_name, roleid=role.id).insert()
         await ctx.send(embed=Embed(color=0x0c73d3, description=f"giveyou `{giveyou_name}` created for {role.mention}"))
     
-    @slash_command(name='giveyou', sub_cmd_name='delete', sub_cmd_description="Delete giveyou's")
+    @slash_command(name='giveyou', sub_cmd_name='delete', sub_cmd_description="Delete giveyou's",
+        default_member_permissions=Permissions.MANAGE_ROLES
+    )
     @giveyou_name()
-    @check(member_permissions(Permissions.MANAGE_ROLES))
     async def giveyourole_delete(self, ctx: InteractionContext, giveyou_name:str=None):
         if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
@@ -77,8 +80,9 @@ class GiveRoles(Extension):
         await ctx.send(embed=Embed(color=0x0c73d3, description=f"giveyou `{giveyou_name}` deleted from {role.mention}"))
         await gy.delete()
     
-    @slash_command(name='giveyou', sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild")
-    @check(member_permissions(Permissions.BAN_MEMBERS))
+    @slash_command(name='giveyou', sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild",
+        default_member_permissions=Permissions.BAN_MEMBERS
+    )
     async def giveyourole_list(self, ctx: InteractionContext):
         
         from naff.ext.paginators import Paginator
@@ -136,10 +140,11 @@ class GiveRoles(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='role', description="Add/remove users to a role or roles")
+    @slash_command(name='role', description="Add/remove users to a role or roles",
+        default_member_permissions=Permissions.MANAGE_ROLES
+    )
     @members()
     @roles()
-    @check(member_permissions(Permissions.MANAGE_ROLES))
     async def give_role(self, ctx: InteractionContext, members:str=None, roles:str=None):
         if members is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)

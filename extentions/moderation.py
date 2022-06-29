@@ -6,7 +6,7 @@ import random
 from naff.models.discord.timestamp import Timestamp
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, modal, ModalContext
+from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, modal, ModalContext, SlashCommandChoice
 from naff.ext.paginators import Paginator
 from naff.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
@@ -131,30 +131,53 @@ class Moderation(Extension):
         await modal_recived.send(f"Your mod application has been sent to the staff team.", ephemeral=True)
 
 
-    @slash_command(name='delete', description="[MOD]allows me to delete messages")
+    @slash_command(name='delete', description="[MOD]allows me to delete messages, max: 700",
+        default_member_permissions=Permissions.MANAGE_MESSAGES
+    )
     @amount()
     @reason()
-    @check(member_permissions(Permissions.MANAGE_MESSAGES))
-    async def delete_messages(self, ctx:InteractionContext, amount:int=0, reason:str='No reason given'):
+    async def delete_messages(self, ctx:InteractionContext, amount:int=0, reason:str='MISSING'):
+        def chunks(l, n):
+            n = max(1, n)
+            return (l[i:i+n] for i in range(0, len(l), n))
         await ctx.defer()
-        if (amount <= 0) or (amount >= 1000):
-            embed = Embed(description=f":x: Amount can't be less than 1 or more than 1000",
+        if (amount < 2) or (amount > 700):
+            embed = Embed(description=f":x: Amount can't be less than 2 or more than 700",
                         color=0xDD2222)
             await ctx.send(embed=embed)
             return
-        deleted = await ctx.channel.purge(deletion_limit=amount, search_limit=1000, reason=reason)
-        embed = Embed(description=f"Deleted {deleted} messages",
+        messages = await ctx.channel.fetch_messages(limit=(amount+1))
+        messages.pop(0)
+        new_msgs = []
+        old_msgs = []
+        for message in messages:
+            twa = datetime.now() - timedelta(weeks=2)
+            cat = await seperate_string_number(str(message.created_at))
+            ca = datetime.fromtimestamp(int(cat[3]))
+            if ca > twa:
+                new_msgs.append(message)
+            elif ca < twa:
+                old_msgs.append(message)
+        for new_msgs in chunks(new_msgs, 100):
+            await ctx.channel.delete_messages(new_msgs, reason)
+        for msg in old_msgs:
+            await msg.delete()
+        embed = Embed(description=f"I've deleted {len(new_msgs)+len(old_msgs)} messages\nReason: {reason}",
                             timestamp=datetime.utcnow(),
                             color=0x0c73d3)
-        embed.set_footer(text=f"Auctioned by: {ctx.author}|{ctx.author.id}")
+        embed.set_footer(text=f"Actioned by: {ctx.author}|{ctx.author.id}")
         await ctx.send(embed=embed)
     
-    @slash_command(name='userpurge', description="[MOD]allows me to purge users messages")
+    @slash_command(name='userpurge', description="[MOD]allows me to purge users messages",
+        default_member_permissions=Permissions.MANAGE_MESSAGES
+    )
     @user()
     @amount()
     @reason()
-    @check(member_permissions(Permissions.MANAGE_MESSAGES))
     async def userpurge(self, ctx:InteractionContext, user:OptionTypes.USER=None, amount:int=0, reason:str='No reason given'):
+        def chunks(l, n):
+            n = max(1, n)
+            return (l[i:i+n] for i in range(0, len(l), n))
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't purge yourself", ephemeral=True)
@@ -170,30 +193,42 @@ class Moderation(Extension):
             elif member.has_permission(Permissions.MANAGE_MESSAGES) == True:
                 await ctx.send("You can't purge users with manage messages perms", ephemeral=True)
                 return
-        if (amount <= 0) or (amount >= 300):
-            embed = Embed(description=f":x: Amount can't be less than 1 or more than 300",
+        if (amount < 2) or (amount > 300):
+            embed = Embed(description=f":x: Amount can't be less than 2 or more than 300",
                         color=0xDD2222)
             await ctx.send(embed=embed)
             return
 
-        del_msgs = 0
-        from_channels = ''
         for channel in ctx.guild.channels:
-            deleted = await channel.purge(deletion_limit=amount, search_limit=3000, predicate=lambda m: m.author == user, reason=reason)
-            del_msgs = del_msgs+deleted
-            from_channels = from_channels+f"{channel.mention} "
-        embed = Embed(description=f"Deleted {del_msgs} messages from {from_channels}",
+            messages = await channel.fetch_messages(limit=(amount+1))
+            messages.pop(0)
+            new_msgs = []
+            old_msgs = []
+            for message in messages:
+                twa = datetime.now() - timedelta(weeks=2)
+                cat = await seperate_string_number(str(message.created_at))
+                ca = datetime.fromtimestamp(int(cat[3]))
+                if ca > twa:
+                    new_msgs.append(message)
+                elif ca < twa:
+                    old_msgs.append(message)
+            for new_msgs in chunks(new_msgs, 100):
+                await ctx.channel.delete_messages(new_msgs, reason)
+            for msg in old_msgs:
+                await msg.delete()
+        embed = Embed(description=f"I've purged {len(new_msgs)+len(old_msgs)} messages from {user}\nReason: {reason}",
                             timestamp=datetime.utcnow(),
                             color=0x0c73d3)
-        embed.set_footer(text=f"Auctioned by: {ctx.author}|{ctx.author.id}")
+        embed.set_footer(text=f"Actioned by: {ctx.author}|{ctx.author.id}")
         await ctx.send(embed=embed)
     
-    @slash_command(name='ban', description="[MOD]allows me to ban users from the server")
+    @slash_command(name='ban', description="[MOD]allows me to ban users from the server",
+        default_member_permissions=Permissions.BAN_MEMBERS
+    )
     @user()
     @bantime()
     @deletedays()
     @reason()
-    @check(member_permissions(Permissions.BAN_MEMBERS))
     async def ban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
         await ctx.defer()
         if user is ctx.author:
@@ -291,10 +326,11 @@ class Moderation(Extension):
         else:
             await ctx.send(f'{user} already banned')
     
-    @slash_command(name='unban', description="[MOD]allows me to unban users from the server")
+    @slash_command(name='unban', description="[MOD]allows me to unban users from the server",
+        default_member_permissions=Permissions.BAN_MEMBERS
+    )
     @user()
     @reason()
-    @check(member_permissions(Permissions.BAN_MEMBERS))
     async def unban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
         await ctx.defer()
         if user == ctx.author:
@@ -326,10 +362,11 @@ class Moderation(Extension):
             # daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
             # await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Unban", day=daytime, reason=reason))
 
-    @slash_command(name='kick', description="[MOD]allows me to kick users from the server")
+    @slash_command(name='kick', description="[MOD]allows me to kick users from the server",
+        default_member_permissions=Permissions.KICK_MEMBERS
+    )
     @user()
     @reason()
-    @check(member_permissions(Permissions.KICK_MEMBERS))
     async def kick(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
         await ctx.defer()
         member = find_member(ctx, user.id)
@@ -381,11 +418,12 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
     
-    @slash_command(name='mute', description="[MOD]allows me to mute users")
+    @slash_command(name='mute', description="[MOD]allows me to mute users",
+        default_member_permissions=Permissions.MODERATE_MEMBERS
+    )
     @user()
     @mutetime()
     @reason()
-    @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def mute(self, ctx:InteractionContext, user:OptionTypes.USER=None, mutetime:str=None, reason:str='No reason given'):
         await ctx.defer()
         if user is ctx.author:
@@ -471,10 +509,11 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
     
-    @slash_command(name='unmute', description="[MOD]allows me to unmute users")
+    @slash_command(name='unmute', description="[MOD]allows me to unmute users",
+        default_member_permissions=Permissions.MODERATE_MEMBERS
+    )
     @user()
     @reason()
-    @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def unmute(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
         await ctx.defer()
         member = find_member(ctx, user.id)
@@ -488,11 +527,22 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
         
-    @slash_command(name='warn', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to warn users")
+    @slash_command(name='warn', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to warn users",
+        default_member_permissions=Permissions.MODERATE_MEMBERS
+    )
+    @slash_option(
+        name="type",
+        description="Warn type",
+        required=True,
+        opt_type=OptionTypes.STRING,
+        choices=[
+            SlashCommandChoice(name="Minor", value='Minor'),
+            SlashCommandChoice(name="Major", value='Major'),
+        ]
+    )
     @user()
     @reason()
-    @check(member_permissions(Permissions.MODERATE_MEMBERS))
-    async def warn(self, ctx:InteractionContext, user:OptionTypes.USER, reason:str=None):
+    async def warn(self, ctx:InteractionContext, type:str, user:OptionTypes.USER, reason:str=None):
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't warn yourself", ephemeral=True)
@@ -510,48 +560,90 @@ class Moderation(Extension):
                 else:
                     continue
             
-            # warnaction = re.compile(f"^warn$", re.IGNORECASE)
-            warnings = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':{'$regex':'^warn$', '$options':'i'}})
-            warncount = []
-            async for warn in warnings:
-                warncount.append(warn.strikeid)
-            if warncount == []:
-                warnrolename = 'Warning-1'
-            else:
-                warnrolename = f'Warning-{len(warncount)+1}'
-            
-            warn_role = [role for role in ctx.guild.roles if role.name == warnrolename]
-            if warn_role == []:
-                role = await ctx.guild.create_role(name=warnrolename, reason='[automod]|[warn]created new warnrole as warnrole with this number did not exist yet')
-            else:
-                for role in warn_role:
-                    role = role
-            
-            await user.add_role(role, reason)
+            if type == 'Major':
+                warnings = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':{'$regex':'^warn$', '$options':'i'}})
+                warncount = []
+                async for warn in warnings:
+                    warncount.append(warn.strikeid)
+                if warncount == []:
+                    warnrolename = 'Warning-1'
+                else:
+                    warnrolename = f'Warning-{len(warncount)+1}'
+                
+                warn_role = [role for role in ctx.guild.roles if role.name == warnrolename]
+                if warn_role == []:
+                    role = await ctx.guild.create_role(name=warnrolename, reason='[automod]|[warn]created new warnrole as warnrole with this number did not exist yet')
+                else:
+                    for role in warn_role:
+                        role = role
+                
+                await user.add_role(role, reason)
+
+                try:
+                    embed = Embed(
+                        title='Major Warning',
+                        description=f":grey_exclamation: **You've been given a major warning in {ctx.guild.name} for:** {reason}",
+                        color=0x0c73d3)
+                    await user.send(embed=embed)
+                except HTTPException:
+                    embed = Embed(
+                        title='Major Warning',
+                        description=f"Couldn't dm {user.mention}, major warn logged and user was given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                        color=0x0c73d3)
+                    await ctx.send(embed=embed)
+                    return
+                else:
+                    embed = Embed(
+                        title='Major Warning',
+                        description=f"{user.mention} warned and given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                        color=0x0c73d3)
+                    await ctx.send(embed=embed)
+            elif type == 'Minor':
+                try:
+                    embed = Embed(
+                        title='Minor Warning',
+                        description=f":grey_exclamation: **You've been given a minor warning in {ctx.guild.name} for:** {reason}",
+                        color=0x0c73d3)
+                    await user.send(embed=embed)
+                except HTTPException:
+                    embed = Embed(
+                        title='Minor Warning',
+                        description=f"Couldn't dm {user.mention}, minor warn logged | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                        color=0x0c73d3
+                    )
+                    await ctx.send(embed=embed)
+                    return
+                else:
+                    embed = Embed(
+                        title='Minor Warning', 
+                        description=f"{user.mention} warned | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
+                        color=0x0c73d3)
+                    await ctx.send(embed=embed)
 
             daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
-            await db.strikes(strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Warn", day=daytime, reason=reason).insert()
-            try:
-                embed = Embed(description=f":grey_exclamation: **You have been warned in {ctx.guild.name} for:** {reason}",
-                        color=0x0c73d3)
-                await user.send(embed=embed)
-            except HTTPException:
-                embed = Embed(description=f"Couldn't dm {user.mention}, warn logged and user was given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3)
-                await ctx.send(embed=embed)
-                return
-            else:
-                embed = Embed(description=f"{user.mention} warned and given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                            color=0x0c73d3)
-                await ctx.send(embed=embed)
+            await db.strikes(type=type, strikeid=warnid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Warn", day=daytime, reason=reason).insert()
+
+            mw = db.strikes.find({'type':'Minor', 'guildid':ctx.guild_id, 'user':user.id, 'action':{'$regex':'^warn$', '$options':'i'}})
+            mwc = []
+            counter = []
+            i = 1
+            while i < 11:
+                v = 3 * i
+                counter.append(v)
+                i = i + 1
+            async for warn in mw:
+                mwc.append(warn.strikeid)
+            if len(mwc) in counter:
+                await ctx.send(f'**[REMINDER]** {user} now has {len(mwc)} minor warnings.')
         else:
             raise UserNotFound()
     
-    @slash_command(name='warn', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to remove warns from users")
+    @slash_command(name='warn', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to remove warns from users",
+        default_member_permissions=Permissions.MODERATE_MEMBERS
+    )
     @user()
     @warnid()
     @reason()
-    @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def warn_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, warnid:str=None, reason:str=None):
         await ctx.defer()
         if user is ctx.author:
@@ -562,8 +654,6 @@ class Moderation(Extension):
             return
         member = find_member(ctx, user.id)
         if member is not None:
-            
-            # warnaction = re.compile(f"^warn$", re.IGNORECASE)
             warning = await db.strikes.find_one({'guildid':ctx.guild_id, 'user':user.id, 'action':{'$regex':'^warn$', '$options':'i'}, 'strikeid':warnid})
             if warning is None:
                 return await ctx.send(f'Warning not found for {user}', ephemeral=True)
@@ -581,9 +671,10 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
     
-    @slash_command(name='warnings', description="[MOD]shows you a users warn list", scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='warnings', description="[MOD]shows you a users warn list", scopes=[435038183231848449,149167686159564800],
+        default_member_permissions=Permissions.MODERATE_MEMBERS
+    )
     @user()
-    @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def warn_list(self, ctx:InteractionContext, user:OptionTypes.USER):
         await ctx.defer()
         def chunks(l, n):
@@ -608,14 +699,11 @@ class Moderation(Extension):
         warnings = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'})
         warns = []
         async for warn in warnings:
-            warns.append(f"**Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n")
-            # moderator = ctx.guild.get_member(warn.moderator)
-            # if moderator is None:
-            #     moderator = warn.moderator
-            # time = warn.day.replace('<t:','')
-            # time = day.replace('>','')
-            # day = Timestamp.utcfromtimestamp(time)
-            # warns.append([f"{warn.strikeid}", f"{warn.reason}", f"{moderator}", f"{day}"])
+            if warn.type is None:
+                warntype = 'Major'
+            else:
+                warntype = warn.type
+            warns.append(f"**Type:** {warntype} | **Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n")
         if warns == []:
             embed = Embed(description=f"There are no warnings for {user}.",
                         color=0x0c73d3)
@@ -641,9 +729,10 @@ class Moderation(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='strikes', description="[MOD]shows you a users strike list")
+    @slash_command(name='strikes', description="[MOD]shows you a users strike list",
+        default_member_permissions=Permissions.MODERATE_MEMBERS
+    )
     @user()
-    @check(member_permissions(Permissions.MODERATE_MEMBERS))
     async def strikes_list(self, ctx:InteractionContext, user:OptionTypes.USER=None):
         await ctx.defer()
         def chunks(l, n):
@@ -668,7 +757,15 @@ class Moderation(Extension):
         all_strikes = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id})
         allstrikes = []
         async for s in all_strikes:
-            allstrikes.append(f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n")
+            if s.action.lower() != 'warn':
+                allstrikes.append(f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n")
+            else:
+                if s.type is None:
+                    warntype = 'Major'
+                else:
+                    warntype = s.type
+                allstrikes.append(f"**Strike ID:** {s.strikeid} | **Action:** {warntype} {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}\n\n")
+
         if allstrikes == []:
             embed = Embed(description=f"There are no strikes for {user}.",
                         color=0x0c73d3)
@@ -694,10 +791,56 @@ class Moderation(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users", scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='strike', description="[MOD]look at a strike info",
+        default_member_permissions=Permissions.MODERATE_MEMBERS,
+    )
+    @warnid()
+    async def strike_info(self, ctx:InteractionContext, warnid:str=None):
+        await ctx.defer()
+        s = await db.strikes.find_one({'guildid':ctx.guild_id, 'strikeid':warnid})
+        if s is None:
+            return await ctx.send(f'Strike not found', ephemeral=True)
+        if s.action.lower() != 'warn':
+            info = f"**Strike ID:** {s.strikeid} | **Action:** {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}"
+        else:
+            if s.type is None:
+                warntype = 'Major'
+            else:
+                warntype = s.type
+            info = f"**Strike ID:** {s.strikeid} | **Action:** {warntype} {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}"
+        embed = Embed(
+            description=info,
+            color=0x0c73d3)
+        await ctx.send(embed=embed)
+    
+    @slash_command(name='reason', description="[MOD]allows me to modify reasons of strikes",
+        default_member_permissions=Permissions.MODERATE_MEMBERS,
+    )
+    @warnid()
+    @reason()
+    async def strike_reason(self, ctx:InteractionContext, warnid:str=None, reason:str=None):
+        await ctx.defer()
+        if reason is None:
+            await ctx.send("You have to include a reason", ephemeral=True)
+            return
+        strike = await db.strikes.find_one({'guildid':ctx.guild_id, 'strikeid':warnid})
+        if strike is None:
+            return await ctx.send(f'Strike not found', ephemeral=True)
+        if strike.user == ctx.author.id:
+            await ctx.send("You can't change a reason on a strike directed at you", ephemeral=True)
+            return
+        embed = Embed(
+            description=f"Strike reason changed from `{strike.reason}` to `{reason}`\n**Strike ID:** {strike.strikeid}\n**Action:** {strike.action}\n**User ID:** {strike.user} \n**Actioned by:** {ctx.author.mention}",
+            color=0x0c73d3)
+        await ctx.send(embed=embed)
+        strike.reason = reason
+        await strike.save()
+    
+    @slash_command(name='limbo', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to limbo users", scopes=[435038183231848449,149167686159564800],
+        default_member_permissions=Permissions.BAN_MEMBERS
+    )
     @user()
     @reason()
-    @check(member_permissions(Permissions.BAN_MEMBERS))
     async def limbo_add(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
         await ctx.defer()
         if reason is None:
@@ -761,10 +904,11 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
     
-    @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo", scopes=[435038183231848449,149167686159564800])
+    @slash_command(name='limbo', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to let users out of limbo", scopes=[435038183231848449,149167686159564800],
+        default_member_permissions=Permissions.BAN_MEMBERS
+    )
     @user()
     @reason()
-    @check(member_permissions(Permissions.BAN_MEMBERS))
     async def limbo_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
         await ctx.defer()
         if reason is None:

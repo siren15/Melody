@@ -50,9 +50,10 @@ class EventLogs(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
     
-    @slash_command(name='logchannel', description="set up a logging channel")
+    @slash_command(name='logchannel', description="set up a logging channel",
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
     @channel()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def logchannel(self, ctx: InteractionContext, channel:OptionTypes.CHANNEL=None):
         if channel is None:
             embed = Embed(
@@ -74,10 +75,11 @@ class EventLogs(Extension):
                                   color=0x0c73d3)
             await ctx.send(embed=embed)
     
-    @slash_command(name='welcomemessage', description="set up a welcome message and channel", scopes=[149167686159564800, 435038183231848449])
+    @slash_command(name='welcomemessage', description="set up a welcome message and channel",
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
     @welcome_message_text()
     @channel()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def welcome_message_cmd(self, ctx: InteractionContext, welcome_message_text:OptionTypes.STRING=None, channel:OptionTypes.CHANNEL=None):
         if (channel is None) and (welcome_message_text is None):
             embed = Embed(
@@ -116,10 +118,11 @@ class EventLogs(Extension):
                                   color=0x0c73d3)
             await ctx.send(embed=embed)
 
-    @slash_command(name='leavemessage', description="set up a leave message and channel", scopes=[149167686159564800, 435038183231848449])
+    @slash_command(name='leavemessage', description="set up a leave message and channel",
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
     @leave_message_text()
     @channel()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def leave_message_cmd(self, ctx: InteractionContext, leave_message_text:OptionTypes.STRING=None, channel:OptionTypes.CHANNEL=None):
         if (channel is None) and (leave_message_text is None):
             embed = Embed(
@@ -158,10 +161,11 @@ class EventLogs(Extension):
                                   color=0x0c73d3)
             await ctx.send(embed=embed)
     
-    @slash_command(name='specialwelcomemsg', description="set up a special welcome message and channel", scopes=[149167686159564800, 435038183231848449])
+    @slash_command(name='specialwelcomemsg', description="set up a special welcome message and channel", scopes=[149167686159564800, 435038183231848449],
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
     @welcome_message_text()
     @channel()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def specialwelcome_message_cmd(self, ctx: InteractionContext, welcome_message_text:OptionTypes.STRING=None, channel:OptionTypes.CHANNEL=None):
         if (channel is None) and (welcome_message_text is None):
             embed = Embed(

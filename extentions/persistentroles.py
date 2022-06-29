@@ -7,9 +7,10 @@ class PersistentRoles(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
     
-    @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent", scopes=[435038183231848449, 149167686159564800])
+    @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent",
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
     @role()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def persistent_roles_add(self, ctx, role:OptionTypes.ROLE=None):
         # if role is None:
         #     return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
@@ -34,9 +35,10 @@ class PersistentRoles(Extension):
         embed.set_footer(text=f'{ctx.author}|{ctx.author.id}',icon_url=avatarurl)
         await ctx.send(embed=embed)
 
-    @slash_command(name='persistentroles', sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles")
+    @slash_command(name='persistentroles', sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles",
+        default_member_permissions=Permissions.ADMINISTRATOR
+    )
     @role()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
     async def persistent_roles_remove(self, ctx, role:OptionTypes.ROLE=None):
         if role is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
@@ -161,7 +163,8 @@ class PersistentRoles(Extension):
         warnings = db.strikes.find({'guildid':guild.id, 'user':member.id, 'action':{'$regex':'^warn$', '$options':'i'}})
         warncount = []
         async for warn in warnings:
-            warncount.append(warn.strikeid)
+            if warn.type != 'Minor':
+                warncount.append(warn.strikeid)
         if warncount != []:
             wrc = 0
             while wrc != len(warncount):

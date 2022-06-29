@@ -335,6 +335,7 @@ class Update(Extension):
         "reloader",
         description="Reloads an extension.",
         scopes=[435038183231848449, 149167686159564800],
+        default_member_permissions=Permissions.ADMINISTRATOR
     )
     @check(is_owner())
     async def _reloader(self, ctx: ComponentContext):
