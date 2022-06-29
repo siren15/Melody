@@ -59,7 +59,7 @@ class PersistentRoles(Extension):
         embed.set_footer(text=f'{ctx.author}|{ctx.author.id}',icon_url=avatarurl)
         await ctx.send(embed=embed)
     
-    @slash_command(name='persistentroles', sub_cmd_name='list', sub_cmd_description="List all the persistent roles")
+    @persistent_roles.subcommand(sub_cmd_name='list', sub_cmd_description="List all the persistent roles")
     async def persistent_roles_list(self, ctx):
         from naff.ext.paginators import Paginator
         def chunks(l, n):
