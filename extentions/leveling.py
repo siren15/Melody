@@ -42,7 +42,7 @@ class Levels(Extension):
         if message.author.bot:
             return
         
-        cooldown = await db.leveling_cooldown.find_one({'guildid':message.guild.id, 'user':message.author.id})
+        cooldown = await db.levelwait.find_one({'guildid':message.guild.id, 'user':message.author.id})
         if cooldown:
             return
         await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert()
