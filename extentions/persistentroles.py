@@ -1,4 +1,4 @@
-from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check, listen, AutoDefer
+from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check, listen, AutoDefer, SlashCommand
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -6,10 +6,8 @@ from utils.customchecks import *
 class PersistentRoles(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
-    
-    @slash_command(name='persistentroles', sub_cmd_name='add', sub_cmd_description="Make a role persistent",
-        default_member_permissions=Permissions.ADMINISTRATOR
-    )
+    persistent_roles = SlashCommand(name='persistentroles',  description='Manage persistent roles', default_member_permissions=Permissions.ADMINISTRATOR)
+    @persistent_roles.subcommand(sub_cmd_name='add', sub_cmd_description="Make a role persistent")
     @role()
     async def persistent_roles_add(self, ctx, role:OptionTypes.ROLE=None):
         # if role is None:
@@ -35,9 +33,7 @@ class PersistentRoles(Extension):
         embed.set_footer(text=f'{ctx.author}|{ctx.author.id}',icon_url=avatarurl)
         await ctx.send(embed=embed)
 
-    @slash_command(name='persistentroles', sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles",
-        default_member_permissions=Permissions.ADMINISTRATOR
-    )
+    @persistent_roles.subcommand(sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles")
     @role()
     async def persistent_roles_remove(self, ctx, role:OptionTypes.ROLE=None):
         if role is None:
