@@ -536,6 +536,8 @@ class AutoMod(Extension):
         user = message.author
         guild = event.message.guild
         channel = message.channel
+        if user.bot:
+            return
         if await is_event_active(guild, 'banned_words'):
             settings = await db.automod_config.find_one({'guildid':guild.id})
             if settings.ignored_users is not None:
@@ -606,6 +608,8 @@ class AutoMod(Extension):
         user = message.author
         guild = event.message.guild
         channel = message.channel
+        if user.bot:
+            return
         if await is_event_active(guild, 'banned_words'):
             settings = await db.automod_config.find_one({'guildid':guild.id})
             if settings.ignored_users is not None:
@@ -657,6 +661,8 @@ class AutoMod(Extension):
         user = message.author
         guild = event.message.guild
         channel = message.channel
+        if user.bot:
+            return
         reason = f'[AUTOMOD]phishing link sent in {channel.name}'
         if await is_event_active(guild, 'phishing_filter'):
             settings = await db.automod_config.find_one({'guildid':guild.id})
