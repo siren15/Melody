@@ -4,7 +4,8 @@ from email.policy import default
 import math
 from dateutil.relativedelta import relativedelta
 from naff import Client, Extension, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild, listen, SlashCommand, modal
-# from extentions.touk import BeanieDocuments as db
+from naff.models.naff.tasks import Task
+from naff.models.naff.tasks.triggers import IntervalTrigger
 from utils.slash_options import *
 from utils.customchecks import *
 
@@ -20,6 +21,21 @@ async def guild_owner(ctx) -> bool:
 class Basic(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
+
+    @listen()
+    async def on_ready(self):
+        self.heroku_ping.start()
+    
+    @Task.create(IntervalTrigger(minutes=28))
+    async def heroku_ping(self):
+        import requests
+        hostname = 'https://beni2am.herokuapp.com/'
+        response = requests.get(hostname)
+
+        if response.status_code == 200:
+            print(hostname, 'is up!')
+        else:
+            print(hostname, 'is down!')
     
     # @slash_command(name='command', sub_cmd_name='restrict', sub_cmd_description='Restrict a commands usage to a specific role', scopes=[435038183231848449, 149167686159564800])
     # @slash_option(name='command_name', description='Type the command to restrict', opt_type=OptionTypes.STRING, required=True)
