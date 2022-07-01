@@ -371,87 +371,13 @@ class Levels(Extension):
             return await ctx.send(f"Member {user.mention} doeasn't have a custom background set")
 
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
-    @slash_option(name="web_or_local", description="Choose which type do you want, within discord or link to website.", opt_type=OptionTypes.STRING, required=False,
-    choices=[
-            SlashCommandChoice(name="website", value='web'),
-            SlashCommandChoice(name="discord_paginator", value='local')
-        ]
-    )
-    async def leaderboard(self, ctx: InteractionContext, web_or_local:OptionTypes.STRING='web'):
-        if web_or_local == 'web':
-            components = Button(
-                style=ButtonStyles.URL,
-                label="Click Me!",
-                url=f"https://beni2am.herokuapp.com/melody/leaderboard/{ctx.guild_id}/",
-            )
-            await ctx.send("A button to the web leaderboard!", components=components)
-        elif web_or_local == 'local':
-            from naff.ext.paginators import Paginator
-            from tabulate import tabulate as tb
-            def chunks(l, n):
-                n = max(1, n)
-                return (l[i:i+n] for i in range(0, len(l), n))
-            
-            def page_list(lst, s, e):
-                nc = list(chunks(lst, 20))
-                for page in nc[s:e]:
-                    return page
-
-            def newpage(title, stats):
-                embed = Embed(
-                    title=title,
-                    description=f'```\n{stats}\n```',
-                    color=0x0c73d3)
-                return embed
-            
-            lvl_order = db.leveling.find({'guildid':ctx.guild_id, 'level':{'$gt':0}}).sort(-db.leveling.total_xp)
-            
-            rank = 1
-            stats = []
-            async for lvl in lvl_order:
-                if rank == 1:
-                    ranks = '🏆1'
-                elif rank == 2:
-                    ranks = '🥈2'
-                elif rank == 3:
-                    ranks = '🥉3'
-                else:
-                    ranks = rank
-                member = find_member(ctx, lvl.memberid)
-                if member is not None:
-                    # stats.append([f'[1;37m{ranks}.', f'[0;34m{member.display_name}', f'[0;31m{lvl.level}', f'[0;36m{lvl.total_xp}']) this will be used when mobile ansi support will be available
-                    # if (lvl.display_name is None) or (lvl.display_name != member.display_name):
-                    #     lvl.display_name = member.display_name
-                    #     await lvl.save()
-                    stats.append([f'{ranks}.', f'{member.display_name}', f'{lvl.level}', f'{lvl.total_xp}'])
-                else:
-                    stats.append([f'{ranks}.', f'{lvl.memberid}', f'{lvl.level}', f'{lvl.total_xp}'])
-                rank = rank+1
-            
-            if stats == []:
-                await ctx.send('Nobody has levels in this server yet')
-                return            
-
-            s = -1
-            e = 0
-            embedcount = 1
-            nc = list(chunks(stats, 20))
-            
-            embeds = []
-            while embedcount <= len(nc):
-                s = s+1
-                e = e+1
-
-                embeds.append(newpage(f'Leveling leaderboard for {ctx.guild.name}', tb(page_list(stats, s, e), headers=['Rank', "Member", "Level", "Total XP"], colalign=("left","left","left","left"))))
-                embedcount = embedcount+1
-                
-            paginator = Paginator(
-                client=self.bot, 
-                pages=embeds,
-                timeout_interval=80,
-                show_select_menu=False,
-                wrong_user_message='Stop finding yourself! ...Since this leaderboard was not generated for you')
-            await paginator.send(ctx)
+    async def leaderboard(self, ctx: InteractionContext):
+        components = Button(
+            style=ButtonStyles.URL,
+            label="Click Me!",
+            url=f"https://beni2am.herokuapp.com/melody/leaderboard/{ctx.guild_id}/",
+        )
+        await ctx.send("A button to the web leaderboard!", components=components)
         
 def setup(bot):
     Levels(bot)
