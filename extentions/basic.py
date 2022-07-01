@@ -36,46 +36,6 @@ class Basic(Extension):
             print(hostname, 'is up!')
         else:
             print(hostname, 'is down!')
-    
-    # @slash_command(name='command', sub_cmd_name='restrict', sub_cmd_description='Restrict a commands usage to a specific role', scopes=[435038183231848449, 149167686159564800])
-    # @slash_option(name='command_name', description='Type the command to restrict', opt_type=OptionTypes.STRING, required=True)
-    # @role()
-    # @check(member_permissions(Permissions.ADMINISTRATOR))
-    # async def temp_restrict_cmd(self, ctx: InteractionContext, command_name:str=None, role:OptionTypes.ROLE=None):
-    #     cmd = command_name
-    #     if cmd is None:
-    #         return await ctx.send(':x: You have to include a command name', ephemeral=True)
-    #     elif role is None:
-    #         return await ctx.send(':x: You have to include a role', ephemeral=True)
-
-    #     if cmd.lower() in all_commands:
-            
-            
-    #         regx = {'$regex': f"^{cmd}$", '$options':'i'}
-    #         restricted_command = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
-    #         if restricted_command is not None:
-    #             r_role = ctx.guild.get_role(restricted_command.role)
-    #             return await ctx.send(f'`{cmd}` already restricted to {r_role.mention}')
-    #         await db.hasrole(guildid=ctx.guild_id, command=cmd, role=role.id).insert()
-    #         await ctx.send(embed=Embed(color=0x0c73d3,description=f'`{cmd}` restricted to {role.mention}'))
-    
-    # @slash_command(name='command', sub_cmd_name='unrestrict', sub_cmd_description='Lift a command role restriction', scopes=[435038183231848449, 149167686159564800])
-    # @slash_option(name='command_name', description='Type the command to restrict', opt_type=OptionTypes.STRING, required=True)
-    # @check(member_permissions(Permissions.ADMINISTRATOR))
-    # async def temp_unrestrict_cmd(self, ctx: InteractionContext, command_name:str=None):
-    #     cmd = command_name
-    #     if cmd is None:
-    #         return await ctx.send(':x: You have to include a command name', ephemeral=True)
-
-    #     if cmd.lower() in all_commands:
-            
-            
-    #         regx = {'$regex': f"^{cmd}$", '$options':'i'}
-    #         restricted_command = await db.hasrole.find_one({"guildid":ctx.guild_id, "command":regx})
-    #         if restricted_command is None:
-    #             return await ctx.send(f'`{cmd}` not restricted')
-    #         await restricted_command.delete()
-    #         await ctx.send(embed=Embed(color=0x0c73d3,description=f'Restriction lifted from `{cmd}`'))
 
     @slash_command("echo", description="echo your messages")
     @text()
@@ -310,7 +270,7 @@ class Basic(Extension):
         if (embed_title is None) and (embed_text is None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
-        message_to_edit = channel.get_message(embed_message_id)
+        message_to_edit = await channel.fetch_message(embed_message_id)
         embed=Embed(color=0x0c73d3,
         description=embed_text,
         title=embed_title)
