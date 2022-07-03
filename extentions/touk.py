@@ -44,6 +44,11 @@ class BeanieDocuments():
         guildid: Optional[int64] = None
         command: Optional[str] = None
         role: Optional[int64] = None
+    
+    class levelingStats(Document):
+        level: Optional[int64] = None
+        xp_to_next_level: Optional[int64] = None
+        total_xp: Optional[int64] = None
 
     class leveling_settings(Document):
         guildid: Optional[int64] = None
@@ -201,6 +206,7 @@ class BeanieDocumentsExtension(Extension):
 def setup(bot):
     BeanieDocumentsExtension(bot)
     bot.add_model(BeanieDocuments.automod_config)
+    bot.add_model(BeanieDocuments.levelingStats)
     bot.add_model(BeanieDocuments.banned_words)
     bot.add_model(BeanieDocuments.giveaways)
     bot.add_model(BeanieDocuments.giveyou)

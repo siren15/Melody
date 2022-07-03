@@ -3,9 +3,10 @@ import random
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import requests
+import pymongo
 
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles
+from naff import Client, Extension, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles, prefixed_command, Context
 from naff.models.naff.tasks import Task
 from naff.models.naff.tasks.triggers import IntervalTrigger
 from extentions.touk import BeanieDocuments as db
@@ -52,17 +53,18 @@ class Levels(Extension):
             await db.leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0, messages=1).insert()
             return
         
-        level_stats = await db.levelingstats.find_one( {'lvl':member.level})
+        level_stats = await db.levelingStats.find_one( {'level':member.level})
 
         if member.xp_to_next_level is None:
-            xp = random.randint(15, 25)
+            xptnl = 0
         else:
-            xp = member.xp_to_next_level + random.randint(15, 25)
-
-        member.total_xp = member.total_xp+xp
+            xptnl = member.xp_to_next_level
+        xp_to_give = random.randint(15, 25)
+        member.total_xp = member.total_xp+xp_to_give
         member.messages = member.messages+1
+        xp = xptnl + xp_to_give
 
-        if xp >= level_stats.xptolevel:
+        if xp >= level_stats.xp_to_next_level:
             member.level = member.level+1
             member.xp_to_next_level = 0
             roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':member.level})
@@ -205,7 +207,7 @@ class Levels(Extension):
         for member in ctx.guild.members:
             if role in member.roles:
                 await member.remove_role(role)
-    
+
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
     async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
@@ -214,12 +216,12 @@ class Levels(Extension):
         if member is None:
             member = ctx.author
         
-        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) 
+        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id})
         if levels is None:
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
 
-        level_stats = await db.levelingstats.find_one({'lvl':levels.level})
+        level_stats = await db.levelingStats.find_one({'level':levels.level})
         if (levels.display_name is None) or (levels.display_name != member.display_name):
             levels.display_name = member.display_name
             await levels.save()
@@ -235,7 +237,7 @@ class Levels(Extension):
         
         def getPercent(first, second):
             return first / second * 100
-        percent = getPercent(levels.xp_to_next_level,level_stats.xptolevel)
+        percent = getPercent(levels.xp_to_next_level,level_stats.xp_to_next_level)
         def findx(percentage):
             if percentage == 0:
                 return 1
@@ -317,7 +319,7 @@ class Levels(Extension):
         # lvlfont_2 = ImageFont.truetype('Everson-Mono-Bold.ttf', 25)
         # I1.text((52,360), 'Lvl', font=lvlfont_2, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
 
-        lvlmsg = f'XP: {levels.xp_to_next_level}/{level_stats.xptolevel}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
+        lvlmsg = f'XP: {levels.xp_to_next_level}/{level_stats.xp_to_next_level}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
         I1.text((341,110), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
 
         namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 50)
