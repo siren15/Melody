@@ -61,10 +61,10 @@ class BeanieDocuments():
         guildid: Optional[int64] = None
         display_name: Optional[str] = None
         memberid: Optional[int64] = None
-        level: Optional[int64] = None
-        xp_to_next_level: Optional[int64] = None
-        total_xp: Optional[int64] = None
-        messages: Optional[int64] = None
+        level: Optional[int64] = 0
+        xp_to_next_level: Optional[int64] = 0
+        total_xp: Optional[int64] = 0
+        messages: Optional[int64] = 0
         decimal: Optional[int64] = None
         lc_background: Optional[str] = None
         
