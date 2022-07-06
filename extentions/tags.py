@@ -29,6 +29,7 @@ class Tags(Extension):
     @slash_command(name='t', description="allow's me to recall tags", scopes=[435038183231848449, 149167686159564800])
     @tagname()
     async def t(self, ctx:InteractionContext, tagname:str):
+        await ctx.defer()
         regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
         if tags is None:
@@ -65,6 +66,7 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
     @tagname()
     async def tag(self, ctx:InteractionContext, tagname:str):
+        await ctx.defer()
         regx = {'$regex':f'^{tagname}$', '$options':'i'}
         tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
         if tags is None:
@@ -93,6 +95,7 @@ class Tags(Extension):
     @content()
     @attachment()
     async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
+        await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)
@@ -175,6 +178,7 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='delete', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
     async def tag_delete(self, ctx:InteractionContext, tagname:str=None):
+        await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)
@@ -207,6 +211,7 @@ class Tags(Extension):
     @tagname()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def tag_admin_delete(self, ctx:InteractionContext, tagname:str=None):
+        await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)
@@ -239,6 +244,7 @@ class Tags(Extension):
     @content()
     @attachment()
     async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
+        await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)
@@ -338,6 +344,7 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
     @tagname()
     async def tag_info(self, ctx:InteractionContext, tagname:str=None):
+        await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)
@@ -396,6 +403,7 @@ class Tags(Extension):
     
     @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
     async def tag_list(self, ctx:InteractionContext):
+        await ctx.defer()
         from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
@@ -450,6 +458,7 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
     @tagname()
     async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
+        await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)
@@ -492,6 +501,7 @@ class Tags(Extension):
     @tagname()
     @member()
     async def tag_gift(self, ctx:InteractionContext, tagname:str=None, member:OptionTypes.USER=None):
+        await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
                         color=0xDD2222)

@@ -106,6 +106,7 @@ class Levels(Extension):
     @role()
     @role_level()
     async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE, role_level:str): 
+        await ctx.defer()
         if (int(role_level) < 1) or (int(role_level) > 300):
             await ctx.send('role level has to be more than 0 and less than 300')
             return
@@ -131,6 +132,7 @@ class Levels(Extension):
     
     @slash_command(name='ranklist', description="leveling roles list")
     async def ranks_list(self, ctx:InteractionContext):
+        await ctx.defer()
         from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
@@ -193,6 +195,7 @@ class Levels(Extension):
     )
     @role()
     async def leveling_remove_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):
+        await ctx.defer()
         if role is None:
             await ctx.send('you have to include a role')
             return
@@ -338,6 +341,7 @@ class Levels(Extension):
     @reset_to_default()
     @check(role_lock())
     async def level_bg(self, ctx: InteractionContext, attachment: OptionTypes.ATTACHMENT, reset_to_default:OptionTypes.BOOLEAN=False):
+        await ctx.defer()
         from utils.catbox import CatBox as cb
         if reset_to_default == True:
             levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
@@ -364,6 +368,7 @@ class Levels(Extension):
     )
     @user()
     async def level_bg_reset(self, ctx: InteractionContext, user: OptionTypes.USER):
+        await ctx.defer()
         levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':user.id})
         if levels.lc_background is not None:
             levels.lc_background = None
