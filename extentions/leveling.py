@@ -61,6 +61,8 @@ class Levels(Extension):
             xptnl = member.xp_to_next_level
         xp_to_give = random.randint(15, 25)
         member.total_xp = member.total_xp+xp_to_give
+        if member.messages is None:
+            member.messages = 0
         member.messages = member.messages+1
         xp = xptnl + xp_to_give
 
