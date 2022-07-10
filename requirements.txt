@@ -8,3 +8,4 @@ python-dateutil
 dnspython
 tabulate
 rapidfuzz
+duckpy

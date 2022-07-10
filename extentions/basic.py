@@ -8,6 +8,9 @@ from naff.models.naff.tasks import Task
 from naff.models.naff.tasks.triggers import IntervalTrigger
 from utils.slash_options import *
 from utils.customchecks import *
+from duckpy import AsyncClient
+
+duckduckgo = AsyncClient()
 
 all_commands = ['echo', 'userinfo', 'botinfo', 'avatar', 'useravatar', 'embed create', 'embed edit', 't', 'tag recall', 'tag create', 'tag edit', 'tag delete', 'tag claim', 'tag list', 'tag aedit', 'tag gift', 'tag info', 'ban', 'mute', 'delete', 'kick', 'unban', 'warn add', 'warn remove', 'limbo', 'userpurge', 'warnings', 'strikes', 'rank', 'ranklist', 'leveling addrole', 'leveling removerole', 'leaderboard', 'giveyou _', 'giveyou create', 'giveyou delete', 'giveyou list', 'uptime', 'reactionrole create', 'reactionrole delete']
 
@@ -188,6 +191,19 @@ class Basic(Extension):
         
         embed = Embed(description=member.display_name, color=0x0c73d3)
         embed.set_image(url=avatarurl)
+        await ctx.send(embed=embed)
+    
+    @slash_command(name='search', description="Search with DuckDuckGo, returns the first result.")
+    @text()
+    async def duckduckgosearch(self, ctx:InteractionContext, text: str):
+        await ctx.defer()
+        results = await duckduckgo.search(text)
+        embed = Embed(
+            title=results[0].title,
+            description=results[0].description,
+            color=0xdb4b26
+        )
+        embed.set_footer(text=results[0].url)
         await ctx.send(embed=embed)
     
     @slash_command(name='ping', description="Ping! Pong!")
