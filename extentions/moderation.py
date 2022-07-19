@@ -6,7 +6,7 @@ import random
 from naff.models.discord.timestamp import Timestamp
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, modal, ModalContext, SlashCommandChoice
+from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, modal, ModalContext, SlashCommandChoice, SlashCommand
 from naff.ext.paginators import Paginator
 from naff.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
@@ -526,10 +526,10 @@ class Moderation(Extension):
             await ctx.send(embed=embed)
         else:
             raise UserNotFound()
-        
-    @slash_command(name='warn', sub_cmd_name='add', sub_cmd_description="[MOD]allows me to warn users",
-        default_member_permissions=Permissions.MODERATE_MEMBERS
-    )
+    
+    warn = SlashCommand(name='warn', default_member_permissions=Permissions.MODERATE_MEMBERS)
+
+    @warn.subcommand('add', sub_cmd_description='Add a warn to a member.')
     @slash_option(
         name="type",
         description="Warn type",
@@ -542,7 +542,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def warn(self, ctx:InteractionContext, type:str, user:OptionTypes.USER, reason:str=None):
+    async def warnadd(self, ctx:InteractionContext, type:str, user:OptionTypes.USER, reason:str=None):
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't warn yourself", ephemeral=True)
@@ -591,7 +591,6 @@ class Moderation(Extension):
                         description=f"Couldn't dm {user.mention}, major warn logged and user was given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
                         color=0x0c73d3)
                     await ctx.send(embed=embed)
-                    return
                 else:
                     embed = Embed(
                         title='Major Warning',
@@ -612,7 +611,6 @@ class Moderation(Extension):
                         color=0x0c73d3
                     )
                     await ctx.send(embed=embed)
-                    return
                 else:
                     embed = Embed(
                         title='Minor Warning', 
@@ -638,9 +636,7 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
     
-    @slash_command(name='warn', sub_cmd_name='remove', sub_cmd_description="[MOD]allows me to remove warns from users",
-        default_member_permissions=Permissions.MODERATE_MEMBERS
-    )
+    @warn.subcommand('remove', sub_cmd_description='Remove a warn from a member.')
     @user()
     @warnid()
     @reason()
@@ -671,7 +667,17 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
     
-    @slash_command(name='warnings', description="[MOD]shows you a users warn list", scopes=[435038183231848449,149167686159564800],
+    @warn.subcommand('removeall', sub_cmd_description='Remove all warns from a member.')
+    @user()
+    async def warnremoveall(self, ctx:InteractionContext, user: OptionTypes.USER):
+        await ctx.defer()
+        if user is ctx.author:
+            await ctx.send("You can't remove a warn from yourself", ephemeral=True)
+            return
+        await db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'}).delete_many()
+        await ctx.send(f'All warns removed from {user}')
+
+    @slash_command(name='warnings', description="[MOD]shows you a users warn list",
         default_member_permissions=Permissions.MODERATE_MEMBERS
     )
     @user()
