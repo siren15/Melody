@@ -2,48 +2,43 @@
 <html>
   <head> 
     <meta charset="utf-8">
-    <title>{% block title %}beni2am{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="HandheldFriendly" content="true">
     <link rel="stylesheet" href="{{ url_for('static', path='css/bootstrap.css') }}" type="text/css">
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+      a{
+        text-decoration: none !important; 
+        color: white !important;
+      }
+      a:hover{
+        /* box-shadow: inset 0 -1.2em 0 #725a7a86; */
+        color: #ffcc50 !important;
+      }
+      #centerbox{
+        color: white !important;
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        margin-right: -50%;
+        transform: translate(-50%, -50%);
+        /* font-family: Menlo, monospace; */
+      }
+    </style>
+    <title>Melody</title>
+    {% block head %}
+    {% endblock %}
   </head>
-  <body style="background-color: rgb(37, 37, 42)">
-
-    <nav class="navbar navbar-expand-lg navbar-dark nav-border-bottom border-2" style="background-color: #211f25;">
-      <div class="d-flex container-fluid">
-        <a class="navbar-brand me-auto" href="/">beni2am</a>
-        {% block navbar %}
-        {% endblock %}
-      </div>
-    </nav>
-
-    <div class="container py-3" align="center">
-      <ol>
-        {% block breadcrumb %}
-        {% endblock %}
-      </ol>
-      <div class="container py-3 container-border rounded" style="background-color: rgb(58, 55, 65);">
-          {% block content %}
-          {% endblock %}
-      </div>
-    </div>
-    
-    <div class="footer" style="background-color: rgb(37, 37, 42);">
-      <div class="contain">
-        <div class="col">
-          <h1>Melody</h1>
-          <ul>
-            <li>Melody Bot</li>
-            <li>Bot Commands</li>
-            <li>r/GravityFalls Discord Server</li>
-          </ul>
-        </div>
-      <div class="clearfix"></div>
-      </div>
-    </div>
+  <body style="background-color: #ffcc50;"> <!-- #0d1820 -->
     <script src="{{ url_for('static', path='js/bootstrap.bundle.js') }}"></script>
+    <script src="{{ url_for('static', path='js/jquery.js') }}"></script>
+    {% block body %}
+    {% endblock %}
+    <div id="body-con" class="container-fliud">
+      <div id="centerbox" class="row row-cols-1" align="center">
+        {% block centerbox %}
+        {% endblock %}
+      </div>
+    </div>
   </body>
-
 </html>

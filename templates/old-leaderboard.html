@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<link href="{{ url_for('static', path='fonts/stylesheet.css') }}" rel="stylesheet">
+<!-- <link rel="stylesheet" href="{{ url_for('static', path='css/cropper.css') }}"> -->
+<link rel="stylesheet" href="{{ url_for('static', path='css/croppie.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/leaderboard.css') }}">
+  {% if user %}
+    <a href="/melody/user">
+    <img class = "custom-border rounded-circle" style="width: auto; height: 50px;" src = "https://cdn.discordapp.com/avatars/{{user.id}}/{{user.avatar}}.png">{{user.username}}#{{user.discriminator}}</img>
+    </a>
+  {% endif %}
+  <ol></ol>
+  <a  href="{{login_button_url}}">
+    <button class="{{button_style}}" style="color: white;">{{login_button_text}}</button>
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-md-center">
+  <div class="d-flex container-fluid">
+    <table class="table table-dark table-hover mx-1 my-1" style="--bs-table-bg: rgb(58, 55, 65); --bs-table-hover-bg: #25252a; border-color: #3a3741;">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Rank</th>
+        <th scope="col">Member</th>
+        <th scope="col">Level</th>
+        <th scope="col">XP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in members %}
+        <tr>
+          <th scope="row" class="align-middle">{{member.rank}}</th>
+          <td class="align-middle"><img class = "rounded-circle" style="width: auto; height: 40px;" src = "{{member.avatar_url}}"></img>     {{member.username}}</td>
+          <th scope="row" class="align-middle">{{member.level}}</th>
+          <td class="align-middle">{{member.xp}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if user %}
+    {% if levelinfo %}
+    <div id="bgCard" class="card" style="width: 474.8px; height:153px; background-color: #3a3741; border-color: #3a3741; border-radius: 20px;">
+      <div id="bgBox" class="card-img-top">
+        <img id="bg" src="{{levelinfo.lc_background}}">
+        <img id="bgOverlay" src="{{ url_for('static', path='images/overlay.png') }}">
+        <p id="name">{{levelinfo.name}}</p>
+        <p id="stats">XP: {{levelinfo.xp_to_next_level}}<br>Total XP: {{levelinfo.xp}}<br>Messages: {{levelinfo.messages}}</p>
+        <p id="level">LVL:{{levelinfo.level}}</p>
+        <img id="bgAvatar" class = "rounded-circle" src="{{ levelinfo.avatar_url }}">
+        <div id="pgbarbox" class="progress" style="background-color: #fff0;">
+          <div id="pgbar" class="progress-bar bg-success" role="progressbar" style="width: {{levelinfo.percent}}px;"></div>
+        </div>
+      </div>
+      <input type="file" id="imageinput" name="image" accept="image/jpeg, image/png, image/gif" style="display: None;">
+      <button id="changebtn" class="btn btn-outline-warning">Change Background</button>
+      <button style="position: absolute; top: 163px; left: 182px; z-index: 5;" id="resetButton" class="btn btn-outline-danger">Reset Background</button>
+    </div>
+
+    <form id="imageform" action="{{ url_for('test_upload') }}" method="POST"></form>
+    <form id="resetForm"></form>
+    <!-- Modal -->
+    <div class="modal fade" id="CropModal" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="img-container">
+              <!-- <img id="cropimage" alt="Image"> -->
+              <div id="cropimage"></div>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-color: #25252a;">
+            <button type="button" class="btn btn-danger" id="cropCancel">Close</button>
+            <button type="button" class="btn btn-success" id="crop">Upload!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="saveAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+        <button id="cancelbtn" class="btn btn-danger">Cancel</button> <button id="savebtn" type="submit" class="btn btn-success">Save</button>
+      </div>
+    </div>
+    <div id="successAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Background successfully changed!</h4>
+      </div>
+    </div>
+    <div id="errorAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">An error occured while changing the background!</h4>
+      </div>
+    </div>
+    <div id="fileSizeErrorAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">File size too large! Files can be max 8mb!</h4>
+      </div>
+    </div>
+
+    <div id="progressAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Uploading...</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="resetSaveAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+        <button id="resetCancelButton" class="btn btn-danger">Cancel</button> <button id="resetSaveButton" type="submit" class="btn btn-success">Save</button>
+      </div>
+    </div>
+    <div id="resetSuccessAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Background was successfully reset!</h4>
+      </div>
+    </div>
+    <div id="resetErrorAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">An error occured while resetting the background!</h4>
+      </div>
+    </div>
+    
+    {% endif %}
+  {% endif %}
+  </div>
+</div>
+  
+{% if members %}
+  {% if members.has_other_pages %}
+    <div class="btn-group py-3 px-3 justify-content-md-center" role="group" aria-label="Item pagination" align="center">
+        {% if members.has_previous %}
+            <a href="?page={{ members.previous_page_number }}" class="btn btn-outline-light">&laquo;</a>
+        {% endif %}
+
+        {% for page_number in members.paginator.page_range %}
+            {% if members.number == page_number %}
+                <button class="btn btn-outline-light active">
+                    <span>{{ page_number }} <span class="sr-only">(current)</span></span>
+                </button>
+            {% else %}
+                <a href="?page={{ page_number }}" class="btn btn-outline-light">
+                    {{ page_number }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if members.has_next %}
+            <a href="?page={{ members.next_page_number }}" class="btn btn-outline-light">&raquo;</a>
+        {% endif %}
+    </div>
+  {% endif %}
+  {% else %}
+      <p>Nobody from this server has levels.</p>
+  {% endif %}
+<input type="hidden" id="obgurl" value="{{levelinfo.lc_background}}">
+<input type="hidden" id="guildID" value="{{guild_id}}">
+<input type="hidden" id="memberID" value="{{user.id}}">
+<input type="hidden"  id="uploadurl" value="{{ url_for('test_upload') }}">
+<input type="hidden" id="reseturl" value="{{ url_for('lvl_bg_reset') }}">
+<input type="hidden"  id="defaultBG" value="{{ url_for('static', path='images/bg.png') }}">
+<script src="{{ url_for('static', path='js/jquery.js') }}"></script>
+<script src="{{ url_for('static', path='js/bootstrap.bundle.js') }}""></script>
+<!-- <script src="{{ url_for('static', path='js/cropper.js') }}"></script> -->
+<script src="{{ url_for('static', path='js/croppie.js') }}"></script>
+<script src="{{ url_for('static', path='js/cropBackground.js') }}"></script>
+{% endblock %}

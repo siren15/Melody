@@ -1,0 +1,90 @@
+:root{
+    --w: 335px;
+    --h: 153px;
+  }
+  #bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--w);
+    height: var(--h);
+    z-index: 0;
+    border-radius: 5px;
+  }
+  #bgOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--w);
+    height: var(--h);
+    z-index: 1;
+  }
+  #name {
+    font-family: Everson Mono;
+    font-size: 18px;
+    position: absolute;
+    color: white;
+    z-index: 2;
+    top: 8px;
+    left: 27px;
+  }
+  #stats {
+    font-family: Everson Mono;
+    line-height: 20px;
+    font-size: 18px;
+    position: absolute;
+    color: white;
+    z-index: 2;
+    top: 38px;
+    left: 118px;
+    text-align: left;
+  }
+  #level {
+    font-family: Everson Mono;
+    font-size: 15px;
+    position: absolute;
+    color: white;
+    z-index: 2;
+    top: 123px;
+    left: 28px;
+    text-align: left;
+  }
+  #bgAvatar {
+    position: absolute;
+    top: 42px;
+    left: 29px;
+    width: auto;
+    height: 70px;
+    z-index: 2;
+  }
+  #pgbar {
+    background-color: rgb(57, 159, 89);
+    position: absolute;
+    top: 130px;
+    left: 117px;
+    height: 10px;
+    z-index: 3;
+    border-radius: 3px;
+  }
+  #changebtn {
+    position: absolute;
+    top: 163px;
+    left: 0;
+    z-index: 4;
+  }
+  .alert {
+    background-color: rgba(37, 37, 42, 0.945);
+    color: white;
+    border-color: rgba(37, 37, 42, 0.911);
+  }
+  .img-container img {
+    max-width: 100%;
+  }
+  .label {
+    cursor: pointer;
+  }
+  .modal-content {
+    background-color: rgb(37, 37, 42);
+    color: white;
+    border-color: #25252a;
+  }

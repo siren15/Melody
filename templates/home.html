@@ -1,19 +1,64 @@
-{% extends 'base.html' %}
-
-{% block navbar %}
-  {% if user %}
-      <a href="/melody/user">
-      <img class = "custom-border rounded-circle" style="width: auto; height: 60px;" src = "https://cdn.discordapp.com/avatars/{{user.id}}/{{user.avatar}}.png">{{user.username}}#{{user.discriminator}}</img>
-      </a>
-  {% endif %}
-  <ol></ol>
-  <a  href="{{login_button_url}}">
-    <button class="{{button_style}}" style="color: white;">{{login_button_text}}</button>
-  </a>
-{% endblock %}
-
-{% block content %}
-<iframe width="420" height="315"
-  src={{url}}>
-</iframe> 
-{% endblock %}
+<!DOCTYPE html>
+<html>
+  <head> 
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bootstrap.css') }}" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <style>
+      a{
+        text-decoration: none !important; 
+        color: white !important;
+      }
+      a:hover{
+        box-shadow: inset 0 -1.2em 0 #725a7a86;
+        color: #ffcc50 !important;
+      }
+      #centerbox{
+        color: white;
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        margin-right: -50%;
+        transform: translate(-50%, -50%);
+        font-family: Menlo, monospace;
+        
+      }
+      #wave{
+        position: fixed;
+        top: 58%;
+        left: 50%;
+        margin-right: -50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+    </style>
+    <title>beni2am</title>
+  </head>
+  <body style="background-color: #0f1616"> <!-- #121925 -->
+    <script src="{{ url_for('static', path='js/bootstrap.bundle.js') }}"></script>
+    <div class="container-fliud">
+      <object id="wave" data="{{ url_for('static', path='images/wave2.svg') }}" type="image/svg+xml"></object>
+      <div id="centerbox" class="row row-cols-1" align="center">
+        <div id="pfp" class="col">
+          <img class="rounded-circle my-3 mx-3" style="height: 200px; width: auto;" src="https://images-ext-1.discordapp.net/external/pc3niJRsLziyLvka6qxUvdVTRMMbX5Bfilpichx1Gwg/%3Fsize%3D4096/https/cdn.discordapp.com/avatars/400713431423909889/576668317da4343f7553132150e34fc7.png?width=676&height=676" alt="">
+        </div>
+        <div id="bio" class="col my-3 mx-3" style="text-decoration: underline;">
+          Hello, I'm Beni. I'm a hobbyist programmer, and digital artist.
+        </div>
+        <div class="col">
+          <div id="links" class="row justify-content-center">
+            <div class="col my-3 mx-3"><a href="https://www.deviantart.com/ansubjin/gallery/all">Gallery(dA)</a></div>
+            <div class="col my-3 mx-3"><a href="https://discord.gg/gravityfalls">Discord</a></div>
+            <div class="col my-3 mx-3"><a href="/melody">Melody Bot</a></div>
+            <div class="col my-3 mx-3"><a href="https://github.com/siren15">GitHub</a></div>
+          </div>
+        </div>
+    </div>
+    <div class="row fixed-bottom">
+      <footer class="col" style="color: white;">© 2022 beni2am</footer>
+    </div>
+  </div>
+  </body>
+</html>

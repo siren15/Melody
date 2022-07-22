@@ -1,35 +1,44 @@
 # props to proxy and his way to connect to database https://github.com/artem30801/SkyboxBot/blob/master/main.py
+import json
 import os
 import asyncio
 from typing import Optional
+from uuid import uuid4
 import motor
 import aiohttp
 import pymongo
+import random
+import uuid
 
 from beanie import Indexed, init_beanie
 from naff import Client, Intents, listen, Embed, InteractionContext, AutoDefer
 from utils.customchecks import *
-from extentions.touk import BeanieDocuments as db, violation_settings
+from extentions.touk import BeanieDocuments as db
 from naff.client.errors import NotFound
 from naff.api.events.discord import GuildLeft
 
 from jose import jwt, JWTError
 from oauthlib.common import generate_token
 from authlib.integrations.starlette_client import OAuth, OAuthError
-from fastapi import Depends, FastAPI, status, Form
+from fastapi import Depends, FastAPI, status, Form, File, UploadFile
 from starlette.config import Config
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
-from starlette.responses import RedirectResponse
+from starsessions import SessionMiddleware
+from fastapi.requests import Request
+from starlette.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from dependencies import get_token, is_logged_in
+from dependencies import GuildNotFound, get_token, is_logged_in, UnauthorizedUser, is_guest, csrfTokenDoesNotMatch, get_csrf_token, verify_csrf_token
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from pydantic import BaseModel
 
+def rsg(r:int):
+    characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
+    result=''
+    for i in range(0, r):
+        result += random.choice(characters)
+    return result
 
 app = FastAPI()
-
 # import logging
 # import naff
 # logging.basicConfig()
@@ -58,7 +67,7 @@ class CustomClient(Client):
                 print(f'grew {filename[:-3]}')
         self.db = motor.motor_asyncio.AsyncIOMotorClient(os.environ['pt_mongo_url'])
         await init_beanie(database=self.db.giffany, document_models=self.models)
-        await self.astart(os.environ['tyrone_token'])
+        await self.astart(os.environ['pinetree_token'])
     
     @listen()
     async def on_ready(self):
@@ -77,6 +86,22 @@ bot = CustomClient()
 # Here starts FastAPI stuff for the dashboard #
 ###############################################
 
+@app.exception_handler(UnauthorizedUser)
+async def UnauthorisedUserExceptionHandler(request: Request, exc: UnauthorizedUser):
+    return RedirectResponse('/melody/login')
+
+@app.exception_handler(csrfTokenDoesNotMatch)
+async def csrfTokenDoesNotMatchExceptionHandler(request: Request, exc: csrfTokenDoesNotMatch):
+    sid = request.session.get('sessionid')
+    if sid:
+        await db.dashSession.find({'sessionid':sid}).delete_many()
+    request.session.clear()
+    response = RedirectResponse(url='/melody/login', status_code=status.HTTP_303_SEE_OTHER)
+    response.delete_cookie('session')
+    return response
+
+# from utils.csrf_middleware import CSRFMiddleware
+# app.add_middleware(CSRFMiddleware)
 
 def paginate(request, lst, page):
     paginator = Paginator(lst, 100)
@@ -89,18 +114,35 @@ def paginate(request, lst, page):
 
 HOST = '127.0.0.1'
 PORT = 8000
-DISCORD_API_PATH = 'https://discord.com/api/v9'
+DISCORD_API_PATH = 'https://discord.com/api/v10'
 
 CLIENT_ID = os.environ['melody_id']
 CLIENT_SECRET = os.environ['melody_secret']
 SESSION_SECRET = os.environ['sesh_secret']
 ALGORITHM = os.environ['sesh_algo']
 
+from fastapi.middleware.cors import CORSMiddleware
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "https://beni2am.herokuapp.com",
+    "http://beni2am.herokuapp.com",
+    "https://haigb.herokuapp.com"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET,
-                   max_age=60 * 60 * 24 * 7)  # one week, in seconds
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET, max_age=7200, autoload=True)
 
 
 # configure OAuth client
@@ -116,21 +158,13 @@ oauth.register(  # this allows us to call oauth.discord later on
 )
 @app.get('/')
 async def home(request: Request):
-    user = is_logged_in(request)
-    if user is not None:
-        login_button_url = '/melody/logout'
-        login_button_text = 'Logout'
-        button_style = 'btn btn-outline-danger'
-    elif user is None:
-        login_button_url = '/melody/login'
-        login_button_text = 'Login with Discord'
-        button_style = 'btn btn-outline-warning'
-    return templates.TemplateResponse('home.html', {
+    return templates.TemplateResponse('home.html', {"request": request,})
+
+@app.get('/melody')
+async def melody(request: Request):
+    user = await is_guest(request)
+    return templates.TemplateResponse('melody.html', {
             "request": request,
-            'url':'https://www.youtube.com/watch?v=im-juUv7QHQ',
-            'login_button_url':login_button_url,
-            'login_button_text':login_button_text,
-            'button_style':button_style,
             'user':user
         })
 
@@ -172,34 +206,32 @@ async def auth(request: Request):
         'public_flags': user_full['public_flags'],
     }
     response = RedirectResponse(url='/melody/user')
-    response.set_cookie('guilds', jwt.encode({'guilds':guilds}, SESSION_SECRET, algorithm=ALGORITHM), max_age=86400, httponly=True, secure=True)
-    response.set_cookie('user', jwt.encode(discord_user, SESSION_SECRET, algorithm=ALGORITHM), max_age=86400, httponly=True, secure=True)
-    response.set_cookie('sesh_i', jwt.encode(dict(token), SESSION_SECRET, algorithm=ALGORITHM), max_age=86400, httponly=True, secure=True)
+    
+    while True:
+        sid = rsg(124)
+        sid_db = await db.dashSession.find_one({'sessionid':sid})
+        if sid_db is None:
+            break
+        else:
+            continue
+    
+    csrf_token = str(uuid.uuid4())
+    request.session['csrftoken'] = csrf_token
+    request.session['sessionid'] = sid
+    await db.dashSession(sessionid=sid, user=discord_user, guilds=guilds, token=dict(token), csrf=csrf_token).insert()
+    # request.session['user'] = discord_user
+    # request.session['guilds'] = guilds
+    # response.set_cookie('sesh_i', jwt.encode(dict(token), SESSION_SECRET, algorithm=ALGORITHM), max_age=7200, httponly=True, secure=True, samesite='strict')
     return response
 
 @app.get('/melody/user')
 async def userpage(request: Request):
-    user = is_logged_in(request)
-    if user is None:
-        return RedirectResponse('/melody/login')
-    melody = bot.user
+    user, guilds = await is_logged_in(request)
     
-    guilds = jwt.decode(request.cookies['guilds'], SESSION_SECRET, ALGORITHM)
-    shared_guilds = [guild for guild in guilds['guilds'] for botguild in melody.guilds if int(guild['id']) == int(botguild.id)]
-    if user is not None:
-        login_button_url = '/melody/logout'
-        login_button_text = 'Logout'
-        button_style = 'btn btn-outline-danger'
-    elif user is None:
-        login_button_url = '/melody/login'
-        login_button_text = 'Login with Discord'
-        button_style = 'btn btn-outline-warning'
-
+    melody = bot.user
+    shared_guilds = [guild for guild in guilds for botguild in melody.guilds if int(guild['id']) == int(botguild.id)]
     return templates.TemplateResponse('userpage.html', {
             'request':request,
-            'login_button_url':login_button_url,
-            'login_button_text':login_button_text,
-            'button_style':button_style,
             'shared_guilds':shared_guilds,
             'user':user
         })
@@ -214,114 +246,151 @@ default_extensions_settings = [
 
 @app.get('/melody/user/{guild_id}')
 async def user_guild(request: Request, guild_id:int):
-    user = is_logged_in(request)
-    if user is None:
-        return RedirectResponse('/melody/login')
-    
+    user, guilds = await is_logged_in(request)
+    userguild = bot.get_guild(guild_id)
+    if userguild is None:
+        raise GuildNotFound(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Guild is not in the cache'
+        )
+    member = userguild.get_member(int(user['id']))
+    if member.has_permission(Permissions.ADMINISTRATOR):
+        return RedirectResponse(f'/melody/leaderboard/{guild_id}')
     events_logging = await db.prefixes.find_one({'guildid':guild_id})
+    extensions = []
+    for des in default_extensions_settings:
+        if des['event_name'] in events_logging.activecommands:
+            extensions.append({'name':des['name'], 'url':des['url'], 'event_name':des['event_name'], 'can_be_disabled': des['can_be_disabled'], 'is_disabled': True})
+        else:
+            extensions.append({'name':des['name'], 'url':des['url'], 'event_name':des['event_name'], 'can_be_disabled': des['can_be_disabled'], 'is_disabled': False})
 
-    melody = bot.user
-    guilds = jwt.decode(request.cookies['guilds'], SESSION_SECRET, ALGORITHM)
-    shared_guilds = [guild for guild in guilds['guilds'] for botguild in melody.guilds if int(guild['id']) == int(botguild.id)]
-    for guild in shared_guilds:
-        if int(guild['id']) == int(guild_id):
-            if (int(guild['permissions']) & 0x8) == 0x8:
-                if user is not None:
-                    login_button_url = '/melody/logout'
-                    login_button_text = 'Logout'
-                    button_style = 'btn btn-outline-danger'
-                elif user is None:
-                    login_button_url = '/melody/login'
-                    login_button_text = 'Login with Discord'
-                    button_style = 'btn btn-outline-warning'
-                
-                extensions = []
-                for des in default_extensions_settings:
-                    if des['event_name'] in events_logging.activecommands:
-                        extensions.append({'name':des['name'], 'url':des['url'], 'event_name':des['event_name'], 'can_be_disabled': des['can_be_disabled'], 'is_disabled': True})
-                    else:
-                        extensions.append({'name':des['name'], 'url':des['url'], 'event_name':des['event_name'], 'can_be_disabled': des['can_be_disabled'], 'is_disabled': False})
-
-                return templates.TemplateResponse('dashboard.html', {
-                        'request': request,
-                        'login_button_url':login_button_url,
-                        'login_button_text':login_button_text,
-                        'button_style':button_style,
-                        'user':user,
-                        'extensions':extensions,
-                        'guild_id':guild_id,
-                    })
-            return RedirectResponse(f'/melody/leaderboard/{guild_id}')
+    return templates.TemplateResponse('dashboard.html', {
+            'request': request,
+            'user':user,
+            'extensions':extensions,
+            'guild_id':guild_id,
+            'csrftoken':await get_csrf_token(request)
+        })
 
 class EventInfo(BaseModel):
     name: str
     event: str
 
 @app.post('/melody/user/{guild_id}/change')
-async def user_guild_post(request: Request, guild_id:int, event:str = Form(...)):
-    user = is_logged_in(request)
-    if user is None:
-        return RedirectResponse('/melody/login')
-    
+async def user_guild_post(request: Request, guild_id:int, event:str = Form(...), csrftoken:str=Form(...)):
+    await verify_csrf_token(request, csrftoken)
+    await is_logged_in(request)
     events_logging = await db.prefixes.find_one({'guildid':guild_id})
-    
     if event not in events_logging.activecommands:
         events_logging.activecommands = events_logging.activecommands+f' {event},'
         await events_logging.save()
     elif event in events_logging.activecommands:
         events_logging.activecommands = events_logging.activecommands.replace(f' {event},', '')
         await events_logging.save()
-
     return RedirectResponse(f'/melody/user/{guild_id}', status_code=status.HTTP_303_SEE_OTHER)
 
 @app.get('/melody/logout')
 async def logout(request: Request):
-    response = RedirectResponse(url='/')
-    response.delete_cookie('user')
-    response.delete_cookie('guilds')
-    response.delete_cookie('sesh_i')
+    sid = request.session.get('sessionid')
+    if sid:
+        await db.dashSession.find({'sessionid':sid}).delete_many()
+    request.session.clear()
+    response = RedirectResponse(url='/melody')
     response.delete_cookie('session')
-    response.delete_cookie('csrftoken')
     return response
 
 @app.get('/melody/leaderboard/{guild_id}')
 async def leaderboard(request: Request, guild_id:int, page:int=1):
-    user = is_logged_in(request)
+    user, guilds = await is_guest(request)
     if user is not None:
-        login_button_url = '/melody/logout'
-        login_button_text = 'Logout'
-        button_style = 'btn btn-outline-danger'
+        guild = bot.get_guild(int(guild_id))
+        LevelInfo = await db.leveling.find_one({'guildid':int(guild_id), 'memberid':int(user['id'])})
+        level_stats = await db.levelingstats.find_one({'lvl':LevelInfo.level})
+        member = guild.get_member(int(user['id']))
+        
+        def getPercent(first, second):
+            percentage = int(first) / int(second) * 100
+            if percentage == 0:
+                percentage = 1
+            return 160/(100/percentage)
+        percent = getPercent(LevelInfo.xp_to_next_level,level_stats.xptolevel) 
+        if LevelInfo.lc_background is None:
+            background = 'https://files.catbox.moe/vgij11.png'
+        else:
+            background = LevelInfo.lc_background
+        levelinfo = {'percent':percent, 'name':member.display_name, 'avatar_url':member.display_avatar.url, 'level':LevelInfo.level, 'xp':LevelInfo.total_xp, 'xp_to_next_level':LevelInfo.xp_to_next_level, 'messages':LevelInfo.messages, 'lc_background':background}
     elif user is None:
-        login_button_url = '/melody/login'
-        login_button_text = 'Login with Discord'
-        button_style = 'btn btn-outline-warning'
+        levelinfo = None
+        guild = bot.get_guild(int(guild_id))
 
     guild_users = db.leveling.find({'guildid':int(guild_id), 'level':{'$gt':0}}).sort([('total_xp', pymongo.DESCENDING)])
     user_list = list()
-    ranknum = 1
     async for guser in guild_users:
-        melody_guilds = bot.user.guilds
-        for guild in [guild for guild in melody_guilds if guild.id == int(guild_id)]:
-            members = [guild.get_member(guser.memberid)]
-            for member in members:
-                if member is not None:
-                    if ranknum == 1:
-                        rank = '🏆1.'
-                    elif ranknum == 2:
-                        rank = '🥈2.'
-                    elif ranknum == 3:
-                        rank = '🥉3.'
-                    else:
-                        rank = f'{ranknum}.'
-                    ranknum = ranknum+1
-                    user_list.append({'rank':rank, 'username':member.display_name, 'level':guser.level, 'xp':guser.total_xp, 'avatar_url':member.display_avatar.url})
+        members = [guild.get_member(guser.memberid)]
+        for member in members:
+            if member is not None:
+                user_list.append({'rank':None, 'username':member.display_name, 'level':guser.level, 'xp':guser.total_xp, 'avatar_url':member.display_avatar.url})
+    from operator import itemgetter
+    user_list = sorted(user_list, key=itemgetter('level', 'xp'), reverse=True)
+    for u in user_list:
+        u['rank'] = f"{user_list.index(u)+1}."
     return templates.TemplateResponse('leaderboard.html', {
         'request':request,
         'members':paginate(request, user_list, page),
-        'login_button_url':login_button_url,
-        'login_button_text':login_button_text,
-        'button_style':button_style,
-        'user':user
+        'user':user,
+        'levelinfo':levelinfo,
+        'guild_id':guild_id,
         })
+
+from utils.catbox import CatBox
+@app.post('/melody/levelcard/upload')
+async def test_upload(request: Request, image: UploadFile = File(...), guild_id:str = Form(...), member_id:str = Form(...)):
+    user, guilds = await is_logged_in(request)
+    if user is None:
+        return JSONResponse(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            content = { 'message' : 'Unauthorized.' })
+    elif int(user['id']) != int(member_id):
+        return JSONResponse(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            content = { 'message' : 'Unauthorized.' })
+    if image.content_type == 'image/png' or image.content_type == 'image/jpeg' or image.content_type == 'image/gif':
+        content = await image.read()
+        if len(content) > 8388608:
+            return JSONResponse(
+                status_code = status.HTTP_400_BAD_REQUEST,
+                content = { 'message' : 'Image exceeds 8MB.' })
+        url = CatBox.file_upload(image.filename, content, image.content_type)
+        if url is None:
+            return JSONResponse(
+                status_code = status.HTTP_400_BAD_REQUEST,
+                content = { 'message' : 'Error occured while uploading the file.' })
+        else:
+            leveling_info = await db.leveling.find_one({'guildid': int(guild_id), 'memberid': int(user['id'])})
+            leveling_info.lc_background = url
+            await leveling_info.save()
+            return JSONResponse(
+                status_code = status.HTTP_200_OK,
+                content = { 'imageUrl' : url })
+    else:
+        return JSONResponse(
+                status_code = status.HTTP_400_BAD_REQUEST,
+                content = { 'message' : 'Invalid file type.' })
+
+@app.post('/melody/levelcard/reset')
+async def lvl_bg_reset(request: Request, guild_id:str = Form(...), member_id:str = Form(...)):
+    user, guilds = await is_logged_in(request)
+    if user is None:
+        return JSONResponse(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            content = { 'message' : 'Unauthorized.' })
+    elif int(user['id']) != int(member_id):
+        return JSONResponse(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            content = { 'message' : 'Unauthorized.' })
+    leveling_info = await db.leveling.find_one({'guildid': int(guild_id), 'memberid': int(user['id'])})
+    leveling_info.lc_background = None
+    await leveling_info.save()
+    return JSONResponse(status_code = status.HTTP_200_OK, content={'message':'Successfully reset the level card background.'})
 
 asyncio.ensure_future(bot.startup())

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+  .body{
+    background-color: #ffcc50;
+  }
+  .btn{
+    width: 105px;
+    height: 38px;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<object style="position: fixed; top: 58%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%); z-index: -1;" id="wave" data="{{ url_for('static', path='images/melody_wave.svg') }}" type="image/svg+xml"></object>
+{% endblock %}
+
+{% block centerbox %}
+<div id="pfp" class="col">
+  <img class="rounded-circle my-3 mx-3" style="height: 300px; width: auto;" src="https://images-ext-2.discordapp.net/external/n7heL_LvVUOohEeWfV4crtDZv7dKixvGxC8IpPHnMmc/%3Fsize%3D4096/https/cdn.discordapp.com/avatars/887648476387762186/ab9b45d840a51ce343c2f9cf17e1ece8.png?width=676&height=676" alt="">
+</div>
+<div class="col">
+  <h1>Melody</h1>
+</div>
+<div class="col my-3 mx-3" style="text-decoration: underline;">
+  A multipurpose bot made for r/GravityFalls Discord server.
+</div>
+<div class="col">
+  <div id="links" class="row justify-content-center">
+    <div class="col my-3 mx-3"><a class="btn btn-outline-light" href="/">Homepage</a></div>
+    {% if user %}
+      <div class="col my-3 mx-3"><a class="btn btn-outline-light" href="/melody/user">Dashboard</a></div>
+    {% else %}
+      <div class="col my-3 mx-3"><a class="btn btn-outline-light" href="/melody/login">Dashboard</a></div>
+    {% endif %}
+    <div class="col my-3 mx-3"><a class="btn btn-outline-light" href="https://discord.gg/gravityfalls">Discord</a></div>
+    <div class="col my-3 mx-3"><a class="btn btn-outline-light" href="/melody/docs">Docs</a></div>
+    <div class="col my-3 mx-3"><a class="btn btn-outline-light" href="https://github.com/siren15/melody">GitHub</a></div>
+  </div>
+</div>
+{% endblock %}

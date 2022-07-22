@@ -19,3 +19,4 @@ python-dateutil
 dnspython
 tabulate
 rapidfuzz
+starsessions
