@@ -37,6 +37,7 @@ class ButtonRoles(Extension):
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def add_role_buttons(self, ctx: InteractionContext, bt_role_1: OptionTypes.ROLE, message_id: OptionTypes.STRING, channel: OptionTypes.CHANNEL=None,
     role_2: OptionTypes.ROLE=None, role_3: OptionTypes.ROLE=None, role_4: OptionTypes.ROLE=None, role_5: OptionTypes.ROLE=None, button_colour: OptionTypes.INTEGER = 1, mode: OptionTypes.INTEGER=1):
+        await ctx.defer()
         #modes: 1 = react to get a role - unreact to remove the role, 2 = react to get a role - not possible to remove the role, 3 = only one role allowed from the message
         if message_id is None:
             return await ctx.send('You need to include the message buttons will be on.', ephemeral=True)    
@@ -124,6 +125,7 @@ class ButtonRoles(Extension):
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def rb_edit(self, ctx: InteractionContext, message_id:OptionTypes.STRING, button_id:OptionTypes.STRING, channel:OptionTypes.CHANNEL=None, mode:OptionTypes.INTEGER=None,
     button_colour:OptionTypes.INTEGER=None, new_role: OptionTypes.ROLE = None, requirement_role: OptionTypes.ROLE = None, ignore_role: OptionTypes.ROLE = None, name: OptionTypes.STRING=None):
+        await ctx.defer()
         if (mode is None) and (button_colour is None) and (new_role is None) and (requirement_role is None) and (ignore_role is None) and (name is None):
             return await ctx.send('You have to change at least one option to change')
         if channel is None:
@@ -219,6 +221,7 @@ class ButtonRoles(Extension):
     @channel()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def rb_remove(self, ctx: InteractionContext, message_id:OptionTypes.STRING, button_id:OptionTypes.STRING, channel:OptionTypes.CHANNEL=None):
+        await ctx.defer()
         if channel is None:
             channel = ctx.channel
         message = await channel.fetch_message(message_id)
@@ -268,6 +271,7 @@ class ButtonRoles(Extension):
 
     @slash_command(name='rolebuttons', sub_cmd_name='list', sub_cmd_description="List all role buttons on this server")
     async def rb_list(self, ctx: InteractionContext):
+        await ctx.defer()
         from naff.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)

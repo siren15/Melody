@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime, timezone
-from email.policy import default
 import math
 from dateutil.relativedelta import relativedelta
 from naff import Client, Extension, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild, listen, SlashCommand, modal
