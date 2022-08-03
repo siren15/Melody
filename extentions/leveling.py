@@ -249,9 +249,15 @@ class Levels(Extension):
             return 550/(100/percentage)
 
         if member.guild_avatar is not None:
-            avatarurl = f'{member.guild_avatar.url}.png'
+            try:
+                avatarurl = f'{member.guild_avatar.url}.png'
+            except:
+                avatarurl = 'https://cdn.discordapp.com/embed/avatars/1.png'
         else:
-            avatarurl = f'{member.avatar.url}.png'
+            try:
+                avatarurl = f'{member.avatar.url}.png'
+            except:
+                avatarurl = 'https://cdn.discordapp.com/embed/avatars/1.png'
         
         def round(im):
             im = im.resize((210*16,210*16), resample=Image.ANTIALIAS)
