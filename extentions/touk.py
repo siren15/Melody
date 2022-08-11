@@ -13,8 +13,8 @@ class Document(BeanieDocument):
         return hash(self.id)
 
 class violation_settings(BaseModel):
-    violation_count: Optional[int64] = None
-    violation_punishment: Optional[str] = None
+    violation_count: Optional[int64] = 0
+    violation_punishment: Optional[str] = 0
     class Config:
         orm_mode = True
 
@@ -200,9 +200,9 @@ class BeanieDocuments():
     
     class amConfig(Document):
         guild: int64
-        ignored_channels: List|int = None
-        ignored_roles: List|int = None
-        ignored_users: List|int = None
+        ignored_channels: List|int = list()
+        ignored_roles: List|int = list()
+        ignored_users: List|int = list()
         phishing: violation_settings
         banned_words: violation_settings
         banned_names: violation_settings

@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta
 from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, ModalContext, SlashCommandChoice, SlashCommand
 from naff.ext.paginators import Paginator
 from naff.models.discord.base import DiscordObject
-from extentions.touk import BeanieDocuments as db
+from extentions.touk import BeanieDocuments as db, violation_settings
 from utils.slash_options import *
 from utils.customchecks import *
 from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageCreate
@@ -830,7 +830,11 @@ class AutoMod(Extension):
         if channel is None:
             channel = ctx.channel
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
         ignored_channels = settings.ignored_channels
+        if ignored_channels is None:
+            ignored_channels = list()
         if channel.id in ignored_channels:
             await ctx.send(f'{channel.mention} is already ignored.', ephemeral=True)
         ignored_channels.append(channel.id)
@@ -849,7 +853,11 @@ class AutoMod(Extension):
         if channel is None:
             channel = ctx.channel
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
         ignored_channels = settings.ignored_channels
+        if ignored_channels is None:
+            ignored_channels = list()
         if channel.id not in ignored_channels:
             await ctx.send(f'{channel.mention} is not being ignored by automod.', ephemeral=True)
         ignored_channels.remove(channel.id)
@@ -866,7 +874,11 @@ class AutoMod(Extension):
     async def AutomodAddIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
         ignored_roles = settings.ignored_roles
+        if ignored_roles is None:
+            ignored_roles = list()
         if role.id in ignored_roles:
             await ctx.send(f'{role.mention} is already ignored.', ephemeral=True)
         ignored_roles.append(role.id)
@@ -883,7 +895,11 @@ class AutoMod(Extension):
     async def AutomodRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
         ignored_roles = settings.ignored_roles
+        if ignored_roles is None:
+            ignored_roles = list()
         if role.id not in ignored_roles:
             await ctx.send(f'{role.mention} is not being ignored by automod.', ephemeral=True)
         ignored_roles.remove(role.id)
@@ -900,7 +916,11 @@ class AutoMod(Extension):
     async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
         ignored_users = settings.ignored_users
+        if ignored_users is None:
+            ignored_users = list()
         if user.id in ignored_users:
             await ctx.send(f'{user}|{user.id} is already ignored.', ephemeral=True)
         ignored_users.append(user.id)
@@ -917,7 +937,11 @@ class AutoMod(Extension):
     async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+           await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
         ignored_users = settings.ignored_users
+        if ignored_users is None:
+            ignored_users = list()
         if user.id not in ignored_users:
             await ctx.send(f'{user}|{user.id} is not being ignored by automod.', ephemeral=True)
         ignored_users.remove(user.id)
