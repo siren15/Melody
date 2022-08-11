@@ -238,8 +238,6 @@ class AutoMod(Extension):
         choices=[
             SlashCommandChoice(name="violation_punishments", value='violation_punishments'),
             SlashCommandChoice(name="banned_words", value='banned_words'),
-            SlashCommandChoice(name="ignored_channels", value='ignored_channels'),
-            SlashCommandChoice(name="ignored_roles", value='ignored_roles'),
             SlashCommandChoice(name="ignored_users", value='ignored_users')
         ]
     )
@@ -417,117 +415,6 @@ class AutoMod(Extension):
             
             embed=Embed(color=0x0c73d3,
             description=f'Current banned words:\nExact match:\n{em_words}\n\nPartial match:\n{pm_words}\nViolation count: {bw_vc_response}\nPunishments: {bw_vp_response}')
-            await modal_recived.send(embed=embed)
-
-        elif automod_options == 'ignored_channels':
-            settings = await db.automod_config.find_one({'guildid':ctx.guild_id})
-            if settings.ignored_channels is None:
-                channels_prefill = MISSING
-            else:
-                if (settings.ignored_channels is None) or (settings.ignored_channels == ''):
-                    channels_prefill = MISSING
-                else:
-                    channels_prefill = settings.ignored_channels
-            m = modal.Modal(title='Configure the automatic moderation', components=[
-                modal.InputText(
-                    label="Ignored Channels",
-                    style=modal.TextStyles.PARAGRAPH,
-                    custom_id=f'ignored_channels',
-                    placeholder="Channel ID's, seperated by a comma(,)",
-                    value=channels_prefill,
-                    required=False
-                )
-            ],custom_id=f'{ctx.author.id}_automod_ign_ch_config_modal')
-            
-            await ctx.send_modal(modal=m)
-            try:
-                modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
-            except asyncio.TimeoutError:
-                return await ctx.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond.", ephemeral=True)
-            
-            ign_ch = modal_recived.responses.get('ignored_channels')
-            if ign_ch == '':
-                ign_ch = None
-            
-            settings.ignored_channels=ign_ch
-            await settings.save()
-            
-            embed=Embed(color=0x0c73d3,
-            description=f'Current ignored channels:\n```\n{ign_ch}\n```')
-            await modal_recived.send(embed=embed)
-
-        elif automod_options == 'ignored_roles':
-            settings = await db.automod_config.find_one({'guildid':ctx.guild_id})
-            if settings.ignored_roles is None:
-                roles_prefill = MISSING
-            else:
-                if (settings.ignored_roles is None) or (settings.ignored_roles == ''):
-                    roles_prefill = MISSING
-                else:
-                    roles_prefill = settings.ignored_roles
-            m = modal.Modal(title='Configure the automatic moderation', components=[
-                modal.InputText(
-                    label="Ignored Roles",
-                    style=modal.TextStyles.PARAGRAPH,
-                    custom_id=f'ignored_roles',
-                    placeholder="Roles ID's, seperated by a comma(,)",
-                    value=roles_prefill,
-                    required=False
-                )
-            ],custom_id=f'{ctx.author.id}_automod_ign_r_config_modal')
-            
-            await ctx.send_modal(modal=m)
-            try:
-                modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
-            except asyncio.TimeoutError:
-                return await ctx.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond.", ephemeral=True)
-            
-            ign_r = modal_recived.responses.get('ignored_roles')
-            if ign_r == '':
-                ign_r = None
-            
-            settings.ignored_channels=ign_r
-            await settings.save()
-            
-            embed=Embed(color=0x0c73d3,
-            description=f'Current ignored roles:\n```\n{ign_r}\n```')
-            await modal_recived.send(embed=embed)
-
-        elif automod_options == 'ignored_users':
-            settings = await db.automod_config.find_one({'guildid':ctx.guild_id})
-            if settings.ignored_users is None:
-                users_prefill = MISSING
-            else:
-                if (settings.ignored_users is None) or (settings.ignored_users == ''):
-                    users_prefill = MISSING
-                else:
-                    users_prefill = settings.ignored_users
-            m = modal.Modal(title='Configure the automatic moderation', components=[
-                modal.InputText(
-                    label="Ignored Users",
-                    style=modal.TextStyles.PARAGRAPH,
-                    custom_id=f'ignored_users',
-                    placeholder="User ID's, seperated by a comma(,)",
-                    value=users_prefill,
-                    required=False
-                )
-            ],custom_id=f'{ctx.author.id}_automod_ign_u_config_modal')
-            
-            await ctx.send_modal(modal=m)
-            try:
-                modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
-            except asyncio.TimeoutError:
-                return await ctx.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond.", ephemeral=True)
-            
-            ign_u = modal_recived.responses.get('ignored_users')
-            if ign_u == '':
-                ign_u = None
-            
-            settings.ignored_channels=ign_u
-            await settings.save()
-            
-            embed=Embed(color=0x0c73d3,
-            description=f'Current ignored users:\n```\n{ign_u}\n```')
             await modal_recived.send(embed=embed)
 
     @listen()
@@ -949,7 +836,7 @@ class AutoMod(Extension):
         ignored_channels.append(channel.id)
         await settings.save()
         channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
-        channel_mentions = [ch for ch in channel_mentions if ch is not None]
+        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
         channel_mentions = ' '.join(channel_mentions)
         embed = Embed(description=f"Channel {channel.mention} set to be ignored.")
         embed.add_field('Ignored Channels', channel_mentions)
@@ -964,11 +851,11 @@ class AutoMod(Extension):
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
         ignored_channels = settings.ignored_channels
         if channel.id not in ignored_channels:
-            await ctx.send(f'{channel.mention} is not ignored.', ephemeral=True)
+            await ctx.send(f'{channel.mention} is not being ignored by automod.', ephemeral=True)
         ignored_channels.remove(channel.id)
         await settings.save()
         channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
-        channel_mentions = [ch for ch in channel_mentions if ch is not None]
+        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
         channel_mentions = ' '.join(channel_mentions)
         embed = Embed(description=f"Channel {channel.mention} removed from ignored channels.")
         embed.add_field('Ignored Channels', channel_mentions)
@@ -985,7 +872,7 @@ class AutoMod(Extension):
         ignored_roles.append(role.id)
         await settings.save()
         role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
-        role_mentions = [r for r in role_mentions if r is not None]
+        role_mentions = [r.mention for r in role_mentions if r is not None]
         role_mentions = ' '.join(role_mentions)
         embed = Embed(description=f"Role {role.mention} was added to roles ignored by automod.")
         embed.add_field('Ignored Roles', role_mentions)
@@ -1002,10 +889,44 @@ class AutoMod(Extension):
         ignored_roles.remove(role.id)
         await settings.save()
         role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
-        role_mentions = [r for r in role_mentions if r is not None]
+        role_mentions = [r.mention for r in role_mentions if r is not None]
         role_mentions = ' '.join(role_mentions)
         embed = Embed(description=f"Role {role.mention} was removed from roles ignored by automod.")
         embed.add_field('Ignored Roles', role_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+    
+    @AutoModSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by automod.')
+    @user()
+    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.ROLE):
+        await ctx.defer(ephemeral=True)
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        ignored_users = settings.ignored_users
+        if user.id in ignored_users:
+            await ctx.send(f'{user}|{user.id} is already ignored.', ephemeral=True)
+        ignored_users.append(user.id)
+        await settings.save()
+        users = [ctx.guild.get_member(id) for id in ignored_users]
+        users = [f'{r}({r.id})' for r in users if r is not None]
+        users = ' '.join(users)
+        embed = Embed(description=f"Member {user}({user.id}) was added to members ignored by automod.")
+        embed.add_field('Ignored Members', users)
+        await ctx.send(embed=embed, ephemeral=True)
+
+    @AutoModSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
+    @user()
+    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.ROLE):
+        await ctx.defer(ephemeral=True)
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        ignored_users = settings.ignored_users
+        if user.id not in ignored_users:
+            await ctx.send(f'{user}|{user.id} is not being ignored by automod.', ephemeral=True)
+        ignored_users.remove(user.id)
+        await settings.save()
+        users = [ctx.guild.get_member(id) for id in ignored_users]
+        users = [f'{r}({r.id})' for r in users if r is not None]
+        users = ' '.join(users)
+        embed = Embed(description=f"Member {user}({user.id}) was removed from members ignored by automod.")
+        embed.add_field('Ignored Members', users)
         await ctx.send(embed=embed, ephemeral=True)
         
 
