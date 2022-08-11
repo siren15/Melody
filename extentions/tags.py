@@ -1,6 +1,7 @@
 import math
 import re
 import asyncio
+from urllib.request import FancyURLopener
 
 from utils.catbox import CatBox as catbox
 from dateutil.relativedelta import relativedelta
@@ -9,6 +10,7 @@ from naff import Client, Extension, slash_command, InteractionContext, OptionTyp
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
+from rapidfuzz import fuzz, process
 
 def geturl(string):
     regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
@@ -30,8 +32,7 @@ class Tags(Extension):
     @tagname()
     async def t(self, ctx:InteractionContext, tagname:str):
         await ctx.defer()
-        regx = {'$regex':f'^{tagname}$', '$options':'i'}
-        tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
+        tags = await db.tag.find_one({"names":tagname, "guild_id":ctx.guild_id})
         if tags is None:
             embed = Embed(
                 description=f":x: `{tagname}` is not a tag",
@@ -56,19 +57,20 @@ class Tags(Extension):
     @t.autocomplete('tagname')
     async def t_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
-        tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
-        async for tag in tags:
-            tag_name = tag.names
-            choices.append({'name':f'{tag_name}', 'value':f'{tag.names}'})
+        tags = db.tag.find({"guild_id":ctx.guild_id})
+        tagnames = [tag.names async for tag in tags]
+        if tagname:
+            result = process.extract(tagname, tagnames, scorer=fuzz.partial_token_sort_ratio, limit=25)
+            choices = [{'name':f'{t[0]}', 'value':f'{t[0]}'} for t in result if t[1] > 50]
+        else:
+            choices = [{'name':f'{name}', 'value':f'{name}'} for name in tagnames[:25]]
         await ctx.send(choices=choices)
 
     @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
     @tagname()
     async def tag(self, ctx:InteractionContext, tagname:str):
         await ctx.defer()
-        regx = {'$regex':f'^{tagname}$', '$options':'i'}
-        tags = await db.tag.find_one({"names":regx, "guild_id":ctx.guild_id})
+        tags = await db.tag.find_one({"names":tagname, "guild_id":ctx.guild_id})
         if tags is None:
             embed = Embed(
                 description=f":x: `{tagname}` is not a tag",
@@ -112,7 +114,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
+        tagname_regx = {'$regex':f'^{re.escape(tagname)}$', '$options':'i'}
         check = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if check==None:
             if attachment is not None:
@@ -185,7 +187,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
+        tagname_regx = {'$regex':f'^{re.escape(tagname)}$', '$options':'i'}
         tag_to_delete = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'author_id':ctx.author.id})
         if tag_to_delete is None:
             tag_to_delete = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
@@ -218,7 +220,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
+        tagname_regx = {'$regex':f'^{re.escape(tagname)}$', '$options':'i'}
         tag_to_delete = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_delete is None:
             embed = Embed(description=f":x: There's not a tag with the name `{tagname}`",
@@ -261,7 +263,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
+        tagname_regx = {'$regex':f'^{re.escape(tagname)}$', '$options':'i'}
         tag_to_edit = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'author_id':ctx.author.id})
         if tag_to_edit is None:
             tag_to_edit = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
@@ -351,7 +353,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
             return
  
-        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
+        tagname_regx = {'$regex':f'^{re.escape(tagname)}$', '$options':'i'}
         tag_to_view = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_view is None:
             embed = Embed(description=f":x: I couldn't find a tag called `{tagname}`",
@@ -465,7 +467,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
+        tagname_regx = {'$regex':f'^{re.escape(tagname)}$', '$options':'i'}
         tag_to_claim = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx})
         if tag_to_claim is None:
             embed = Embed(description=f":x: I couldn't find a tag called `{tagname}`",
@@ -520,7 +522,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
             return
         
-        tagname_regx = {'$regex':f'^{tagname}$', '$options':'i'}
+        tagname_regx = {'$regex':f'^{re.escape(tagname)}$', '$options':'i'}
         tag_to_claim = await db.tag.find_one({'guild_id':ctx.guild_id, 'names':tagname_regx, 'owner_id':ctx.author.id})
         if tag_to_claim is None:
             embed = Embed(description=f":x: You don't own a tag with that name",
@@ -574,7 +576,7 @@ class Tags(Extension):
     @tag.autocomplete('tagname')
     async def tag_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
         async for tag in tags:
             tag_name = tag.names
@@ -584,7 +586,7 @@ class Tags(Extension):
     @tag_admin_delete.autocomplete('tagname')
     async def tag_admin_delete_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
         async for tag in tags:
             tag_name = tag.names
@@ -594,7 +596,7 @@ class Tags(Extension):
     @tag_claim.autocomplete('tagname')
     async def tag_claim_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
         async for tag in tags:
             tag_name = tag.names
@@ -604,7 +606,7 @@ class Tags(Extension):
     @tag_gift.autocomplete('tagname')
     async def tag_gift_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
         async for tag in tags:
             tag_name = tag.names
@@ -614,7 +616,7 @@ class Tags(Extension):
     @tag_info.autocomplete('tagname')
     async def tag_info_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
         async for tag in tags:
             tag_name = tag.names
@@ -624,7 +626,7 @@ class Tags(Extension):
     @tag_edit.autocomplete('tagname')
     async def tag_edit_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
         async for tag in tags:
             tag_name = tag.names
@@ -634,7 +636,7 @@ class Tags(Extension):
     @tag_delete.autocomplete('tagname')
     async def tag_delete_autocomplete(self, ctx: AutocompleteContext, tagname: str):
         choices = []
-        regx = {'$regex':f'{tagname}', '$options':'igm'}
+        regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
         async for tag in tags:
             tag_name = tag.names

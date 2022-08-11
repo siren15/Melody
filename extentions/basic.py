@@ -156,7 +156,7 @@ class Basic(Extension):
         embed.add_field(name="Joined server on:", value=f"<t:{math.ceil(member.joined_at.timestamp())}> `{join_time} ago`", inline=False)
         embed.add_field(name=f"Roles: [{rolecount}]", value=roles, inline=False)
         embed.add_field(name="Highest role:", value=toprole, inline=False)
-        embed.add_field(name="Library:", value="[dis-snek](https://naff-docs.readthedocs.io/)")
+        embed.add_field(name="Library:", value="[NAFF](https://naff.info/)")
         embed.add_field(name="Servers:", value=len(self.bot.user.guilds))
         embed.add_field(name="Bot Latency:", value=f"{self.bot.latency * 1000:.0f} ms")
         embed.add_field(name='GitHub: https://github.com/siren15/melody', value='‎')

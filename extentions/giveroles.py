@@ -22,7 +22,7 @@ class GiveRoles(Extension):
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
 
         
-        regx = {'$regex': f"^{giveyou_name}$", '$options':'i'}
+        regx = {'$regex': f"^{re.escape(giveyou_name)}$", '$options':'i'}
         gy = await db.giveyou.find_one({'name':regx, 'guildid': ctx.guild_id})
 
         if gy is None:
@@ -52,7 +52,7 @@ class GiveRoles(Extension):
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
 
         
-        regx = {'$regex': f"^{giveyou_name}$", '$options':'i'}
+        regx = {'$regex': f"^{re.escape(giveyou_name)}$", '$options':'i'}
         gy = await db.giveyou.find_one({'name':regx, 'guildid': ctx.guild_id})
 
         if gy is not None:
@@ -67,7 +67,7 @@ class GiveRoles(Extension):
         if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
 
-        regx = {'$regex': f"^{giveyou_name}$", '$options':'i'}
+        regx = {'$regex': f"^{re.escape(giveyou_name)}$", '$options':'i'}
         gy = await db.giveyou.find_one({'name':regx, 'guildid': ctx.guild_id})
 
         if gy is not None:

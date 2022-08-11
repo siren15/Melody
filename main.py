@@ -79,7 +79,7 @@ class CustomClient(Client):
 
         elif isinstance(error, MissingRole):
             
-            regx = {'$regex':f"^{ctx.invoked_name}$", '$options':'i'}
+            regx = {'$regex':f"^{re.escape(ctx.invoked_name)}$", '$options':'i'}
             roleid = await db.hasrole.find_one({"guildid":ctx.guild.id, "command":regx})
             if roleid is not None:
                 role = ctx.guild.get_role(roleid.role)

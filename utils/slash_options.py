@@ -76,6 +76,9 @@ def embed_title():
     return wrapper
 
 def channel():
+    """
+    Select a channel OptionType.
+    """
     def wrapper(func):
         return slash_option(name='channel', description='Select a channel', opt_type=OptionTypes.CHANNEL, required=False)(func)
     return wrapper

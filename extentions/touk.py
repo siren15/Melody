@@ -1,10 +1,12 @@
 # inspired by https://github.com/artem30801/SkyboxBot/blob/master/main.py
 from bson.int64 import Int64 as int64
 from naff import Client, Extension, slash_command, InteractionContext, Embed, check, is_owner, Permissions
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
-from beanie import Document as BeanieDocument
+from beanie import Document as BeanieDocument, Indexed
+import pymongo
+import uuid
 
 class Document(BeanieDocument):
     def __hash__(self):
@@ -112,7 +114,7 @@ class BeanieDocuments():
 
     class strikes(Document):
         type: Optional[str] = None
-        strikeid: Optional[str] = None
+        strikeid: str = uuid.uuid4
         guildid: Optional[int64] = None
         user: Optional[int64] = None
         moderator: Optional[str] = None
@@ -124,7 +126,7 @@ class BeanieDocuments():
     class tag(Document):
         guild_id: Optional[int64] = None
         author_id: Optional[int64] = None
-        names: Optional[str] = None
+        names: Indexed(str, pymongo.TEXT)
         content: Optional[str] = None
         attachment_url: Optional[str] = None
         no_of_times_used: Optional[int64] = None
@@ -190,6 +192,23 @@ class BeanieDocuments():
         banned_words: violation_settings
         ban_time: Optional[int64] = None
         mute_time: Optional[int64] = None
+    
+    class bannedNames(Document):
+        guild: int64
+        names: List|str = None
+        default_name:str
+    
+    class amConfig(Document):
+        guild: int64
+        ignored_channels: List|int = None
+        ignored_roles: List|int = None
+        ignored_users: List|int = None
+        phishing: violation_settings
+        banned_words: violation_settings
+        banned_names: violation_settings
+        ban_time: int64 = 0
+        mute_time: int64 = 0
+
 
 class BeanieDocumentsExtension(Extension):
     def __init__(self, bot: Client):
@@ -205,6 +224,8 @@ class BeanieDocumentsExtension(Extension):
 
 def setup(bot):
     BeanieDocumentsExtension(bot)
+    bot.add_model(BeanieDocuments.amConfig)
+    bot.add_model(BeanieDocuments.bannedNames)
     bot.add_model(BeanieDocuments.automod_config)
     bot.add_model(BeanieDocuments.levelingStats)
     bot.add_model(BeanieDocuments.banned_words)
