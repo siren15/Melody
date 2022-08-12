@@ -760,7 +760,11 @@ class AutoMod(Extension):
             if bn.names is None:
                 exact_prefill = MISSING
             else:
-                exact_prefill = bn.names
+                exact_prefill = ','.join(bn.names)
+        if bn.default_name is None:
+            defname_prefill = MISSING
+        else:
+            defname_prefill = bn.default_name
         m = modal.Modal(title='Configure the automatic moderation', components=[
             modal.InputText(
                 label="Banned Names",
@@ -769,6 +773,16 @@ class AutoMod(Extension):
                 placeholder='Words, seperated by a comma(,). They should have minimum 3 characters.',
                 value=exact_prefill,
                 required=False
+            ),
+            modal.InputText(
+                label="Fallback Name",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'defname',
+                placeholder="One name that will be act as a fallback",
+                value=defname_prefill,
+                required=True,
+                max_length=32,
+                min_length=2
             ),
             modal.InputText(
                 label="Violation Count",
@@ -795,8 +809,7 @@ class AutoMod(Extension):
             return await modal_recived.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond to this modal.", ephemeral=True)
         
         em_words = modal_recived.responses.get('exact_match')
-        if em_words == '':
-            em_words = None
+        defName = modal_recived.responses.get('defname')
         
         bw_vc_response = modal_recived.responses.get('bw_vc')
         if (bw_vc_response == '') or (bw_vc_response is None):
@@ -812,13 +825,14 @@ class AutoMod(Extension):
         await settings.save()
 
         if bn is None:
-            await db.bannedNames(guild=ctx.guild_id, names=list()).insert()
+            await db.bannedNames(guild=ctx.guild_id, names=em_words.split(','), default_name=defName).insert()
         else:
-            bn.names = list(em_words)
+            bn.default_name = defName
+            bn.names = em_words.split(',')
             await bn.save()
         
         embed=Embed(color=0x0c73d3,
-        description=f'Current banned names:\nExact match:\n{em_words}\nViolation count: {bw_vc_response}\nPunishments: {bw_vp_response}')
+        description=f'**Current banned names:**\n{em_words}\n**Violation count:** {bw_vc_response}\n**Punishments:** {bw_vp_response}')
         await modal_recived.send(embed=embed)
     
     AutoModSettings = SlashCommand(name='automod', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage the automod.')
