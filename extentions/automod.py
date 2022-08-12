@@ -718,15 +718,16 @@ class AutoMod(Extension):
 
         if bn is None:
             exact_prefill = MISSING
+            defname_prefill = MISSING
         else:
             if bn.names is None:
                 exact_prefill = MISSING
             else:
                 exact_prefill = ','.join(bn.names)
-        if bn.default_name is None:
-            defname_prefill = MISSING
-        else:
-            defname_prefill = bn.default_name
+            if bn.default_name is None:
+                defname_prefill = MISSING
+            else:
+                defname_prefill = bn.default_name
         m = modal.Modal(title='Configure the automatic moderation', components=[
             modal.InputText(
                 label="Banned Names",
