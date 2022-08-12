@@ -77,7 +77,7 @@ class CustomClient(Client):
                           color=0xdd2e44)
             await ctx.send(embed=embed, ephemeral=True)
 
-        elif isinstance(error, MissingRole):
+        if isinstance(error, MissingRole):
             
             regx = {'$regex':f"^{re.escape(ctx.invoked_name)}$", '$options':'i'}
             roleid = await db.hasrole.find_one({"guildid":ctx.guild.id, "command":regx})
@@ -85,42 +85,42 @@ class CustomClient(Client):
                 role = ctx.guild.get_role(roleid.role)
                 embed = Embed(description=f":x: {ctx.author.mention} You don't have role {role.mention} that's required to use this command.",
                               color=0xDD2222)
-                await ctx.send(embed=embed, ephemeral=True)
+                return await ctx.send(embed=embed, ephemeral=True)
 
-        elif isinstance(error, RoleNotFound):
+        if isinstance(error, RoleNotFound):
             embed = Embed(description=f":x: Couldn't find that role",
                           color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
+            return await ctx.send(embed=embed, ephemeral=True)
 
-        elif isinstance(error, UserNotFound):
+        if isinstance(error, UserNotFound):
             embed = Embed(description=f":x: User is not a member of this server ",
                           color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
+            return await ctx.send(embed=embed, ephemeral=True)
 
-        elif isinstance(error, CommandOnCooldown):
+        if isinstance(error, CommandOnCooldown):
             embed = Embed(
                 description=f":x: Command **{ctx.invoked_name}** on cooldown, try again later.",
                 color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
+            return await ctx.send(embed=embed, ephemeral=True)
 
-        elif isinstance(error, ExtensionNotActivatedInGuild):
+        if isinstance(error, ExtensionNotActivatedInGuild):
             embed = Embed(description=f":x: Module for this command is not activated in the server.",
                           color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
+            return await ctx.send(embed=embed, ephemeral=True)
 
-        elif isinstance(error, CommandNotActivatedInGuild):
+        if isinstance(error, CommandNotActivatedInGuild):
             embed = Embed(description=f":x: Command is not activated in the server.",
                           color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
+            return await ctx.send(embed=embed, ephemeral=True)
 
-        elif isinstance(error, UserInBlacklist):
+        if isinstance(error, UserInBlacklist):
             embed = Embed(description=f":x: {ctx.author.mention} You are not allowed to use this command",
                           color=0xDD2222)
-            await ctx.send(embed=embed, ephemeral=True)
+            return await ctx.send(embed=embed, ephemeral=True)
         else:
-        #     embed = Embed(description=f":x: An error occured while trying to execute `{ctx.invoked_name}` command: ```{error}```",
-        #                   color=0xDD2222)
-        #     await ctx.send(embed=embed, ephemeral=True)
+            embed = Embed(description=f":x: An error occured while trying to execute `{ctx.invoked_name}` command: ```{error}```",
+                          color=0xDD2222)
+            await ctx.send(embed=embed, ephemeral=True)
             if ctx.guild_id != 435038183231848449:
                 guild = self.get_guild(435038183231848449)
                 channel = guild.get_channel(932661537729024132)
