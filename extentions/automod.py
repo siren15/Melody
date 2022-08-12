@@ -616,10 +616,15 @@ class AutoMod(Extension):
             banned_names = bn.names
             new_name_result = process.extract(new_name, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
             names = [t[0] for t in new_name_result if t[1] >= 90]
+            username_result = process.extract(member.username, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
+            usernames = [t[0] for t in username_result if t[1] >= 90]
             if names != []:
                 name = ' '.join(names)
                 reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
-                await member.edit_nickname(bn.default_name, reason)
+                if usernames == []:
+                    await member.edit_nickname(reason=reason)
+                else:
+                    await member.edit_nickname(bn.default_name, reason)
                 embed = Embed(description=reason,
                                         color=0x0c73d3)
                 embed.set_thumbnail(url=member.avatar.url)
