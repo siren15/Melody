@@ -622,7 +622,7 @@ class AutoMod(Extension):
                 name = ' '.join(names)
                 reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
                 if usernames == []:
-                    await member.edit_nickname(reason=reason)
+                    await member.edit_nickname(member.username, reason)
                 else:
                     await member.edit_nickname(bn.default_name, reason)
                 embed = Embed(description=reason,
@@ -633,7 +633,6 @@ class AutoMod(Extension):
                 
                 channelid = await db.logs.find_one({"guild_id":member.guild.id})
                 log_channel = member.guild.get_channel(channelid.channel_id)
-                await log_channel.send(embed=embed)
                 try:
                     await member.send(f"Your name or part of your name were flagged in banned names in `{event.guild.name}` server.\nI've flagged `{name}` in `{new_name}`")
                     await log_channel.send(f'I DMed {member}', embed=embed)
@@ -684,7 +683,6 @@ class AutoMod(Extension):
             
             channelid = await db.logs.find_one({"guild_id":member.guild.id})
             log_channel = member.guild.get_channel(channelid.channel_id)
-            await log_channel.send(embed=embed)
             try:
                 await member.send(f"Your name or part of your name were flagged in banned names in `{event.guild.name}` server.\nI've flagged `{name}` in `{new_name}`")
                 await log_channel.send(f'I DMed {member}', embed=embed)
