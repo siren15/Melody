@@ -597,132 +597,43 @@ class AutoMod(Extension):
 
     @listen()
     async def onNameChange_banned_name_exact(self, event: MemberUpdate):
-        member = event.after
-        user = member
-        old_name = event.before.display_name.lower()
-        new_name = event.after.display_name.lower()
-        settings = await db.amConfig.find_one({'guild':event.guild.id})
-        if settings.ignored_users is not None:
-            if member.id in settings.ignored_users:
+        member =  event.after
+        old_name =  event.before.display_name
+        new_name = event.after.display_name
+        if old_name != new_name:
+            settings = await db.amConfig.find_one({'guild':event.guild.id})
+            if settings.ignored_users is not None:
+                if member.id in settings.ignored_users:
+                    return
+            if settings.ignored_roles is not None:
+                if any(role for role in member.roles if role.id in settings.ignored_roles):
+                    return
+            if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 return
-        if settings.ignored_roles is not None:
-            if any(role for role in member.roles if role.id in settings.ignored_roles):
-                return
-        if member.has_permission(Permissions.ADMINISTRATOR) == True:
-            return
-        bn = await db.bannedNames.find_one({'guild':event.guild.id})
-        if bn is not None:
+            bn = await db.bannedNames.find_one({'guild':event.guild.id})
+            if bn is None:
+                await db.bannedNames(guild=event.guild.id).insert()
             banned_names = bn.names
-            for raw_name in banned_names:
-                if raw_name.startswith('*') and raw_name.endswith('*'):
-                    name = raw_name.replace('*', '')
-                    if name in new_name:
-                        is_name_banned = True
-                elif raw_name.startswith('*') and not raw_name.endswith('*'):
-                    name = raw_name.replace('*', '')
-                    if new_name.startswith(name):
-                        is_name_banned = True
-                elif raw_name.endswith('*') and not raw_name.startswith('*'):
-                    name = raw_name.replace('*', '')
-                    if new_name.endswith(name):
-                        is_name_banned = True
-                else:
-                    if raw_name == new_name:
-                        is_name_banned = True
-            if is_name_banned is True:
-                if raw_name.startswith('*') and raw_name.endswith('*'):
-                    name = raw_name.replace('*', '')
-                    if name in old_name:
-                        is_old_name_banned = True
-                elif raw_name.startswith('*') and not raw_name.endswith('*'):
-                    name = raw_name.replace('*', '')
-                    if old_name.startswith(name):
-                        is_old_name_banned = True
-                elif raw_name.endswith('*') and not raw_name.startswith('*'):
-                    name = raw_name.replace('*', '')
-                    if old_name.endswith(name):
-                        is_old_name_banned = True
-                else:
-                    if raw_name == old_name:
-                        is_old_name_banned = True
-                if is_old_name_banned:
-                    replacement_name = bn.default_name
-                else:
-                    replacement_name = old_name
+            new_name_result = process.extract(new_name, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
+            names = [t[0] for t in new_name_result if t[1] >= 90]
+            if names != []:
+                name = ' '.join(names)
+                reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
+                await member.edit_nickname(bn.default_name, reason)
+                embed = Embed(description=reason,
+                                        color=0x0c73d3)
+                embed.set_thumbnail(url=member.avatar.url)
+                embed.add_field(name="Old Name", value=old_name)
+                embed.add_field(name="New Name", value=new_name)
                 
-                reason = f"[AUTOMOD][Banned Name]I've flagged a banned name `{name}` in `{new_name}`."
-                
-                await member.edit_nickname(replacement_name, reason)
-                await automod_strike(self, event, "Automod Log (Phishing Links)", reason)
-                                        
-                channelid = await db.logs.find_one({"guild_id":event.guild.id})
-                log_channel = event.guild.get_channel(channelid.channel_id)
+                channelid = await db.logs.find_one({"guild_id":member.guild.id})
+                log_channel = member.guild.get_channel(channelid.channel_id)
+                await log_channel.send(embed=embed)
                 try:
                     await member.send(f"Your name or part of your name were flagged in banned names in `{event.guild.name}` server.\nI've flagged `{name}` in `{new_name}`")
+                    await log_channel.send(f'I DMed {member}', embed=embed)
                 except Exception:
-                    await log_channel.send(f"[AUTOMOD][Banned Name]Couldn't DM member: {member}({member.id}). I've flagged `{name}` in `{new_name}`")
-                
-                violation_count = await db.strikes.find({'guildid':event.guild.id, 'user':user.id, 'action':"Automod Log (Banned Name)", 'automod':True}).count()
-                if settings.banned_names.violation_count is not None:
-                    if violation_count > settings.banned_names.violation_count:
-                        if 'warn' in settings.banned_names.violation_punishment:
-                            await automod_warn(event, log_channel, reason)
-                        
-                        if 'mute' in settings.banned_names.violation_punishment:
-                            await automod_mute(event, settings, reason)
-                            
-                        if 'kick' in settings.banned_names.violation_punishment:
-                            await event.guild.kick(user, reason)
-                
-                        if 'ban' in settings.banned_names.violation_punishment:
-                            await automod_ban(event, settings, reason)
-    
-    @listen()
-    async def onMemAdd_banned_name_exact(self, event: MemberAdd):
-        member = event.member
-        memname = member.display_name.lower()
-        settings = await db.amConfig.find_one({'guild':event.guild.id})
-        if settings.ignored_users is not None:
-            if member.id in settings.ignored_users:
-                return
-        if settings.ignored_roles is not None:
-            if any(role for role in member.roles if role.id in settings.ignored_roles):
-                return
-        if member.has_permission(Permissions.ADMINISTRATOR) == True:
-            return
-        bn = await db.bannedNames.find_one({'guild':event.guild.id})
-        if bn is not None:
-            banned_names = bn.names
-            for raw_name in banned_names:
-                if raw_name.startswith('*') and raw_name.endswith('*'):
-                    name = raw_name.replace('*', '')
-                    if name in memname:
-                        is_name_banned = True
-                elif raw_name.startswith('*') and not raw_name.endswith('*'):
-                    name = raw_name.replace('*', '')
-                    if memname.startswith(name):
-                        is_name_banned = True
-                elif raw_name.endswith('*') and not raw_name.startswith('*'):
-                    name = raw_name.replace('*', '')
-                    if memname.endswith(name):
-                        is_name_banned = True
-                else:
-                    if raw_name == memname:
-                        is_name_banned = True
-            if is_name_banned is True:
-                replacement_name = bn.default_name
-                
-                reason = f"[AUTOMOD][Banned Name]I've flagged a banned name `{name}` in `{member.display_name}`."
-                
-                await member.edit_nickname(replacement_name, reason)
-                await automod_strike(self, event, "Automod Log (Phishing Links)", reason)
-                                        
-                channelid = await db.logs.find_one({"guild_id":event.guild.id})
-                log_channel = event.guild.get_channel(channelid.channel_id)
-                try:
-                    await member.send(f"Your name or part of your name were flagged in banned names in `{event.guild.name}` server.\nI've flagged `{name}` in `{member.display_name}`")
-                except Exception:
-                    await log_channel.send(f"[AUTOMOD][Banned Name]Couldn't DM member: {member}({member.id}). I've flagged `{name}` in `{member.display_name}`")
+                    await log_channel.send(f"Couldn't DM {member}", embed=embed)
                 
                 violation_count = await db.strikes.find({'guildid':event.guild.id, 'user':member.id, 'action':"Automod Log (Banned Name)", 'automod':True}).count()
                 if settings.banned_names.violation_count is not None:
@@ -738,6 +649,57 @@ class AutoMod(Extension):
                 
                         if 'ban' in settings.banned_names.violation_punishment:
                             await automod_ban(event, settings, reason)
+    
+    @listen()
+    async def onMemAdd_banned_name_exact(self, event: MemberAdd):
+        member =  event.member
+        new_name = member.display_name
+        settings = await db.amConfig.find_one({'guild':event.guild.id})
+        if settings.ignored_users is not None:
+            if member.id in settings.ignored_users:
+                return
+        if settings.ignored_roles is not None:
+            if any(role for role in member.roles if role.id in settings.ignored_roles):
+                return
+        if member.has_permission(Permissions.ADMINISTRATOR) == True:
+            return
+        bn = await db.bannedNames.find_one({'guild':event.guild.id})
+        if bn is None:
+            await db.bannedNames(guild=event.guild.id).insert()
+        banned_names = bn.names
+        new_name_result = process.extract(new_name, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
+        names = [t[0] for t in new_name_result if t[1] >= 90]
+        if names != []:
+            name = ' '.join(names)
+            reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
+            await member.edit_nickname(bn.default_name, reason)
+            embed = Embed(description=reason,
+                                    color=0x0c73d3)
+            embed.set_thumbnail(url=member.avatar.url)
+            
+            channelid = await db.logs.find_one({"guild_id":member.guild.id})
+            log_channel = member.guild.get_channel(channelid.channel_id)
+            await log_channel.send(embed=embed)
+            try:
+                await member.send(f"Your name or part of your name were flagged in banned names in `{event.guild.name}` server.\nI've flagged `{name}` in `{new_name}`")
+                await log_channel.send(f'I DMed {member}', embed=embed)
+            except Exception:
+                await log_channel.send(f"Couldn't DM {member}", embed=embed)
+            
+            violation_count = await db.strikes.find({'guildid':event.guild.id, 'user':member.id, 'action':"Automod Log (Banned Name)", 'automod':True}).count()
+            if settings.banned_names.violation_count is not None:
+                if violation_count > settings.banned_names.violation_count:
+                    if 'warn' in settings.banned_names.violation_punishment:
+                        await automod_warn(event, log_channel, reason)
+                    
+                    if 'mute' in settings.banned_names.violation_punishment:
+                        await automod_mute(event, settings, reason)
+                        
+                    if 'kick' in settings.banned_names.violation_punishment:
+                        await event.guild.kick(member, reason)
+            
+                    if 'ban' in settings.banned_names.violation_punishment:
+                        await automod_ban(event, settings, reason)
     
     BannedNames = SlashCommand(name='banned_names', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage banned names.')
 

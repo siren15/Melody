@@ -195,8 +195,10 @@ class BeanieDocuments():
     
     class bannedNames(Document):
         guild: int64
-        names: List|str = None
-        default_name:str = None
+        names: List|str = []
+        default_name:str = 'Default Name'
+        violation_count: int64 = 0
+        violation_punishment: List|str = []
     
     class amConfig(Document):
         guild: int64

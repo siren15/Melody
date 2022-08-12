@@ -11,6 +11,7 @@ from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
 from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd
+from naff.client.const import MISSING
 
 def random_string_generator():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -442,6 +443,12 @@ class EventLogs(Extension):
     @listen()
     async def on_member_update_timeout_remove(self, event: MemberUpdate):
         member_after = event.after
+        if event.after.communication_disabled_until is MISSING and event.before.communication_disabled_until is MISSING:
+            return
+        if event.after.communication_disabled_until is None and event.before.communication_disabled_until is None:
+            return
+        if event.after.communication_disabled_until == event.before.communication_disabled_until:
+            return
         if (member_after.communication_disabled_until is None) and (await is_event_active(event.guild, 'member_timeout') == True):
             audit_log_entry = await event.guild.fetch_audit_log(action_type=24, limit=1)
             for au_entry in audit_log_entry.entries:
@@ -468,6 +475,12 @@ class EventLogs(Extension):
     @listen()
     async def on_member_update_timeout_add(self, event: MemberUpdate):
         member_after = event.after
+        if event.after.communication_disabled_until is MISSING and event.before.communication_disabled_until is MISSING:
+            return
+        if event.after.communication_disabled_until is None and event.before.communication_disabled_until is None:
+            return
+        if event.after.communication_disabled_until == event.before.communication_disabled_until:
+            return
         if member_after.communication_disabled_until is not None:
             timeout_timestamp = f'{member_after.communication_disabled_until}'.replace('<t:', '')
             timeout_timestamp = timeout_timestamp.replace('>', '')
