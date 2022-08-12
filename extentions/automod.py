@@ -629,7 +629,7 @@ class AutoMod(Extension):
                 else:
                     if raw_name == new_name:
                         is_name_banned = True
-            if is_name_banned:
+            if is_name_banned is True:
                 if raw_name.startswith('*') and raw_name.endswith('*'):
                     name = raw_name.replace('*', '')
                     if name in old_name:
@@ -709,7 +709,7 @@ class AutoMod(Extension):
                 else:
                     if raw_name == memname:
                         is_name_banned = True
-            if is_name_banned:
+            if is_name_banned is True:
                 replacement_name = bn.default_name
                 
                 reason = f"[AUTOMOD][Banned Name]I've flagged a banned name `{name}` in `{member.display_name}`."
