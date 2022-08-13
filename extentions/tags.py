@@ -40,7 +40,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
         else:
             if tags.attachment_url is not None:
-                if tags.content is not None:
+                if (tags.content is not None) and (tags.content != tags.attachment_url):
                     await ctx.send(f'{tags.content}\n{tags.attachment_url}')
                 else:
                     await ctx.send(f'{tags.attachment_url}')
@@ -78,7 +78,7 @@ class Tags(Extension):
             await ctx.send(embed=embed, ephemeral=True)
         else:
             if tags.attachment_url is not None:
-                if tags.content is not None:
+                if (tags.content is not None) and (tags.content != tags.attachment_url):
                     await ctx.send(f'{tags.content}\n{tags.attachment_url}')
                 else:
                     await ctx.send(f'{tags.attachment_url}')
