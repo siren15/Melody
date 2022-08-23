@@ -39,6 +39,9 @@
     width: 80px;
   }
 </style>
+<link href="{{ url_for('static', path='fonts/stylesheet.css') }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', path='css/croppie.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='css/leaderboard.css') }}">
 <nav class="navbar navbar-expand-lg fixed-top" style="height: 60px; background-color: #ffd66ed0;">
   <div class="d-flex container-fluid">
     <a class="mx-2" href="/melody">
@@ -94,8 +97,97 @@
 
 {% block body %}
 <object style="z-index: -1; position: fixed; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%);" id="wave" data="{{ url_for('static', path='images/shapes.svg') }}" type="image/svg+xml"></object>
-<div class="d-flex flex-column align-content-center">
+<div class="">
   <div style="height: 60px;"></div>
+  {% if user %}
+    {% if levelinfo %}
+    <div class="row row-cols-1 w-50 mx-auto">
+      <div class="col card mx-1 my-1" style="width: 337px; height:153px; background-color: transparent; border-color: transparent;">
+        <img id="bg" src="{{levelinfo.lc_background}}">
+        <img id="bgOverlay" src="{{ url_for('static', path='images/overlay.png') }}">
+        <p id="name">{{levelinfo.name}}</p>
+        <p id="stats">XP: {{levelinfo.xp_to_next_level}}<br>Total XP: {{levelinfo.xp}}<br>Messages: {{levelinfo.messages}}</p>
+        <p id="level">LVL:{{levelinfo.level}}</p>
+        <img id="bgAvatar" class = "rounded-circle" src="{{ levelinfo.avatar_url }}">
+        <div id="pgbarbox" class="progress" style="background-color: #fff0;">
+          <div id="pgbar" class="progress-bar bg-success" role="progressbar" style="width: {{levelinfo.percent}}px;"></div>
+        </div>
+      </div>
+      <div style="padding-left: 0px; padding-right:0px;">
+        <input type="file" id="imageinput" name="image" accept="image/jpeg, image/png, image/gif" style="display: None;">
+        <button id="changeBtn" class="btn btn-outline-light ah mx-1 my-1" style="width: fit-content;">Change Background</button>
+        <button id="resetButton" class="btn btn-outline-danger mx-1 my-1" style="width: fit-content;">Reset Background</button>
+      </div>
+    </div>
+
+    <form id="imageform" action="{{ url_for('test_upload') }}" method="POST"></form>
+    <form id="resetForm"></form>
+    <!-- Modal -->
+    <div class="modal fade" id="CropModal" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="img-container">
+              <!-- <img id="cropimage" alt="Image"> -->
+              <div id="cropimage"></div>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-color: #25252a;">
+            <button type="button" class="btn btn-danger" id="cropCancel">Close</button>
+            <button type="button" class="btn btn-success" id="crop">Upload!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="saveAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+        <button id="cancelbtn" class="btn btn-danger">Cancel</button> <button id="savebtn" type="submit" class="btn btn-success">Save</button>
+      </div>
+    </div>
+    <div id="successAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Background successfully changed!</h4>
+      </div>
+    </div>
+    <div id="errorAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">An error occured while changing the background!</h4>
+      </div>
+    </div>
+    <div id="fileSizeErrorAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">File size too large! Files can be max 8mb!</h4>
+      </div>
+    </div>
+
+    <div id="progressAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Uploading...</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="resetSaveAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+        <button id="resetCancelButton" class="btn btn-danger">Cancel</button> <button id="resetSaveButton" type="submit" class="btn btn-success">Save</button>
+      </div>
+    </div>
+    <div id="resetSuccessAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Background was successfully reset!</h4>
+      </div>
+    </div>
+    <div id="resetErrorAlert" class="row row-cols-2 justify-content-md-center fixed-bottom" style="width: 100%; display: none;">
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">An error occured while resetting the background!</h4>
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+
   <table class="table table-hover w-50 mx-auto" style="border-color: rgba(255, 255, 255, 0);">
     <thead class="">
         <tr>
@@ -118,7 +210,7 @@
   </table>
   {% if members %}
     {% if members.has_other_pages %}
-      <div class="mx-auto my-3 btn-group" role="group" aria-label="Item pagination" style="width: 20%;">
+      <div class="my-3 btn-group" style="margin-left: 50%; transform: translate(-50%, -50%);" role="group" aria-label="Item pagination">
           {% if members.has_previous %}
               <a href="?page={{ members.previous_page_number }}" class="btn btn-outline-light">&laquo;</a>
           {% endif %}
@@ -144,6 +236,17 @@
     <p>Nobody from this server has levels.</p>
   {% endif %}
 </div>
+<input type="hidden" id="obgurl" value="{{levelinfo.lc_background}}">
+<input type="hidden" id="guildID" value="{{guild_id}}">
+<input type="hidden" id="memberID" value="{{user.id}}">
+<input type="hidden"  id="uploadurl" value="{{ url_for('test_upload') }}">
+<input type="hidden" id="reseturl" value="{{ url_for('lvl_bg_reset') }}">
+<input type="hidden"  id="defaultBG" value="{{ url_for('static', path='images/bg.png') }}">
+<input type="hidden" id="csrftoken" value="{{csrftoken}}" />
+<script src="{{ url_for('static', path='js/jquery.js') }}"></script>
+<script src="{{ url_for('static', path='js/bootstrap.bundle.js') }}""></script>
+<script src="{{ url_for('static', path='js/croppie.js') }}"></script>
+<script src="{{ url_for('static', path='js/cropBackground.js') }}"></script>
 {% endblock %}
 
 {% block centerbox %}

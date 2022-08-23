@@ -1,4 +1,4 @@
-var changebtn = document.getElementById("changebtn");
+var changebtn = document.getElementById("changeBtn");
 var inputbtn = document.getElementById("imageinput");
 var backgroundimg = document.getElementById("bg");
 var uploadUrl = document.getElementById('uploadurl').value;
@@ -10,8 +10,9 @@ var defaultImageURL = obgurl;
 var guildID = document.getElementById('guildID').value;
 var memberID = document.getElementById('memberID').value;
 var defaultBG = document.getElementById('defaultBG').value;
+var csrftoken = document.getElementById('csrftoken').value;
 
-changebtn.addEventListener("click", function() {
+document.getElementById("changeBtn").addEventListener("click", function() {
   inputbtn.click();
 });
 inputbtn.addEventListener("change", function(event) {
@@ -77,6 +78,7 @@ $('#crop').on('click', function () {
       form.append('guild_id', guildID);
       form.append('member_id', memberID);
       form.append('image', blob, inputimage.name);
+      form.append('csrftoken', csrftoken);
       $.ajax({
         method: 'POST',
         url: uploadUrl,
@@ -146,6 +148,7 @@ $('#resetButton').on('click', function () {
     var resetFormData = new FormData(resetForm);
     resetFormData.append('guild_id', guildID);
     resetFormData.append('member_id', memberID);
+    resetFormData.append('csrftoken', csrftoken);
     $.ajax({
       method: 'POST',
       url: resetURL,

@@ -254,7 +254,7 @@ async def user_guild(request: Request, guild_id:int):
             detail='Guild is not in the cache'
         )
     member = userguild.get_member(int(user['id']))
-    if member.has_permission(Permissions.ADMINISTRATOR):
+    if not member.has_permission(Permissions.ADMINISTRATOR):
         return RedirectResponse(f'/melody/leaderboard/{guild_id}')
     events_logging = await db.prefixes.find_one({'guildid':guild_id})
     extensions = []
@@ -268,6 +268,31 @@ async def user_guild(request: Request, guild_id:int):
             'request': request,
             'user':user,
             'extensions':extensions,
+            'guild_id':guild_id,
+            'csrftoken':await get_csrf_token(request)
+        })
+
+@app.get('/melody/user/{guild_id}/roles')
+async def roles(request: Request, guild_id:int):
+    user, guilds = await is_logged_in(request)
+    userguild = bot.get_guild(guild_id)
+    if userguild is None:
+        raise GuildNotFound(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Guild is not in the cache'
+        )
+    member = userguild.get_member(int(user['id']))
+    if not member.has_permission(Permissions.ADMINISTRATOR):
+        return RedirectResponse(f'/melody/logout')
+    gy_list = []
+    async for giveyou in db.giveyou.find({'guildid':int(guild_id)}):
+        role = userguild.get_role(giveyou.roleid)
+        if role is not None:
+            gy_list.append({'rolename':role.name, 'role':role.id, 'colour':role.color, 'gyname':giveyou.name})
+    return templates.TemplateResponse('roles.html', {
+            'request': request,
+            'user':user,
+            'giveyous':gy_list,
             'guild_id':guild_id,
             'csrftoken':await get_csrf_token(request)
         })
@@ -340,11 +365,13 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
         'user':user,
         'levelinfo':levelinfo,
         'guild_id':guild_id,
+        'csrftoken':await get_csrf_token(request)
         })
 
 from utils.catbox import CatBox
 @app.post('/melody/levelcard/upload')
-async def test_upload(request: Request, image: UploadFile = File(...), guild_id:str = Form(...), member_id:str = Form(...)):
+async def test_upload(request: Request, image: UploadFile = File(...), guild_id:str = Form(...), member_id:str = Form(...), csrftoken:str=Form(...)):
+    await verify_csrf_token(request, csrftoken)
     user, guilds = await is_logged_in(request)
     if user is None:
         return JSONResponse(
@@ -378,7 +405,8 @@ async def test_upload(request: Request, image: UploadFile = File(...), guild_id:
                 content = { 'message' : 'Invalid file type.' })
 
 @app.post('/melody/levelcard/reset')
-async def lvl_bg_reset(request: Request, guild_id:str = Form(...), member_id:str = Form(...)):
+async def lvl_bg_reset(request: Request, guild_id:str = Form(...), member_id:str = Form(...), csrftoken:str=Form(...)):
+    await verify_csrf_token(request, csrftoken)
     user, guilds = await is_logged_in(request)
     if user is None:
         return JSONResponse(

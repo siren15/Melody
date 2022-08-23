@@ -66,12 +66,6 @@
     z-index: 3;
     border-radius: 3px;
   }
-  #changebtn {
-    position: absolute;
-    top: 163px;
-    left: 0;
-    z-index: 4;
-  }
   .alert {
     background-color: rgba(37, 37, 42, 0.945);
     color: white;
