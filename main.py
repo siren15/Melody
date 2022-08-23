@@ -316,6 +316,7 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
         LevelInfo = await db.leveling.find_one({'guildid':int(guild_id), 'memberid':int(user['id'])})
         level_stats = await db.levelingstats.find_one({'lvl':LevelInfo.level})
         member = guild.get_member(int(user['id']))
+        csrftoken = await get_csrf_token(request)
         
         def getPercent(first, second):
             percentage = int(first) / int(second) * 100
@@ -331,6 +332,7 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
     elif user is None:
         levelinfo = None
         guild = bot.get_guild(int(guild_id))
+        csrftoken = 'anonymous'
 
     guild_users = db.leveling.find({'guildid':int(guild_id), 'level':{'$gt':0}}).sort([('total_xp', pymongo.DESCENDING)])
     user_list = list()
@@ -349,7 +351,7 @@ async def leaderboard(request: Request, guild_id:int, page:int=1):
         'user':user,
         'levelinfo':levelinfo,
         'guild_id':guild_id,
-        'csrftoken':await get_csrf_token(request)
+        'csrftoken':csrftoken
         })
 
 from utils.catbox import CatBox
