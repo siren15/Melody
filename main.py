@@ -1,33 +1,27 @@
 # props to proxy and his way to connect to database https://github.com/artem30801/SkyboxBot/blob/master/main.py
-import json
 import os
 import asyncio
 from typing import Optional
-from uuid import uuid4
 import motor
 import aiohttp
 import pymongo
 import random
 import uuid
 
-from beanie import Indexed, init_beanie
-from naff import Client, Intents, listen, Embed, InteractionContext, AutoDefer
+from beanie import init_beanie
+from naff import Client, Intents, listen
 from utils.customchecks import *
 from extentions.touk import BeanieDocuments as db
-from naff.client.errors import NotFound
-from naff.api.events.discord import GuildLeft
 
-from jose import jwt, JWTError
-from oauthlib.common import generate_token
 from authlib.integrations.starlette_client import OAuth, OAuthError
-from fastapi import Depends, FastAPI, status, Form, File, UploadFile
+from fastapi import FastAPI, status, Form, File, UploadFile
 from starlette.config import Config
-from starsessions import SessionMiddleware
+import starsessions
 from fastapi.requests import Request
 from starlette.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from dependencies import GuildNotFound, get_token, is_logged_in, UnauthorizedUser, is_guest, csrfTokenDoesNotMatch, get_csrf_token, verify_csrf_token
+from dependencies import GuildNotFound, is_logged_in, UnauthorizedUser, is_guest, csrfTokenDoesNotMatch, get_csrf_token, verify_csrf_token
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from pydantic import BaseModel
 
@@ -39,11 +33,6 @@ def rsg(r:int):
     return result
 
 app = FastAPI()
-# import logging
-# import naff
-# logging.basicConfig()
-# cls_log = logging.getLogger(naff.const.logger_name)
-# cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
 
@@ -55,7 +44,6 @@ class CustomClient(Client):
             delete_unused_application_cmds=False, 
             default_prefix='+', 
             fetch_members=True,
-            # asyncio_debug=True
         )
         self.db: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
         self.models = list()
@@ -100,9 +88,6 @@ async def csrfTokenDoesNotMatchExceptionHandler(request: Request, exc: csrfToken
     response.delete_cookie('session')
     return response
 
-# from utils.csrf_middleware import CSRFMiddleware
-# app.add_middleware(CSRFMiddleware)
-
 def paginate(request, lst, page):
     paginator = Paginator(lst, 100)
     try:
@@ -142,8 +127,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET, max_age=7200, autoload=True)
-
+app.add_middleware(starsessions.SessionMiddleware, secret_key=SESSION_SECRET, max_age=7200, autoload=True)
 
 # configure OAuth client
 config = Config(environ={})  # you could also read the client ID and secret from a .env file
