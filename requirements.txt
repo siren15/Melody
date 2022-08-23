@@ -18,5 +18,5 @@ Pillow
 python-dateutil
 dnspython
 tabulate
-starsessions
+starsessions==1.2.3
 rapidfuzz
