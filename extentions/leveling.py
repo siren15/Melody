@@ -38,7 +38,7 @@ class Levels(Extension):
     async def on_ready(self):
         self.lvl_cooldown_task.start()
     
-    LevelSettings = SlashCommand(name='LevelSettings', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage leveling settings.')
+    LevelSettings = SlashCommand(name='leveling_config', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage leveling settings.')
 
     @LevelSettings.subcommand('ignored_channel', 'add', 'Add a channel to ignored channels.')
     @channel()
