@@ -53,11 +53,13 @@ class BeanieDocuments():
         total_xp: Optional[int64] = None
 
     class leveling_settings(Document):
-        guildid: Optional[int64] = None
-        min: Optional[int64] = None
-        max: Optional[int64] = None
-        multiplier: Optional[int64] = None
-        no_xp_channel: Optional[int64] = None
+        guildid: int64
+        min: int64 = 15
+        max: int64 = 25
+        multiplier: int64 = 1
+        ignored_channels: List|int = []
+        ignored_roles: List|int = []
+        ignored_users: List|int = []
 
     class leveling(Document):
         guildid: Optional[int64] = None

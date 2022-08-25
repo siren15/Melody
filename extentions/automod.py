@@ -421,23 +421,24 @@ class AutoMod(Extension):
     async def exact_match_banned_words(self, event: MessageCreate):
         message = event.message
         user = message.author
+        member = user
         guild = event.message.guild
         channel = message.channel
         if user.bot:
             return
         if await is_event_active(guild, 'banned_words'):
-            settings = await db.automod_config.find_one({'guildid':guild.id})
+            settings = await db.amConfig.find_one({'guild':guild.id})
             if settings.ignored_users is not None:
-                if (user.id in settings.ignored_users.split(',')):
-                    return
-            if settings.ignored_channels is not None:
-                if (channel.id in settings.ignored_channels.split(',')):
+                if member.id in settings.ignored_users:
                     return
             if settings.ignored_roles is not None:
-                if any(role for role in user.roles if role.id in settings.ignored_roles.split(',')):
+                if any(role for role in member.roles if role.id in settings.ignored_roles):
                     return
-            if (user.has_permission(Permissions.ADMINISTRATOR) == True):
+            if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 return
+            if settings.ignored_channels is not None:
+                if channel.id in settings.ignored_channels:
+                    return
             is_banned_word = False
             banned_words = await db.banned_words.find_one({'guildid':guild.id})
             for bw in banned_words.exact.lower().split(','):
@@ -493,23 +494,24 @@ class AutoMod(Extension):
     async def partial_match_banned_words(self, event: MessageCreate):
         message = event.message
         user = message.author
+        member = user
         guild = event.message.guild
         channel = message.channel
         if user.bot:
             return
         if await is_event_active(guild, 'banned_words'):
-            settings = await db.automod_config.find_one({'guildid':guild.id})
+            settings = await db.amConfig.find_one({'guild':guild.id})
             if settings.ignored_users is not None:
-                if (user.id in settings.ignored_users.split(',')):
-                    return
-            if settings.ignored_channels is not None:
-                if (channel.id in settings.ignored_channels.split(',')):
+                if member.id in settings.ignored_users:
                     return
             if settings.ignored_roles is not None:
-                if any(role for role in user.roles if role.id in settings.ignored_roles.split(',')):
+                if any(role for role in member.roles if role.id in settings.ignored_roles):
                     return
-            if (user.has_permission(Permissions.ADMINISTRATOR) == True):
+            if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 return
+            if settings.ignored_channels is not None:
+                if channel.id in settings.ignored_channels:
+                    return
             banned_words = await db.banned_words.find_one({'guildid':guild.id})
             for bw in banned_words.partial.split(','):
                 ratio = fuzz.ratio(bw.lower(), event.message.content.lower())
@@ -893,7 +895,7 @@ class AutoMod(Extension):
     
     @AutoModSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by automod.')
     @user()
-    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.ROLE):
+    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
         if settings is None:
@@ -914,7 +916,7 @@ class AutoMod(Extension):
 
     @AutoModSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
     @user()
-    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.ROLE):
+    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
         if settings is None:
