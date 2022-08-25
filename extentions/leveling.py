@@ -6,7 +6,8 @@ import requests
 import pymongo
 
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles, prefixed_command, Context
+from naff import Client, Extension, listen, Permissions, Embed, SlashCommand, slash_command, InteractionContext, OptionTypes, check, SlashCommandChoice, Button, ButtonStyles, prefixed_command, Context
+from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageCreate
 from naff.models.naff.tasks import Task
 from naff.models.naff.tasks.triggers import IntervalTrigger
 from extentions.touk import BeanieDocuments as db
@@ -37,11 +38,156 @@ class Levels(Extension):
     async def on_ready(self):
         self.lvl_cooldown_task.start()
     
+    LevelSettings = SlashCommand(name='LevelSettings', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage leveling settings.')
+
+    @LevelSettings.subcommand('ignored_channel', 'add', 'Add a channel to ignored channels.')
+    @channel()
+    async def LevelingAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionTypes.CHANNEL=None):
+        await ctx.defer(ephemeral=True)
+        if channel is None:
+            channel = ctx.channel
+        settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
+        if settings is None:
+            await db.leveling_settings(guildid=ctx.guild.id).insert()
+        ignored_channels = settings.ignored_channels
+        if ignored_channels is None:
+            ignored_channels = list()
+        if channel.id in ignored_channels:
+            await ctx.send(f'{channel.mention} is already ignored.', ephemeral=True)
+        ignored_channels.append(channel.id)
+        await settings.save()
+        channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
+        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
+        channel_mentions = ' '.join(channel_mentions)
+        embed = Embed(description=f"Channel {channel.mention} set to be ignored.")
+        embed.add_field('Ignored Channels', channel_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+
+    @LevelSettings.subcommand('ignored_channel', 'remove', 'Remove a channel from ignored channels.')
+    @channel()
+    async def LevelingRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionTypes.CHANNEL=None):
+        await ctx.defer(ephemeral=True)
+        if channel is None:
+            channel = ctx.channel
+        settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
+        if settings is None:
+            await db.leveling_settings(guildid=ctx.guild.id).insert()
+        ignored_channels = settings.ignored_channels
+        if ignored_channels is None:
+            ignored_channels = list()
+        if channel.id not in ignored_channels:
+            await ctx.send(f'{channel.mention} is not being ignored by leveling.', ephemeral=True)
+        ignored_channels.remove(channel.id)
+        await settings.save()
+        channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
+        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
+        channel_mentions = ' '.join(channel_mentions)
+        embed = Embed(description=f"Channel {channel.mention} removed from ignored channels.")
+        embed.add_field('Ignored Channels', channel_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+    
+    @LevelSettings.subcommand('ignored_role', 'add', 'Make a role to be ignored by leveling.')
+    @role()
+    async def LevelingAddIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
+        await ctx.defer(ephemeral=True)
+        settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
+        if settings is None:
+            await db.leveling_settings(guildid=ctx.guild.id).insert()
+        ignored_roles = settings.ignored_roles
+        if ignored_roles is None:
+            ignored_roles = list()
+        if role.id in ignored_roles:
+            await ctx.send(f'{role.mention} is already ignored.', ephemeral=True)
+        ignored_roles.append(role.id)
+        await settings.save()
+        role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
+        role_mentions = [r.mention for r in role_mentions if r is not None]
+        role_mentions = ' '.join(role_mentions)
+        embed = Embed(description=f"Role {role.mention} was added to roles ignored by leveling.")
+        embed.add_field('Ignored Roles', role_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+
+    @LevelSettings.subcommand('ignored_role', 'remove', 'Remove a role from ignored roles.')
+    @role()
+    async def LevelingRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
+        await ctx.defer(ephemeral=True)
+        settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
+        if settings is None:
+            await db.leveling_settings(guildid=ctx.guild.id).insert()
+        ignored_roles = settings.ignored_roles
+        if ignored_roles is None:
+            ignored_roles = list()
+        if role.id not in ignored_roles:
+            await ctx.send(f'{role.mention} is not being ignored by leveling.', ephemeral=True)
+        ignored_roles.remove(role.id)
+        await settings.save()
+        role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
+        role_mentions = [r.mention for r in role_mentions if r is not None]
+        role_mentions = ' '.join(role_mentions)
+        embed = Embed(description=f"Role {role.mention} was removed from roles ignored by leveling.")
+        embed.add_field('Ignored Roles', role_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+    
+    @LevelSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by leveling.')
+    @user()
+    async def LevelingAddIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
+        await ctx.defer(ephemeral=True)
+        settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
+        if settings is None:
+            await db.leveling_settings(guildid=ctx.guild.id).insert()
+        ignored_users = settings.ignored_users
+        if ignored_users is None:
+            ignored_users = list()
+        if user.id in ignored_users:
+            await ctx.send(f'{user}|{user.id} is already ignored.', ephemeral=True)
+        ignored_users.append(user.id)
+        await settings.save()
+        users = [ctx.guild.get_member(id) for id in ignored_users]
+        users = [f'{r}({r.id})' for r in users if r is not None]
+        users = ' '.join(users)
+        embed = Embed(description=f"Member {user}({user.id}) was added to members ignored by leveling.")
+        embed.add_field('Ignored Members', users)
+        await ctx.send(embed=embed, ephemeral=True)
+
+    @LevelSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
+    @user()
+    async def LevelingRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
+        await ctx.defer(ephemeral=True)
+        settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
+        if settings is None:
+           await db.leveling_settings(guildid=ctx.guild.id).insert()
+        ignored_users = settings.ignored_users
+        if ignored_users is None:
+            ignored_users = list()
+        if user.id not in ignored_users:
+            await ctx.send(f'{user}|{user.id} is not being ignored by leveling.', ephemeral=True)
+        ignored_users.remove(user.id)
+        await settings.save()
+        users = [ctx.guild.get_member(id) for id in ignored_users]
+        users = [f'{r}({r.id})' for r in users if r is not None]
+        users = ' '.join(users)
+        embed = Embed(description=f"Member {user}({user.id}) was removed from members ignored by leveling.")
+        embed.add_field('Ignored Members', users)
+        await ctx.send(embed=embed, ephemeral=True)
+    
     @listen()
-    async def on_message_create(self, event):
+    async def on_xp_gain(self, event: MessageCreate):
         message = event.message
-        if message.author.bot:
+        user = message.author
+        if user.bot:
             return
+        
+        settings = await db.leveling_settings.find_one({'guildid':message.guild.id})
+        if not user.has_permission(Permissions.ADMINISTRATOR):
+            if settings.ignored_users is not None:
+                if user.id in settings.ignored_users:
+                    return
+            if settings.ignored_roles is not None:
+                if any(role for role in user.roles if role.id in settings.ignored_roles):
+                    return
+        if settings.ignored_channels is not None:
+            if message.channel.id in settings.ignored_channels:
+                return
         
         cooldown = await db.levelwait.find_one({'guildid':message.guild.id, 'user':message.author.id})
         if cooldown:
@@ -343,47 +489,6 @@ class Levels(Extension):
         background.save(f'levelcard_{member.id}.png')
         await ctx.send(file=f'levelcard_{member.id}.png')
         os.remove(f'levelcard_{member.id}.png')
-    
-    @slash_command(name='level', sub_cmd_name='background', sub_cmd_description='change the background of your level stats card(resolution should be min: 956x435)', scopes=[435038183231848449,149167686159564800])
-    @attachment()
-    @reset_to_default()
-    @check(role_lock())
-    async def level_bg(self, ctx: InteractionContext, attachment: OptionTypes.ATTACHMENT, reset_to_default:OptionTypes.BOOLEAN=False):
-        await ctx.defer()
-        from utils.catbox import CatBox as cb
-        if reset_to_default == True:
-            levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
-            if levels.lc_background is not None:
-                levels.lc_background = None
-                await levels.save()
-                return await ctx.send(f"{ctx.author.mention} Background is now set back to default")
-            elif levels.lc_background is None:
-                return await ctx.send(f"{ctx.author.mention} You don't have a custom background set")
-
-        if str(attachment.content_type) not in ['image/jpeg', 'image/jpg', 'image/png']:
-            return await ctx.send('The background has to be an image, .png or .jpg/.jpeg are allowed')
-
-        bg_url = cb.url_upload(attachment.url)
-        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':ctx.author.id})
-        levels.lc_background = bg_url
-        await levels.save()
-        embed = Embed(description=f"Leveling card background set to {bg_url}", color=0x0c73d3)
-        embed.set_image(bg_url)
-        await ctx.send(embed=embed)
-    
-    @slash_command(name='reset_lvl_bg', description='[ADMIN]Reset members level card background)', scopes=[435038183231848449,149167686159564800],
-        default_member_permissions=Permissions.ADMINISTRATOR
-    )
-    @user()
-    async def level_bg_reset(self, ctx: InteractionContext, user: OptionTypes.USER):
-        await ctx.defer()
-        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':user.id})
-        if levels.lc_background is not None:
-            levels.lc_background = None
-            await levels.save()
-            return await ctx.send(f"Background is now set back to default")
-        elif levels.lc_background is None:
-            return await ctx.send(f"Member {user.mention} doeasn't have a custom background set")
 
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
