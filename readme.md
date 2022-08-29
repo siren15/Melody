@@ -11,6 +11,7 @@
 * Persistent Roles
 * Leveling
 * Tags
+* Dashboard - work in progress, you can't really do anything substential on there rn - only leaderboard works (plus changing custm rank card BGs)
 ***
 ## Planned features
 * Music support (this might be an addon or self hostable feature)
