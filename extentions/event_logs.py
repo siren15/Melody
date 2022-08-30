@@ -10,7 +10,7 @@ from naff import Client, slash_command, OptionTypes, Permissions, Extension, Emb
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd
+from naff.api.events.discord import MemberRemove, MessageDelete, MemberUpdate, BanCreate, BanRemove, MemberAdd, MessageUpdate
 from naff.client.const import MISSING
 
 def random_string_generator():
@@ -320,7 +320,7 @@ class EventLogs(Extension):
                         return
     
     @listen()
-    async def on_message_update(self, event):
+    async def on_message_update(self, event:MessageUpdate):
         if event.before is None:
             return
         before = event.before

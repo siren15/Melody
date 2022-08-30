@@ -8,6 +8,7 @@ from naff.models.naff.tasks.triggers import IntervalTrigger
 from utils.slash_options import *
 from utils.customchecks import *
 from duckpy import AsyncClient
+from naff.client.const import MISSING
 
 duckduckgo = AsyncClient()
 
@@ -226,6 +227,13 @@ class Basic(Extension):
                 style=modal.TextStyles.PARAGRAPH,
                 custom_id=f'embed_text',
                 required=False
+            ),
+            modal.InputText(
+                label="Embed Image",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'embed_image',
+                required=False,
+                placeholder='Image URL'
             )
         ],
         custom_id=f'{ctx.author.id}_embed_modal'
@@ -237,13 +245,21 @@ class Basic(Extension):
             return await ctx.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond.", ephemeral=True)
         
         embed_title = modal_recived.responses.get('embed_title')
+        if embed_title is None:
+            embed_title = MISSING
         embed_text = modal_recived.responses.get('embed_text')
+        if embed_text is None:
+            embed_text = MISSING
+        embed_image = modal_recived.responses.get('embed_image')
+        if embed_image is None:
+            embed_image = MISSING
         if (embed_title is None) and (embed_text is None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
         embed=Embed(color=0x0c73d3,
         description=embed_text,
         title=embed_title)
+        embed.set_image(embed_image)
         await modal_recived.send(embed=embed)
 
     @create_embed.subcommand(sub_cmd_name='edit', sub_cmd_description='Edit embeds')
@@ -268,6 +284,13 @@ class Basic(Extension):
                 style=modal.TextStyles.PARAGRAPH,
                 custom_id=f'embed_text',
                 required=False
+            ),
+            modal.InputText(
+                label="Embed Image",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'embed_image',
+                required=False,
+                placeholder='Image URL'
             )
         ],
         custom_id=f'{ctx.author.id}_embed_modal'
@@ -281,7 +304,14 @@ class Basic(Extension):
             return await ctx.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond.", ephemeral=True)
         
         embed_title = modal_recived.responses.get('embed_title')
+        if embed_title is None:
+            embed_title = MISSING
         embed_text = modal_recived.responses.get('embed_text')
+        if embed_text is None:
+            embed_text = MISSING
+        embed_image = modal_recived.responses.get('embed_image')
+        if embed_image is None:
+            embed_image = MISSING
         if (embed_title is None) and (embed_text is None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
@@ -289,6 +319,7 @@ class Basic(Extension):
         embed=Embed(color=0x0c73d3,
         description=embed_text,
         title=embed_title)
+        embed.set_image(embed_image)
         await message_to_edit.edit(embed=embed)
         await modal_recived.send('Message edited', ephemeral=True)
 

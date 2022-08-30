@@ -331,7 +331,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def unban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
+    async def unban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
         await ctx.defer()
         if user == ctx.author:
             embed = Embed(description=f":x: This is not how that works buddy...",
