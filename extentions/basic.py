@@ -71,7 +71,7 @@ class Basic(Extension):
             roles = ' '.join(roles)
 
         if member.top_role.color.value == 0:
-            color = 0x0c73d3
+            color = 0xffcc50
         else:
             color = member.top_role.color
         
@@ -102,7 +102,7 @@ class Basic(Extension):
         cdiff = relativedelta(datetime.now(tz=timezone.utc), ctx.guild.created_at.replace(tzinfo=timezone.utc))
         creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
         owner = await guild_owner(ctx)
-        embed = Embed(title=f"Server Info", color=0x0c73d3)
+        embed = Embed(title=f"Server Info", color=0xffcc50)
         embed.set_author(name=f'{ctx.guild.name}', icon_url=f'{ctx.guild.icon.url}')
         embed.set_thumbnail(url=f'{ctx.guild.icon.url}')
         embed.add_field(name='Server owner', value=f'{owner.mention}', inline=False)
@@ -132,7 +132,7 @@ class Basic(Extension):
             roles = ' '.join(roles)
 
         if member.top_role.color.value == 0:
-            color = 0x0c73d3
+            color = 0xffcc50
         else:
             color = member.top_role.color
         
@@ -176,7 +176,7 @@ class Basic(Extension):
         else:
             avatarurl = member.avatar.url
         
-        embed = Embed(description=member.display_name, color=0x0c73d3)
+        embed = Embed(description=member.display_name, color=0xffcc50)
         embed.set_image(url=avatarurl)
         await ctx.send(embed=embed)
 
@@ -189,7 +189,7 @@ class Basic(Extension):
 
         avatarurl = member.avatar.url
         
-        embed = Embed(description=member.display_name, color=0x0c73d3)
+        embed = Embed(description=member.display_name, color=0xffcc50)
         embed.set_image(url=avatarurl)
         await ctx.send(embed=embed)
     
@@ -234,6 +234,13 @@ class Basic(Extension):
                 custom_id=f'embed_image',
                 required=False,
                 placeholder='Image URL'
+            ),
+            modal.InputText(
+                label="Embed Colour",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'embed_colour',
+                required=False,
+                placeholder='Colour HEX code'
             )
         ],
         custom_id=f'{ctx.author.id}_embed_modal'
@@ -256,7 +263,15 @@ class Basic(Extension):
         if (embed_title is None) and (embed_text is None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
-        embed=Embed(color=0x0c73d3,
+        embed_colour = modal_recived.responses.get('embed_colour')
+        if embed_colour is None:
+            embed_colour = 0xffcc50
+        else:
+            from utils import utils
+            if not utils.is_hex_valid(embed_colour):
+                await modal_recived.send('Colour HEX not valid. Using default embed colour.', ephemeral=True)
+                embed_colour = 0xffcc50
+        embed=Embed(color=embed_colour,
         description=embed_text,
         title=embed_title)
         embed.set_image(embed_image)
@@ -291,6 +306,13 @@ class Basic(Extension):
                 custom_id=f'embed_image',
                 required=False,
                 placeholder='Image URL'
+            ),
+            modal.InputText(
+                label="Embed Colour",
+                style=modal.TextStyles.SHORT,
+                custom_id=f'embed_colour',
+                required=False,
+                placeholder='Colour HEX code'
             )
         ],
         custom_id=f'{ctx.author.id}_embed_modal'
@@ -315,8 +337,16 @@ class Basic(Extension):
         if (embed_title is None) and (embed_text is None):
             await ctx.send('You must include either embed title or text', ephemeral=True)
             return
+        embed_colour = modal_recived.responses.get('embed_colour')
+        if embed_colour is None:
+            embed_colour = 0xffcc50
+        else:
+            from utils import utils
+            if not utils.is_hex_valid(embed_colour):
+                await modal_recived.send('Colour HEX not valid. Using default embed colour.', ephemeral=True)
+                embed_colour = 0xffcc50
         message_to_edit = await channel.fetch_message(embed_message_id)
-        embed=Embed(color=0x0c73d3,
+        embed=Embed(color=embed_colour,
         description=embed_text,
         title=embed_title)
         embed.set_image(embed_image)
