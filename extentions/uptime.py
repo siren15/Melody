@@ -73,7 +73,7 @@ class Uptime(Extension):
             title="🕐 Uptime",
             description="The bot has been online for %s hours %s minutes %s seconds."
                         % (hours, minitues, seconds),
-            color=0x0c73d3,
+            color=0xffcc50,
             timestamp=self.bot_start_time)
         embed.set_footer(text="Bot start time")
         await ctx.send(embed=embed)

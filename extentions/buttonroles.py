@@ -108,7 +108,7 @@ class ButtonRoles(Extension):
             await db.button_roles.insert_many(documents)
             await message.edit(components=rows)
             for m in messages:
-                await ctx.send(embed=Embed(color=0x0c73d3, description=m))
+                await ctx.send(embed=Embed(color=0xffcc50, description=m))
     
     @slash_command(name='rolebuttons', sub_cmd_name='edit', sub_cmd_description="Edit a behaviour of a role button")
     @message_id()
@@ -211,7 +211,7 @@ class ButtonRoles(Extension):
                 button.ignored_role_id= ignore_role.id
                 await button.save()
                 edits = edits + f"Ignore Role: {ignore_role.mention}\n"
-            await ctx.send(embed=Embed(color=0x0c73d3,description=f"Button `{button_id}` succesfully edited\n{edits}"))
+            await ctx.send(embed=Embed(color=0xffcc50,description=f"Button `{button_id}` succesfully edited\n{edits}"))
         else:
             await ctx.send('Message not found')
 
@@ -288,7 +288,7 @@ class ButtonRoles(Extension):
         def newpage(title, buttoninfo):
             embed = Embed(title=title,
             description=buttoninfo,
-            color=0x0c73d3)
+            color=0xffcc50)
             return embed
         
         role_buttons = db.button_roles.find({'guildid':ctx.guild_id})
@@ -373,7 +373,7 @@ class ButtonRoles(Extension):
                 
                 if role_to_add not in ctx.author.roles:
                     await ctx.author.add_role(role_to_add)
-                    await ctx.author.send(embed=Embed(color=0x0c73d3, description=f"I gave you role `{role_to_add.name}` in `{ctx.guild.name}`"), ephemeral=True)
+                    await ctx.author.send(embed=Embed(color=0xffcc50, description=f"I gave you role `{role_to_add.name}` in `{ctx.guild.name}`"), ephemeral=True)
     
     @listen()
     async def on_button_press_role_add_mode_2(self, event: Component):
@@ -397,9 +397,9 @@ class ButtonRoles(Extension):
             
                 if role_to_add not in ctx.author.roles:
                     await ctx.author.add_role(role_to_add)
-                    await ctx.author.send(embed=Embed(color=0x0c73d3, description=f"I gave you role `{role_to_add.name}`"), ephemeral=True)
+                    await ctx.author.send(embed=Embed(color=0xffcc50, description=f"I gave you role `{role_to_add.name}`"), ephemeral=True)
                 elif role_to_add in ctx.author.roles:
-                    await ctx.author.send(embed=Embed(color=0x0c73d3, description=f"This role `{role_to_add.name}` can't be taken away from you in `{ctx.guild.name}` in `{ctx.guild.name}`"), ephemeral=True)
+                    await ctx.author.send(embed=Embed(color=0xffcc50, description=f"This role `{role_to_add.name}` can't be taken away from you in `{ctx.guild.name}` in `{ctx.guild.name}`"), ephemeral=True)
     
     @listen()
     async def on_button_press_role_add_mode_3(self, event: Component):
@@ -439,7 +439,7 @@ class ButtonRoles(Extension):
             
                 if role_to_add not in ctx.author.roles:
                     await ctx.author.add_role(role_to_add)
-                    await ctx.author.send(embed=Embed(color=0x0c73d3, description=f"I gave you role `{role_to_add.name}` {old_roles} in `{ctx.guild.name}`"), ephemeral=True)
+                    await ctx.author.send(embed=Embed(color=0xffcc50, description=f"I gave you role `{role_to_add.name}` {old_roles} in `{ctx.guild.name}`"), ephemeral=True)
 
     @listen()
     async def on_button_press_role_remove_mode_1(self, event: Component):
@@ -450,7 +450,7 @@ class ButtonRoles(Extension):
             if role_to_remove is not None:
                 if role_to_remove in ctx.author.roles:
                     await ctx.author.remove_role(role_to_remove)
-                    await ctx.author.send(embed=Embed(color=0x0c73d3, description=f"I took away a role `{role_to_remove.name}` from you in `{ctx.guild.name}`"), ephemeral=True)
+                    await ctx.author.send(embed=Embed(color=0xffcc50, description=f"I took away a role `{role_to_remove.name}` from you in `{ctx.guild.name}`"), ephemeral=True)
 
     @listen()
     async def on_button_press_role_remove_mode_3(self, event: Component):
@@ -475,7 +475,7 @@ class ButtonRoles(Extension):
                 if role_to_remove in ctx.author.roles:
                     await ctx.author.remove_role(role_to_remove)
                     old_roles = old_roles + f'`{role_to_remove.name}` '
-                    await ctx.author.send(embed=Embed(color=0x0c73d3, description=f"I took away {old_roles} in `{ctx.guild.name}`"), ephemeral=True)
+                    await ctx.author.send(embed=Embed(color=0xffcc50, description=f"I took away {old_roles} in `{ctx.guild.name}`"), ephemeral=True)
 
 def setup(bot):
     ButtonRoles(bot)

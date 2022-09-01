@@ -262,7 +262,7 @@ class Levels(Extension):
         check = await db.leveling_roles.find_one({'guildid':ctx.guild_id, 'roleid':role.id})
         if check is None:
             await db.leveling_roles(guildid=ctx.guild_id, roleid=role.id, level=int(role_level)).insert()
-            await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} assigned to level {role_level}'))
+            await ctx.send(embed=Embed(color=0xffcc50, description=f'Leveling role {role.mention} assigned to level {role_level}'))
         else:
             await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is already assigned to level {check.level}'))
         
@@ -296,7 +296,7 @@ class Levels(Extension):
 
         def newpage(title, level, role):
             embed = Embed(title=title,
-            color=0x0c73d3)
+            color=0xffcc50)
             embed.add_field(name='Level', value=level, inline=True)
             embed.add_field(name='Role', value=role, inline=True)
             return embed
@@ -315,7 +315,7 @@ class Levels(Extension):
 
         if (level or roles) == []:
             embed = Embed(description=f"There are no ranks for {ctx.guild.name}.",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             return
 
@@ -352,7 +352,7 @@ class Levels(Extension):
         if check is None:
             await ctx.send(embed=Embed(color=0xDD2222, description=f':x: Leveling role {role.mention} is not assigned to a level'))
         else:
-            await ctx.send(embed=Embed(color=0x0c73d3, description=f'Leveling role {role.mention} removed from level {check.level}'))
+            await ctx.send(embed=Embed(color=0xffcc50, description=f'Leveling role {role.mention} removed from level {check.level}'))
             await check.delete()
         
         for member in ctx.guild.members:

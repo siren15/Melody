@@ -67,13 +67,13 @@ class EventLogs(Extension):
         if log_entry is None:
             await db.logs(guild_id=ctx.guild_id, channel_id=channel.id).save()
             embed = Embed(description=f"I have assigned {channel.mention} as a log channel.",
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
         else:
             log_entry.channel_id = channel.id
             await log_entry.save()
             embed = Embed(description=f"I have updated {channel.mention} as a log channel.",
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
     
     @slash_command(name='welcomemessage', description="set up a welcome message and channel",
@@ -102,7 +102,7 @@ class EventLogs(Extension):
                 channel = None
             await db.welcome_msg(guildid=ctx.guild_id, channelid=channel, message=welcome_message_text).save()
             embed = Embed(description=up_msg,
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
         else:
             up_msg = ''
@@ -116,7 +116,7 @@ class EventLogs(Extension):
 
             await log_entry.save()
             embed = Embed(description=up_msg,
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
 
     @slash_command(name='leavemessage', description="set up a leave message and channel",
@@ -145,7 +145,7 @@ class EventLogs(Extension):
                 channel = None
             await db.leave_msg(guildid=ctx.guild_id, channelid=channel, message=leave_message_text).save()
             embed = Embed(description=up_msg,
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
         else:
             up_msg = ''
@@ -159,7 +159,7 @@ class EventLogs(Extension):
 
             await log_entry.save()
             embed = Embed(description=up_msg,
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
     
     @slash_command(name='specialwelcomemsg', description="set up a special welcome message and channel", scopes=[149167686159564800, 435038183231848449],
@@ -188,7 +188,7 @@ class EventLogs(Extension):
                 channel = None
             await db.special_welcome_msg(guildid=ctx.guild_id, channelid=channel, message=welcome_message_text).save()
             embed = Embed(description=up_msg,
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
         else:
             up_msg = ''
@@ -202,7 +202,7 @@ class EventLogs(Extension):
 
             await log_entry.save()
             embed = Embed(description=up_msg,
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
             await ctx.send(embed=embed)
     
     @listen()
@@ -397,7 +397,7 @@ class EventLogs(Extension):
                 for role in roles_list:
                     roles = roles + f'{role} '
                 embed = Embed(description=f"`{member}` **got removed** {roles} ",
-                                            color=0x0c73d3)
+                                            color=0xffcc50)
                 
                 channelid = await db.logs.find_one({"guild_id":member.guild.id})
                 log_channel = member.guild.get_channel(channelid.channel_id)
@@ -416,7 +416,7 @@ class EventLogs(Extension):
                 for role in roles_list:
                     roles = roles + f'{role} '
                 embed = Embed(description=f"`{member}` **got assigned** {roles} ",
-                                            color=0x0c73d3)
+                                            color=0xffcc50)
                 
                 channelid = await db.logs.find_one({"guild_id":member.guild.id})
                 log_channel = member.guild.get_channel(channelid.channel_id)
@@ -431,7 +431,7 @@ class EventLogs(Extension):
 
             if before.display_name != after.display_name:
                 embed = Embed(description=f"`{member}` changed their nickname",
-                                        color=0x0c73d3)
+                                        color=0xffcc50)
                 embed.set_thumbnail(url=after.avatar.url)
                 embed.add_field(name="Before", value=before.display_name)
                 embed.add_field(name="After", value=after.display_name)
@@ -463,7 +463,7 @@ class EventLogs(Extension):
                             moderator = au_user
                     if target.id == member_after.id:
                         embed = Embed(description=f"{target} **was unmuted** | {reason} \n**User ID:** {target.id} \n**Actioned by:** {moderator}",
-                                        color=0x0c73d3,
+                                        color=0xffcc50,
                                         timestamp=datetime.utcnow())
                         embed.set_thumbnail(url=target.avatar.url)
                         
@@ -503,7 +503,7 @@ class EventLogs(Extension):
                     if await is_event_active(event.guild, 'member_timeout') == True:
                         mute_time = f'{member_after.communication_disabled_until}'.replace('>', ':R>')
                         embed = Embed(description=f"{target} **was muted** | {reason} \n**User ID:** {target.id} \n**Actioned by:** {moderator}\n**End time:**{mute_time}",
-                                        color=0x0c73d3,
+                                        color=0xffcc50,
                                         timestamp=datetime.utcnow())
                         embed.set_thumbnail(url=target.avatar.url)
                         

@@ -34,12 +34,12 @@ class GiveRoles(Extension):
             await user.remove_role(role, reason=f'{ctx.author.display_name}|{ctx.author.id} removed a giveyou {giveyou_name}')
             embed = Embed(
                 description=f"I have removed {role.mention} from {user.mention}",
-                color=0x0c73d3)
+                color=0xffcc50)
         elif role not in user.roles:
             await user.add_role(role, reason=f'{ctx.author.display_name}|{ctx.author.id} assigned a giveyou {giveyou_name}')
             embed = Embed(
                 description=f"I have assigned {role.mention} to {user.mention}",
-                color=0x0c73d3)
+                color=0xffcc50)
         await ctx.send(embed=embed)
     
     @giveyou_cmd.subcommand(sub_cmd_name='create', sub_cmd_description="Create giveyou's")
@@ -59,7 +59,7 @@ class GiveRoles(Extension):
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: `{giveyou_name}` already exists as a giveyou for {ctx.guild.name}"), ephemeral=True)
 
         await db.giveyou(guildid=ctx.guild_id, name=giveyou_name, roleid=role.id).insert()
-        await ctx.send(embed=Embed(color=0x0c73d3, description=f"giveyou `{giveyou_name}` created for {role.mention}"))
+        await ctx.send(embed=Embed(color=0xffcc50, description=f"giveyou `{giveyou_name}` created for {role.mention}"))
     
     @giveyou_cmd.subcommand(sub_cmd_name='delete', sub_cmd_description="Delete giveyou's")
     @giveyou_name()
@@ -74,7 +74,7 @@ class GiveRoles(Extension):
             return await ctx.send(embed=Embed(color=0xDD2222, description=f":x: `{giveyou_name}` is not a giveyou for {ctx.guild.name}"), ephemeral=True)
 
         role = ctx.guild.get_role(gy.roleid)
-        await ctx.send(embed=Embed(color=0x0c73d3, description=f"giveyou `{giveyou_name}` deleted from {role.mention}"))
+        await ctx.send(embed=Embed(color=0xffcc50, description=f"giveyou `{giveyou_name}` deleted from {role.mention}"))
         await gy.delete()
     
     @giveyou_cmd.subcommand( sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild")
@@ -95,7 +95,7 @@ class GiveRoles(Extension):
 
         def newpage(title, names, roles):
             embed = Embed(title=title,
-            color=0x0c73d3)
+            color=0xffcc50)
             embed.add_field(name='Giveyou', value=names, inline=True)
             embed.add_field(name='Role', value=roles, inline=True)
             return embed
@@ -113,7 +113,7 @@ class GiveRoles(Extension):
                 roles.append(f"{role.mention}\n")
         if names == []:
             embed = Embed(description=f"There are no giveyous for {ctx.guild.name}.",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             return
         s = -1
@@ -178,7 +178,7 @@ class GiveRoles(Extension):
                 else:
                     await member.add_role(role)
                     added_roles = added_roles + f' {role.mention}'
-            embed = Embed(description=f'Roles changed for {member.mention}\n\n{added_roles}\n\n{removed_roles}', color=0x0c73d3)
+            embed = Embed(description=f'Roles changed for {member.mention}\n\n{added_roles}\n\n{removed_roles}', color=0xffcc50)
             await ctx.send(embed=embed)
 
 def setup(bot):

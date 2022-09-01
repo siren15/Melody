@@ -29,7 +29,7 @@ class PersistentRoles(Extension):
         else:
             avatarurl = f'{ctx.author.avatar.url}.png'
         embed = Embed(description=f"I have made {role.mention} a persistent role.",
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
         embed.set_footer(text=f'{ctx.author}|{ctx.author.id}',icon_url=avatarurl)
         await ctx.send(embed=embed)
 
@@ -55,7 +55,7 @@ class PersistentRoles(Extension):
         else:
             avatarurl = f'{ctx.author.avatar.url}.png'
         embed = Embed(description=f"I have removed {role.mention} from persistent roles.",
-                                  color=0x0c73d3)
+                                  color=0xffcc50)
         embed.set_footer(text=f'{ctx.author}|{ctx.author.id}',icon_url=avatarurl)
         await ctx.send(embed=embed)
     
@@ -76,7 +76,7 @@ class PersistentRoles(Extension):
 
         def newpage(title, roles):
             embed = Embed(title=title,
-            color=0x0c73d3)
+            color=0xffcc50)
             embed.add_field(name='Roles', value=roles, inline=True)
             return embed
 
@@ -93,7 +93,7 @@ class PersistentRoles(Extension):
         all_persistent_roles = level_roles+pers_roles
         if all_persistent_roles == []:
             embed = Embed(description=f"There are no persistent roles for {ctx.guild.name}.",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             return
         roles = []

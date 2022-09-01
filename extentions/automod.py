@@ -157,16 +157,16 @@ async def automod_warn(self, log_channel, reason):
     
     try:
         embed = Embed(description=f":grey_exclamation: **You have been warned in {guild.name} for:** {reason}",
-                color=0x0c73d3)
+                color=0xffcc50)
         await user.send(embed=embed)
     except HTTPException:
         embed = Embed(description=f"Couldn't dm {user.mention}, warn logged and user was given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** [AUTOMOD]{self.bot.user}",
-                color=0x0c73d3)
+                color=0xffcc50)
         await log_channel.send(embed=embed)
         return
     else:
         embed = Embed(description=f"{user.mention} warned and given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** [AUTOMOD]{self.bot.user}",
-                    color=0x0c73d3)
+                    color=0xffcc50)
         await log_channel.send(embed=embed)
 
 async def automod_mute(self, settings, reason):
@@ -200,7 +200,7 @@ async def automod_ban(self, settings, log_channel, reason):
             endtime = datetime.now() + timedelta(seconds=int(time))
             await db.tempbans(guildid=guild.id, user=user.id, starttime=datetime.now(), endtime=endtime, banreason=reason).insert()
             embed = Embed(description=f"{user} **was temporarily banned** | {reason} \n**User ID:** {user.id} \n**Actioned by:** [AUTOMOD]{self.bot.user}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
-                            color=0x0c73d3,
+                            color=0xffcc50,
                             timestamp=datetime.utcnow())
             embed.set_thumbnail(url=user.avatar.url)
             await log_channel.send(embed=embed)
@@ -317,7 +317,7 @@ class AutoMod(Extension):
             settings.phishing.violation_punishment = ph_vp_response
             await settings.save()
 
-            embed=Embed(color=0x0c73d3,
+            embed=Embed(color=0xffcc50,
             description=f'Ban time: {bt_response} s\nMute time: {mt_response} s\nPhishing violation count: {ph_vc_response}\n Phishing punishments: {ph_vp_response}')
             await modal_recived.send(embed=embed)
             
@@ -413,7 +413,7 @@ class AutoMod(Extension):
                 banned_words.partial = pm_words
                 await banned_words.save()
             
-            embed=Embed(color=0x0c73d3,
+            embed=Embed(color=0xffcc50,
             description=f'Current banned words:\nExact match:\n{em_words}\n\nPartial match:\n{pm_words}\nViolation count: {bw_vc_response}\nPunishments: {bw_vp_response}')
             await modal_recived.send(embed=embed)
 
@@ -628,7 +628,7 @@ class AutoMod(Extension):
                 else:
                     await member.edit_nickname(bn.default_name, reason)
                 embed = Embed(description=reason,
-                                        color=0x0c73d3)
+                                        color=0xffcc50)
                 embed.set_thumbnail(url=member.avatar.url)
                 embed.add_field(name="Old Name", value=old_name)
                 embed.add_field(name="New Name", value=new_name)
@@ -680,7 +680,7 @@ class AutoMod(Extension):
             reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
             await member.edit_nickname(bn.default_name, reason)
             embed = Embed(description=reason,
-                                    color=0x0c73d3)
+                                    color=0xffcc50)
             embed.set_thumbnail(url=member.avatar.url)
             
             channelid = await db.logs.find_one({"guild_id":member.guild.id})
@@ -799,7 +799,7 @@ class AutoMod(Extension):
             bn.names = em_words.split(',')
             await bn.save()
         
-        embed=Embed(color=0x0c73d3,
+        embed=Embed(color=0xffcc50,
         description=f'**Current banned names:**\n{em_words}\n**Violation count:** {bw_vc_response}\n**Punishments:** {bw_vp_response}')
         await modal_recived.send(embed=embed)
     

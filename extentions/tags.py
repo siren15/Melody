@@ -126,26 +126,26 @@ class Tags(Extension):
                         image_url = catbox.url_upload(attachment.url)
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=image_url, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}",
-                                color=0x0c73d3)
+                                color=0xffcc50)
                         embed.set_image(url=image_url)
                         return await ctx.send(embed=embed)
                     else:
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=catbox.url_upload(attachment.url), creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {catbox.url_upload(attachment.url)}",
-                                color=0x0c73d3)
+                                color=0xffcc50)
                         return await ctx.send(embed=embed)
                 else:
                     if (attachment.content_type == 'image/png') or (attachment.content_type == 'image/jpg') or (attachment.content_type == 'image/jpeg') or (attachment.content_type == 'image/gif'):
                         image_url = catbox.url_upload(attachment.url)
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=image_url, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
-                                color=0x0c73d3)
+                                color=0xffcc50)
                         embed.set_image(url=image_url)
                         return await ctx.send(embed=embed)
                     else:
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=catbox.url_upload(attachment.url), creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {catbox.url_upload(attachment.url)}",
-                                color=0x0c73d3)
+                                color=0xffcc50)
                         return await ctx.send(embed=embed)
             else:
                 if content is not None:
@@ -159,18 +159,18 @@ class Tags(Extension):
                         if url.endswith('.png') or url.endswith('.apng') or url.endswith('.jpg') or url.endswith('.jpeg') or url.endswith('.gif'):
                             await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=url, creation_date=datetime.utcnow()).insert()
                             embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
-                                        color=0x0c73d3)
+                                        color=0xffcc50)
                             embed.set_image(url=url)
                             return await ctx.send(embed=embed)
                         else:
                             await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=url, creation_date=datetime.utcnow()).insert()
                             embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
-                                        color=0x0c73d3)
+                                        color=0xffcc50)
                             return await ctx.send(embed=embed)
                     else:
                         await db.tag(guild_id=ctx.guild_id, author_id=ctx.author.id, owner_id=ctx.author.id, names=tagname, content=content, attachment_url=None, creation_date=datetime.utcnow()).insert()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
-                                    color=0x0c73d3)
+                                    color=0xffcc50)
                         return await ctx.send(embed=embed)
         else:
             embed = Embed(description=f":x: The tag `{tagname}` already exists",
@@ -205,7 +205,7 @@ class Tags(Extension):
             if tag_to_delete.attachment_url is not None:
                 content = content + f'\n{tag_to_delete.attachment_url}'
         embed = Embed(description=f"__**Tag deleted!**__ \n\n**Tag's name:** {tag_to_delete.names} \n**Tag's content:**{content}",
-                    color=0x0c73d3)
+                    color=0xffcc50)
         await ctx.send(embed=embed)
         await tag_to_delete.delete()
     
@@ -237,7 +237,7 @@ class Tags(Extension):
             if tag_to_delete.attachment_url is not None:
                 content = content + f'\n{tag_to_delete.attachment_url}'
         embed = Embed(description=f"__**Tag deleted!**__ \n\n**Tag's name:** {tag_to_delete.names} \n**Tag's content:**{content}",
-                    color=0x0c73d3)
+                    color=0xffcc50)
         await ctx.send(embed=embed)
         await tag_to_delete.delete()
 
@@ -284,7 +284,7 @@ class Tags(Extension):
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}",
-                            color=0x0c73d3)
+                            color=0xffcc50)
                     embed.set_image(url=image_url)
                     return await ctx.send(embed=embed)
                 else:
@@ -292,7 +292,7 @@ class Tags(Extension):
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Attachment:** {catbox.url_upload(attachment.url)}",
-                            color=0x0c73d3)
+                            color=0xffcc50)
                     return await ctx.send(embed=embed)
             else:
                 if (attachment.content_type == 'image/png') or (attachment.content_type == 'image/jpg') or (attachment.content_type == 'image/jpeg') or (attachment.content_type == 'image/gif'):
@@ -301,7 +301,7 @@ class Tags(Extension):
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag edited!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}",
-                            color=0x0c73d3)
+                            color=0xffcc50)
                     embed.set_image(url=image_url)
                     return await ctx.send(embed=embed)
                 else:
@@ -309,7 +309,7 @@ class Tags(Extension):
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname}\n**Content:** {content}\n**Attachment:** {catbox.url_upload(attachment.url)}",
-                            color=0x0c73d3)
+                            color=0xffcc50)
                     return await ctx.send(embed=embed)
         else:
             if content is not None:
@@ -325,7 +325,7 @@ class Tags(Extension):
                         tag_to_edit.content = content
                         await tag_to_edit.save()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:**{content}",
-                                    color=0x0c73d3)
+                                    color=0xffcc50)
                         embed.set_image(url=url)
                         return await ctx.send(embed=embed)
                     else:
@@ -333,14 +333,14 @@ class Tags(Extension):
                         tag_to_edit.content = content
                         await tag_to_edit.save()
                         embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
-                                    color=0x0c73d3)
+                                    color=0xffcc50)
                         return await ctx.send(embed=embed)
                 else:
                     tag_to_edit.attachment_url = None
                     tag_to_edit.content = content
                     await tag_to_edit.save()
                     embed = Embed(description=f"__**Tag created!**__ \n\n**Tag's name:** {tagname} \n**Tag's content:** \n{content}",
-                                color=0x0c73d3)
+                                color=0xffcc50)
                     return await ctx.send(embed=embed)
     
     @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
@@ -396,7 +396,7 @@ class Tags(Extension):
             content = f'{tag_to_view.content}'
 
         embed = Embed(title=f"Info about [{tag_to_view.names}] tag",
-                    color=0x0c73d3)
+                    color=0xffcc50)
         embed.add_field(name=current_owner, value=last_owner)
         embed.add_field(name="Total uses", value=uses)
         embed.add_field(name="Created", value=date)
@@ -421,7 +421,7 @@ class Tags(Extension):
 
         def newpage(title, names):
             embed = Embed(title=title,
-            color=0x0c73d3)
+            color=0xffcc50)
             embed.add_field(name='Tag Names', value=names, inline=True)
             return embed
 
@@ -432,7 +432,7 @@ class Tags(Extension):
             names.append(f"{t.names}\n")
         if names == []:
             embed = Embed(description=f"There are no tags for {ctx.guild.name}.",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             return
 
@@ -482,7 +482,7 @@ class Tags(Extension):
         if (tag_to_claim.author_id == ctx.author.id) and (tag_to_claim.owner_id != ctx.author.id):
             stealer = find_member(ctx, tag_to_claim.owner_id)
             embed = Embed(description=f"{ctx.author.mention} You took back your tag {tag_to_claim.names} from {stealer.mention}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             tag_to_claim.owner_id = ctx.author.id
             await tag_to_claim.save()
@@ -492,7 +492,7 @@ class Tags(Extension):
             tag_to_claim.owner_id = ctx.author.id
             await tag_to_claim.save()
             embed = Embed(description=f"{ctx.author.mention} You are now owner of {tag_to_claim.names}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
         else:
             embed = Embed(description=f":x: You can't claim a tag that's not orphaned",

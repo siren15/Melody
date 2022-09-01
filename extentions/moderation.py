@@ -164,7 +164,7 @@ class Moderation(Extension):
             await msg.delete()
         embed = Embed(description=f"I've deleted {len(new_msgs)+len(old_msgs)} messages\nReason: {reason}",
                             timestamp=datetime.utcnow(),
-                            color=0x0c73d3)
+                            color=0xffcc50)
         embed.set_footer(text=f"Actioned by: {ctx.author}|{ctx.author.id}")
         await ctx.send(embed=embed)
     
@@ -218,7 +218,7 @@ class Moderation(Extension):
                 await msg.delete()
         embed = Embed(description=f"I've purged {len(new_msgs)+len(old_msgs)} messages from {user}\nReason: {reason}",
                             timestamp=datetime.utcnow(),
-                            color=0x0c73d3)
+                            color=0xffcc50)
         embed.set_footer(text=f"Actioned by: {ctx.author}|{ctx.author.id}")
         await ctx.send(embed=embed)
     
@@ -267,7 +267,7 @@ class Moderation(Extension):
             if bantime is None:
                 # await db.save(strikes(strikeid=banid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Ban", day=daytime, reason=reason))
                 embed = Embed(description=f"{user} **was banned** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                                color=0x0c73d3,
+                                color=0xffcc50,
                                 timestamp=datetime.utcnow())
                 embed.set_thumbnail(url=user.avatar.url)
                 await ctx.send(embed=embed)
@@ -318,7 +318,7 @@ class Moderation(Extension):
                 await db.tempbans(guildid=ctx.guild_id, user=user.id, starttime=datetime.now(), endtime=endtime, banreason=reason).insert()
                 
                 embed = Embed(description=f"{user} **was temporarily banned** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
-                                color=0x0c73d3,
+                                color=0xffcc50,
                                 timestamp=datetime.utcnow())
                 embed.set_thumbnail(url=user.avatar.url)
                 await ctx.send(embed=embed)
@@ -347,7 +347,7 @@ class Moderation(Extension):
         else:
             await ctx.guild.unban(user, reason)
             embed = Embed(description=f"{user} **was unbanned by {ctx.author.mention}** | {reason} \n**User ID:** {user.id}",
-                                color=0x0c73d3,
+                                color=0xffcc50,
                                 timestamp=datetime.utcnow())
             embed.set_thumbnail(url=user.avatar.url)
             await ctx.send(embed=embed)
@@ -411,7 +411,7 @@ class Moderation(Extension):
             # await db.save(strikes(strikeid=kickid, guildid=ctx.guild_id, user=user.id, moderator=ctx.author.id, action="Kick", day=daytime, reason=reason))
             await ctx.guild.kick(user, reason)
             embed = Embed(description=f"{user} **was kicked** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3,
+                        color=0xffcc50,
                         timestamp=datetime.utcnow())
             embed.set_thumbnail(url=user.avatar.url)
             await ctx.send(embed=embed)
@@ -502,7 +502,7 @@ class Moderation(Extension):
             # await db.save(strikes(strikeid=muteid, guildid=ctx.guild_id, user=member.id, moderator=ctx.author.id, action="Mute", day=daytime, reason=reason))
             await member.timeout(endtime, reason)
             embed = Embed(description=f"{member} **was muted** | {reason} \n**User ID:** {member.id} \n**Actioned by:** {ctx.author.mention}\n**End time:**<t:{math.ceil(endtime.timestamp())}:R>",
-                            color=0x0c73d3,
+                            color=0xffcc50,
                             timestamp=datetime.utcnow())
             embed.set_thumbnail(url=member.avatar.url)
             await ctx.send(embed=embed)
@@ -520,7 +520,7 @@ class Moderation(Extension):
         if member is not None:
             await member.timeout(None, '[UNMUTE] '+reason)
             embed = Embed(description=f"{user} **was unmuted** | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                            color=0x0c73d3,
+                            color=0xffcc50,
                             timestamp=datetime.utcnow())
             embed.set_thumbnail(url=user.avatar.url)
             await ctx.send(embed=embed)
@@ -583,39 +583,39 @@ class Moderation(Extension):
                     embed = Embed(
                         title='Major Warning',
                         description=f":grey_exclamation: **You've been given a major warning in {ctx.guild.name} for:** {reason}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
                     await user.send(embed=embed)
                 except HTTPException:
                     embed = Embed(
                         title='Major Warning',
                         description=f"Couldn't dm {user.mention}, major warn logged and user was given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
                     await ctx.send(embed=embed)
                 else:
                     embed = Embed(
                         title='Major Warning',
                         description=f"{user.mention} warned and given {role.mention} | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
                     await ctx.send(embed=embed)
             elif type == 'Minor':
                 try:
                     embed = Embed(
                         title='Minor Warning',
                         description=f":grey_exclamation: **You've been given a minor warning in {ctx.guild.name} for:** {reason}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
                     await user.send(embed=embed)
                 except HTTPException:
                     embed = Embed(
                         title='Minor Warning',
                         description=f"Couldn't dm {user.mention}, minor warn logged | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3
+                        color=0xffcc50
                     )
                     await ctx.send(embed=embed)
                 else:
                     embed = Embed(
                         title='Minor Warning', 
                         description=f"{user.mention} warned | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
                     await ctx.send(embed=embed)
 
             daytime = f'<t:{math.ceil(datetime.now().timestamp())}>'
@@ -662,7 +662,7 @@ class Moderation(Extension):
                 await user.remove_role(role, reason)
                 await warning.delete()
                 embed = Embed(description=f"warn removed from {user.mention}, {role.mention} was taken away | {reason} \n**User ID:** {user.id} \n**Actioned by:** {ctx.author.mention}",
-                            color=0x0c73d3)
+                            color=0xffcc50)
                 await ctx.send(embed=embed)
         else:
             raise UserNotFound()
@@ -699,7 +699,7 @@ class Moderation(Extension):
             embed = Embed(
                 title=title,
                 description=warns,
-                color=0x0c73d3)
+                color=0xffcc50)
             return embed
         
         warnings = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'})
@@ -712,7 +712,7 @@ class Moderation(Extension):
             warns.append(f"**Type:** {warntype} | **Warning ID:** {warn.strikeid} | **Reason:** {warn.reason} | **Moderator:** {warn.moderator} | **Day:** {warn.day}\n\n")
         if warns == []:
             embed = Embed(description=f"There are no warnings for {user}.",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             return
         
@@ -757,7 +757,7 @@ class Moderation(Extension):
             embed = Embed(
                 title=title,
                 description=warns,
-                color=0x0c73d3)
+                color=0xffcc50)
             return embed
         
         all_strikes = db.strikes.find({'guildid':ctx.guild_id, 'user':user.id})
@@ -774,7 +774,7 @@ class Moderation(Extension):
 
         if allstrikes == []:
             embed = Embed(description=f"There are no strikes for {user}.",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             return
 
@@ -816,7 +816,7 @@ class Moderation(Extension):
             info = f"**Strike ID:** {s.strikeid} | **Action:** {warntype} {s.action} | **Reason:** {s.reason} | **Moderator:** {s.moderator} | **Day:** {s.day}"
         embed = Embed(
             description=info,
-            color=0x0c73d3)
+            color=0xffcc50)
         await ctx.send(embed=embed)
     
     @slash_command(name='reason', description="[MOD]allows me to modify reasons of strikes",
@@ -837,7 +837,7 @@ class Moderation(Extension):
             return
         embed = Embed(
             description=f"Strike reason changed from `{strike.reason}` to `{reason}`\n**Strike ID:** {strike.strikeid}\n**Action:** {strike.action}\n**User ID:** {strike.user} \n**Actioned by:** {ctx.author.mention}",
-            color=0x0c73d3)
+            color=0xffcc50)
         await ctx.send(embed=embed)
         strike.reason = reason
         await strike.save()
@@ -896,7 +896,7 @@ class Moderation(Extension):
                 await member.remove_role(user_role)
             await member.add_role(limborole)
             embed = Embed(description=f"{member.mention} put in limbo | {reason} \n**User ID:** {member.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
             while True:
                 warnid = random_string_generator()
@@ -941,7 +941,7 @@ class Moderation(Extension):
             await user_limbo_data.delete()
 
             embed = Embed(description=f"{member.mention} let out of limbo | {reason} \n**User ID:** {member.id} \n**Actioned by:** {ctx.author.mention}",
-                        color=0x0c73d3)
+                        color=0xffcc50)
             await ctx.send(embed=embed)
         else:
             raise UserNotFound
@@ -956,7 +956,7 @@ class Moderation(Extension):
     #             log_channel = message.guild.get_channel(int(channel.channel_id))
 
     #             if message.channel.id == 736680179253903491:
-    #                 embed = Embed(title="Limbo log", timestamp=datetime.utcnow(), color=0x0c73d3)
+    #                 embed = Embed(title="Limbo log", timestamp=datetime.utcnow(), color=0xffcc50)
     #                 embed.set_thumbnail(url=f'{message.author.avatar.url}')
     #                 embed.add_field(name=f"{message.author}", value=f"{message.content}", inline=False)
     #                 embed.set_footer(text=f'User ID: {message.author.id}')
