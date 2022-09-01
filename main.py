@@ -203,9 +203,6 @@ async def auth(request: Request):
     request.session['csrftoken'] = csrf_token
     request.session['sessionid'] = sid
     await db.dashSession(sessionid=sid, user=discord_user, guilds=guilds, token=dict(token), csrf=csrf_token).insert()
-    # request.session['user'] = discord_user
-    # request.session['guilds'] = guilds
-    # response.set_cookie('sesh_i', jwt.encode(dict(token), SESSION_SECRET, algorithm=ALGORITHM), max_age=7200, httponly=True, secure=True, samesite='strict')
     return response
 
 @app.get('/melody/user')
@@ -220,16 +217,16 @@ async def userpage(request: Request):
             'user':user
         })
 
-default_extensions_settings = [
-    {'name':'Automod', 'url':'automod', 'event_name':'automod', 'can_be_disabled': True},
-    {'name':'Role Management', 'url':'roles', 'event_name':'role_manage', 'can_be_disabled': False},
-    {'name':'Logging', 'url':'logging', 'event_name':'logging', 'can_be_disabled': True},
-    {'name':'Leveling', 'url':'leveling', 'event_name':'leveling', 'can_be_disabled': False},
-    {'name':'Tags', 'url':'tags', 'event_name':'tags', 'can_be_disabled': False}
-]
-
 @app.get('/melody/user/{guild_id}')
 async def user_guild(request: Request, guild_id:int):
+    default_extensions_settings = [
+        {'name':'Automod', 'url':f'/melody/user/{guild_id}/automod', 'event_name':'automod', 'can_be_disabled': True},
+        {'name':'Role Management', 'url':f'/melody/user/{guild_id}/roles', 'event_name':'role_manage', 'can_be_disabled': False},
+        {'name':'Logging', 'url':f'/melody/user/{guild_id}/logging', 'event_name':'logging', 'can_be_disabled': True},
+        {'name':'Leveling', 'url':f'/melody/leaderboard/{guild_id}', 'event_name':'leveling', 'can_be_disabled': False},
+        {'name':'Tags', 'url':f'/melody/user/{guild_id}/tags', 'event_name':'tags', 'can_be_disabled': False}
+    ]
+
     user, guilds = await is_logged_in(request)
     userguild = bot.get_guild(guild_id)
     if userguild is None:
