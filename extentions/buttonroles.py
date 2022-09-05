@@ -204,12 +204,20 @@ class ButtonRoles(Extension):
                     await message.edit(components=message.components)
                 edits = edits + f"New Role: {new_role.mention}\n"
             if requirement_role is not None:
-                button.requirement_role_id = requirement_role.id
-                await button.save()
+                if button.requirement_roles is not None:
+                    button.requirement_roles.append(requirement_role.id)
+                    await button.save()
+                else:
+                    button.requirement_roles = [requirement_role.id]
+                    await button.save()
                 edits = edits + f"Requirement Role: {requirement_role.mention}\n"
             if ignore_role is not None:
-                button.ignored_role_id= ignore_role.id
-                await button.save()
+                if button.ignored_roles is not None:
+                    button.ignored_roles.append(ignore_role.id)
+                    await button.save()
+                else:
+                    button.ignored_roles = [ignore_role.id]
+                    button.save()
                 edits = edits + f"Ignore Role: {ignore_role.mention}\n"
             await ctx.send(embed=Embed(color=0xffcc50,description=f"Button `{button_id}` succesfully edited\n{edits}"))
         else:
@@ -300,20 +308,16 @@ class ButtonRoles(Extension):
                 role = 'Role missing'
             elif role is not None:
                 role = role.mention
-            if button.requirement_role_id is not None:
-                req_role = ctx.guild.get_role(button.requirement_role_id)
-                if req_role is None:
+            if button.requirement_roles is not None:
+                req_role = ' '.join([ctx.guild.get_role(id).mention for id in button.requirement_roles])
+                if req_role == '':
                     reqrole = 'Req. role missing'
-                elif role is not None:
-                    reqrole = req_role.mention
             else:
                 reqrole = 'No req. role'
-            if button.ignored_role_id is not None:
-                ign_role = ctx.guild.get_role(button.ignored_role_id)
-                if ign_role is None:
+            if button.ignored_roles is not None:
+                ign_role = ' '.join([ctx.guild.get_role(id).mention for id in button.ignored_roles])
+                if ign_role == '':
                     ignrole = 'Ign. role missing'
-                elif role is not None:
-                    ignrole = ign_role.mention
             else:
                 ignrole = 'No ign. role'
             channel = ctx.guild.get_channel(button.channelid)
@@ -354,22 +358,28 @@ class ButtonRoles(Extension):
     @listen()
     async def on_button_press_role_add_mode_1(self, event: Component):
         ctx = event.context
+        user = ctx.author
         rolebutton = await db.button_roles.find_one({'guildid':ctx.guild_id, 'channelid':ctx.channel.id, 'msg_id':ctx.message.id, 'button_id':ctx.custom_id, 'mode':1})
         if rolebutton is not None:
             role_to_add = ctx.guild.get_role(rolebutton.roleid)
             if role_to_add is not None:
-                if ctx.author.has_permission(Permissions.ADMINISTRATOR) == False:
-                    if rolebutton.ignored_role_id is not None:
-                        ign_role = ctx.guild.get_role(rolebutton.ignored_role_id)
-                        if ign_role is not None:
-                            if ign_role in ctx.author.roles:
-                                return await ctx.author.send(f"I can't give members with `{ign_role.name}` role the `{role_to_add.name}` role in `{ctx.guild.name}`", ephemeral=True)
-                    
-                    if rolebutton.requirement_role_id is not None:
-                        req_role = ctx.guild.get_role(rolebutton.requirement_role_id)
-                        if req_role is not None:
-                            if req_role not in ctx.author.roles:
-                                return await ctx.author.send(f"You don't have `{req_role.name}`, which you need to have for me to give you `{role_to_add.name}` in `{ctx.guild.name}`", ephemeral=True)
+                if not user.has_permission(Permissions.ADMINISTRATOR):
+                    if (rolebutton.ignored_users is not None) and (rolebutton.ignored_users != []):
+                        if user.id in rolebutton.ignored_users:
+                            return await ctx.author.send('You are not allowed to use that role button.')
+
+                    if (rolebutton.ignored_roles is not None) and (rolebutton.ignored_roles != []):
+                        ign_roles = [role.name for role in user.roles if role.id in rolebutton.ignored_roles]
+                        if ign_roles != []:
+                            ign_roles_str = ','.join(ign_roles)
+                            return await ctx.author.send(f"I can't give members with **`{ign_roles_str}`** role the **`{role_to_add.name}`** role in `{ctx.guild.name}`", ephemeral=True)
+
+                    if (rolebutton.requirement_roles is not None) and (rolebutton.requirement_roles != []):
+                        usr_roles = [role.id for role in user.roles]
+                        req_roles = [ctx.guild.get_role(roleid).name for roleid in rolebutton.requirement_roles if roleid not in usr_roles]
+                        if req_roles != []:
+                            req_roles_str = ','.join(ign_roles)
+                            return await ctx.author.send(f"You don't have **`{req_roles_str}`**, which you need to have for me to give you **`{role_to_add.name}`** in `{ctx.guild.name}`", ephemeral=True)           
                 
                 if role_to_add not in ctx.author.roles:
                     await ctx.author.add_role(role_to_add)
@@ -378,23 +388,29 @@ class ButtonRoles(Extension):
     @listen()
     async def on_button_press_role_add_mode_2(self, event: Component):
         ctx = event.context
+        user = ctx.author
         rolebutton = await db.button_roles.find_one({'guildid':ctx.guild_id, 'channelid':ctx.channel.id, 'msg_id':ctx.message.id, 'button_id':ctx.custom_id, 'mode':2})
         if rolebutton is not None:
             role_to_add = ctx.guild.get_role(rolebutton.roleid)
             if role_to_add is not None:
-                if ctx.author.has_permission(Permissions.ADMINISTRATOR) == False:
-                    if rolebutton.ignored_role_id is not None:
-                        ign_role = ctx.guild.get_role(rolebutton.ignored_role_id)
-                        if ign_role is not None:
-                            if ign_role in ctx.author.roles:
-                                return await ctx.author.send(f"I can't give members with `{ign_role.name}` role the `{role_to_add.name}` role in `{ctx.guild.name}`", ephemeral=True)
-                    
-                    if rolebutton.requirement_role_id is not None:
-                        req_role = ctx.guild.get_role(rolebutton.requirement_role_id)
-                        if req_role is not None:
-                            if req_role not in ctx.author.roles:
-                                return await ctx.author.send(f"You don't have `{req_role.name}`, which you need to have for me to give you `{role_to_add.name}` in `{ctx.guild.name}`", ephemeral=True)
-            
+                if not user.has_permission(Permissions.ADMINISTRATOR):
+                    if (rolebutton.ignored_users is not None) and (rolebutton.ignored_users != []):
+                        if user.id in rolebutton.ignored_users:
+                            return await ctx.author.send('You are not allowed to use that role button.')
+
+                    if (rolebutton.ignored_roles is not None) and (rolebutton.ignored_roles != []):
+                        ign_roles = [role.name for role in user.roles if role.id in rolebutton.ignored_roles]
+                        if ign_roles != []:
+                            ign_roles_str = ','.join(ign_roles)
+                            return await ctx.author.send(f"I can't give members with **`{ign_roles_str}`** role the **`{role_to_add.name}`** role in `{ctx.guild.name}`", ephemeral=True)
+
+                    if (rolebutton.requirement_roles is not None) and (rolebutton.requirement_roles != []):
+                        usr_roles = [role.id for role in user.roles]
+                        req_roles = [ctx.guild.get_role(roleid).name for roleid in rolebutton.requirement_roles if roleid not in usr_roles]
+                        if req_roles != []:
+                            req_roles_str = ','.join(ign_roles)
+                            return await ctx.author.send(f"You don't have **`{req_roles_str}`**, which you need to have for me to give you **`{role_to_add.name}`** in `{ctx.guild.name}`", ephemeral=True)
+
                 if role_to_add not in ctx.author.roles:
                     await ctx.author.add_role(role_to_add)
                     await ctx.author.send(embed=Embed(color=0xffcc50, description=f"I gave you role `{role_to_add.name}`"), ephemeral=True)
@@ -404,23 +420,29 @@ class ButtonRoles(Extension):
     @listen()
     async def on_button_press_role_add_mode_3(self, event: Component):
         ctx = event.context
+        user = ctx.author
         rolebutton = await db.button_roles.find_one({'guildid':ctx.guild_id, 'channelid':ctx.channel.id, 'msg_id':ctx.message.id, 'button_id':ctx.custom_id, 'mode':3})
         if rolebutton is not None:
             role_to_add = ctx.guild.get_role(rolebutton.roleid)                 
             if role_to_add is not None:
-                if ctx.author.has_permission(Permissions.ADMINISTRATOR) == False:
-                    if rolebutton.ignored_role_id is not None:
-                        ign_role = ctx.guild.get_role(rolebutton.ignored_role_id)
-                        if ign_role is not None:
-                            if ign_role in ctx.author.roles:
-                                return await ctx.author.send(f"I can't give members with `{ign_role.name}` role the `{role_to_add.name}` role in `{ctx.guild.name}`", ephemeral=True)
-                    
-                    if rolebutton.requirement_role_id is not None:
-                        req_role = ctx.guild.get_role(rolebutton.requirement_role_id)
-                        if req_role is not None:
-                            if req_role not in ctx.author.roles:
-                                return await ctx.author.send(f"You don't have `{req_role.name}`, which you need to have for me to give you `{role_to_add.name}` in `{ctx.guild.name}`", ephemeral=True)
-                
+                if not user.has_permission(Permissions.ADMINISTRATOR):
+                    if (rolebutton.ignored_users is not None) and (rolebutton.ignored_users != []):
+                        if user.id in rolebutton.ignored_users:
+                            return await ctx.author.send('You are not allowed to use that role button.')
+
+                    if (rolebutton.ignored_roles is not None) and (rolebutton.ignored_roles != []):
+                        ign_roles = [role.name for role in user.roles if role.id in rolebutton.ignored_roles]
+                        if ign_roles != []:
+                            ign_roles_str = ','.join(ign_roles)
+                            return await ctx.author.send(f"I can't give members with **`{ign_roles_str}`** role the **`{role_to_add.name}`** role in `{ctx.guild.name}`", ephemeral=True)
+
+                    if (rolebutton.requirement_roles is not None) and (rolebutton.requirement_roles != []):
+                        usr_roles = [role.id for role in user.roles]
+                        req_roles = [ctx.guild.get_role(roleid).name for roleid in rolebutton.requirement_roles if roleid not in usr_roles]
+                        if req_roles != []:
+                            req_roles_str = ','.join(ign_roles)
+                            return await ctx.author.send(f"You don't have **`{req_roles_str}`**, which you need to have for me to give you **`{role_to_add.name}`** in `{ctx.guild.name}`", ephemeral=True)
+
                 old_roles = 'and took away '
                 buttons = []
                 async for b in db.button_roles.find({'guildid':ctx.guild_id, 'channelid':ctx.channel.id, 'msg_id':ctx.message.id, 'mode':3}):

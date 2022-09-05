@@ -170,8 +170,9 @@ class BeanieDocuments():
         channelid: Optional[int64] = None
         msg_id: Optional[int64] = None
         roleid: Optional[int64] = None
-        requirement_role_id: Optional[int64] = None
-        ignored_role_id: Optional[int64] = None
+        requirement_roles: List = []
+        ignored_roles: List = []
+        ignored_users: List = []
         mode: Optional[int64] = None
 
     class levelingstats(Document):
