@@ -278,7 +278,7 @@ class ButtonRoles(Extension):
             return (l[i:i+n] for i in range(0, len(l), n))
         
         def mlis(lst, s, e):
-            nc = list(chunks(lst, 20))
+            nc = list(chunks(lst, 10))
             mc = ''
             for testlist in nc[s:e]:
                 for m in testlist:
@@ -335,7 +335,7 @@ class ButtonRoles(Extension):
         s = -1
         e = 0
         embedcount = 1
-        nc = list(chunks(buttons, 20))
+        nc = list(chunks(buttons, 10))
         
         embeds = []
         while embedcount <= len(nc):
