@@ -47,7 +47,7 @@ def member():
 
 def tagname():
     def wrapper(func):
-        return slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionTypes.STRING, required=True)(func)
+        return slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionTypes.STRING, required=True, autocomplete=True)(func)
     return wrapper
 
 def text():
@@ -76,6 +76,9 @@ def embed_title():
     return wrapper
 
 def channel():
+    """
+    Select a channel OptionType.
+    """
     def wrapper(func):
         return slash_option(name='channel', description='Select a channel', opt_type=OptionTypes.CHANNEL, required=False)(func)
     return wrapper
@@ -183,4 +186,9 @@ def channels():
 def members():
     def wrapper(func):
         return slash_option(name='members', description='Members, seperated by a comma(,)', opt_type=OptionTypes.STRING, required=True)(func)
+    return wrapper
+
+def anon():
+    def wrapper(func):
+        return slash_option(name='anonymous', description='Is this an anon response?', opt_type=OptionTypes.BOOLEAN, required=False)(func)
     return wrapper

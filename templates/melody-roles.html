@@ -1,0 +1,223 @@
+{% extends 'melody-base.html' %}
+
+{% block head %}
+<style>
+    #giveyouroles{
+        background-color: #292b2f;
+        border-radius: 10px;
+    }
+    #buttonroles{
+        background-color: #292b2f;
+        border-radius: 10px;
+    }
+    #persistentroles{
+        background-color: #292b2f;
+        border-radius: 10px;
+    }
+    .rolediv{
+        background-color: #292b2f;
+        border-color: #292b2f;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="section">
+    <h1 class="title is-centered" style="color:#f9f3f4;"><center>Role Management</center></h1>
+</div>
+<section class="section">
+    <center>
+        <div id="giveyouroles">
+            <div class="section">
+                <h2 class="is-size-4" style="color:#f9f3f4;"><center>Giveyou Roles</center></h2>
+            </div>
+            <div class="columns">
+                {% for giveyou in giveyous %}
+                <div class="column">
+                    <div class="ext-card navbar" style="z-index: 1; background-color: #18191c;">
+                        <div class="navbar-start">
+                            <div class="navbar-item rolediv white-text ml-2 mb-2 mr-2 mt-2">
+                                {{giveyou.gyname}}
+                            </div>
+                        </div>
+                        <div class="navbar-end">
+                            <div class="navbar-item rolediv white-text ml-2 mb-2 mr-2 mt-2">
+                                <span class="dot ml-1 mb-1 mr-1 mt-1" style="background-color:{{giveyou.colour}};"></span><span class="ml-1 mb-1 mr-1 mt-1">{{giveyou.rolename}}</span>
+                            </div>
+                            <div class="navbar-item">
+                                <a id="{{giveyou.gyid}}" class="button is-blurple" style="width: 40px;">
+                                    <i class="fa-solid fa-gear"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </center>
+</section>
+
+<div class="modal" id="gymodal" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <center>
+            <div class="modal-card-head">
+                <div class="field mr-2">
+                    <label class="label">Name</label>
+                    <div class="control">
+                        <input id="gytext" class="input" type="text" placeholder="Giveyou Name">
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Role</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="gyselect">
+                                <option selected="selected" id="drs">Select a Role</option>
+                                {% for role in guildroles %}
+                                    <option id="{{role.id}}">{{role.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <form id="gyform">
+                </form>
+            </div>
+        </center>
+        <div class="modal-card-foot" style="border-color: #25252a;">
+            <center>
+                <button type="button" class="button is-danger" id="gyCancel">Close</button>
+                <button type="button" class="button is-success" id="gychange">Change</button>
+            </center>
+        </div>
+    </div>
+</div>
+
+<section class="section">
+    <center>
+        <div id="buttonroles">
+            <div class="section">
+                <h2 class="is-size-4" style="color:#f9f3f4;"><center>Button Roles</center></h2>
+            </div>
+        </div>
+    </center>
+</section>
+
+<section class="section">
+    <center>
+        <div>
+            <div id="persistentroles" class="section">
+                <h2 class="is-size-4" style="color:#f9f3f4;"><center>Persistent Roles</center></h2>
+            </div>
+        </div>
+    </center>
+</section>
+
+<div id="saveAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+    <center>
+        <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+            <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+            <button id="cancelbtn" class="button is-danger">Cancel</button> <button id="savebtn" type="submit" class="button is-primary">Save</button>
+        </div>
+    </center>
+</div>
+
+<div id="successAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+    <center>
+        <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+            <h4 class="alert-heading">Chnages successfully saved!</h4>
+        </div>
+    </center>
+</div>
+
+<div id="errorAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+    <center>
+        <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+            <h4 class="alert-heading">An error occured!</h4>
+        </div>
+    </center>
+</div>
+
+<div id="progressAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+    <center>
+        <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+            <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+            <button id="cancelbtn" class="button is-danger" disabled>Cancel</button> <button id="savebtn" type="submit" class="button is-primary is-loading">Save</button>
+        </div>
+    </center>
+</div>
+
+<script>
+    var buttonid = '';
+    var name = '';
+    var changebutton = document.getElementById('gychange');
+    var savebtn = document.getElementById('savebtn');
+    var cancelbtn= document.getElementById('cancelbtn');
+    var guild_id = {{guild_id}};
+    var temp="Select a Role";
+    var csrftoken = "{{csrftoken}}";
+
+    {% for giveyou in giveyous %}
+    document.getElementById("{{giveyou.gyid}}").addEventListener("click", function() {
+        $('#gymodal').addClass('is-active is-clipped');
+        buttonid = this.id;
+        $("#gyselect").val(temp);
+    });
+    {% endfor %}
+
+    changebutton.addEventListener("click", function() {
+        $('#gymodal').removeClass('is-active is-clipped');
+        $('#saveAlert').show();
+    });
+
+    savebtn.addEventListener("click", function() {
+        var myform = document.getElementById('gyform');
+        var select = $('#gyselect option:selected').attr('id');
+        name = document.getElementById('gytext').value;
+        form = new FormData(myform);
+        form.append('guild_id', guild_id);
+        form.append('giveyou_id', buttonid);
+        form.append('name', name);
+        form.append('roleid', select);
+        form.append('csrftoken', csrftoken);
+        $.ajax({
+            method: 'POST',
+            url: "/melody/user/{{guild_id}}/roles/giveyou_update",
+            data: form,
+            processData: false,
+            contentType: false,
+            success: function(data) {
+            $('#progressAlert').hide();
+            $('#saveAlert').hide();
+            $('#successAlert').show();
+            setTimeout(function () {
+                $('#successAlert').hide();
+            }, 5000);
+            },
+            error: function(data) {
+            $('#progressAlert').hide();
+            $('#saveAlert').hide();
+            $('#errorAlert').show();
+            setTimeout(function () {
+                $('#errorAlert').hide();
+            }, 5000);
+            },
+            beforeSend: function() {
+            $('#saveAlert').hide();
+            $('#progressAlert').show();
+            }
+        });
+    });
+
+    cancelbtn.addEventListener('click', function() {
+        $('#saveAlert').hide();
+    });
+
+    document.getElementById("gyCancel").addEventListener("click", function() {
+        $('#gymodal').removeClass('is-active is-clipped');
+    });
+</script>
+{% endblock %}

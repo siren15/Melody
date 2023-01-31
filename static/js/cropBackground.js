@@ -5,6 +5,7 @@ var uploadUrl = document.getElementById('uploadurl').value;
 var obgurl = document.getElementById('obgurl').value;
 var cropperimage = document.getElementById("cropimage");
 var $modal = $('#CropModal');
+var cropModal = document.getElementById('CropModal');
 var cropper = null;
 var defaultImageURL = obgurl;
 var guildID = document.getElementById('guildID').value;
@@ -27,9 +28,7 @@ inputbtn.addEventListener("change", function(event) {
     return;
   };
   // cropperimage.src = URL.createObjectURL(inputimage);
-  $modal.modal('show');
-});
-$modal.on('shown.bs.modal', function () {
+  $modal.addClass('is-active is-clipped');
   cropOptions = {
     viewport: {
       width: 382,
@@ -71,7 +70,7 @@ $('#crop').on('click', function () {
   }).then(function(blob) {
     croppedImageURL = URL.createObjectURL(blob);
     backgroundimg.src = croppedImageURL;
-    $modal.modal('hide');
+    $modal.removeClass('is-active is-clipped');
     $('#savebtn').on('click', function(){
       var myform = document.getElementById('imageform');
       var form = new FormData(myform);
@@ -124,7 +123,7 @@ $('#crop').on('click', function () {
 $('#cropCancel').on('click', function () {
   cropperimage.innerHTML = "";
   cropperimage.classList.remove("croppie-container");
-  $modal.modal('hide');
+  $modal.removeClass('is-active is-clipped');
   inputimage = null;
   inputbtn.value = null;
 });

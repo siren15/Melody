@@ -1,0 +1,48 @@
+{% extends 'melody-base.html' %}
+
+{% block head %}
+<style>
+    .guild-card{
+    background-color: #292b2f;
+    border: 5px solid #292b2f;
+    border-radius: 3px;
+    min-width: 50px;
+    max-width: 300px;
+    height: auto;
+    }
+    .guild-card:hover{
+        background-color: #4a4d55;
+        border: 5px solid #4a4d55;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="section">
+    <h1 class="title is-centered" style="color:#f9f3f4;"><center>Servers</center></h1>
+</div>
+<div class="section" style="color:#f9f3f4;">
+    <center>
+        <div class="columns section">
+            {% for guild in shared_guilds %}
+            <div class="column" >
+                <a id="{{guild.id}}" class="image guild-card" href="/melody/user/{{guild.id}}">
+                    <img class="is-rounded" style="width: auto; height: 60px" src="https://cdn.discordapp.com/icons/{{guild.id}}/{{guild.icon}}.png"></img>
+                    <script>
+                    var guild_name = "{{guild.name}}";
+                    var guild = document.getElementById("{{guild.id}}");
+                    if (guild_name.length > 20){
+                        name = guild_name.substring(0, 17) + "...";
+                    }
+                    else{
+                        name = guild_name;
+                    }
+                    guild.innerHTML += name;
+                    </script>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </center>
+</div>
+{% endblock %}

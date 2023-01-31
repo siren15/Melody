@@ -1,0 +1,68 @@
+{% extends 'melody-base.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+<center>
+{% for extension in extensions %}
+<div class="column">
+    <div class="ext-card navbar" style="z-index: 1;">
+        <div class="navbar-start">
+            <div class="navbar-item">
+                <h4 class="white-text">{{extension.name}}</h4>
+            </div>
+        </div>
+        <div class="navbar-end">
+        {% if extension.can_be_disabled %}
+            <div class="navbar-item">
+            {% if extension.is_disabled %}
+                <button id="{{extension.name}}-button" class="button is-blurple" data-bs-toggle="modal" data-bs-target="#{{extension.url}}-modal">Disable</button>
+            {% else %}
+                <button id="{{extension.name}}-button" class="button is-blurple" data-bs-toggle="modal" data-bs-target="#{{extension.url}}-modal">Enable</button>
+            {% endif %}
+            </div>
+        {% endif %}
+            <div class="navbar-item">
+                <a class="button is-blurple" style="width: 40px;" href="{{extension.url}}">
+                    <i class="fa-solid fa-gear"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% if extension.can_be_disabled %}
+<div id="{{extension.name}}-modal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+    {% if extension.is_disabled %}
+        <section class="modal-card-head is-dark">Are you sure you want to enable {{extension.name}}?</section>
+    {% else %}
+        <section class="modal-card-head is-dark">Are you sure you want to enable {{extension.name}}?</section>
+    {% endif %}
+      <footer class="modal-card-foot is-dark">
+        <div class="navbar-item">
+            <form action="/melody/user/{{guild_id}}/change" method="post">
+                <input type="hidden" id="event" name="event" value="{{extension.event_name}}">
+                <input type="hidden" name="csrftoken" value="{{csrftoken}}" />
+                <button type="submit" class="button is-blurple">Yes</button>
+            </form>
+        </div>
+        <div class="navbar-item">
+            <button id="{{extension.name}}-cancel-button" class="button is-danger">Cancel</button>
+        </div>
+      </footer>
+    </div>
+</div>
+<script>
+    document.getElementById("{{extension.name}}-button").addEventListener("click", function() {
+        $('#{{extension.name}}-modal').addClass('is-active is-clipped');
+    });
+    document.getElementById("{{extension.name}}-cancel-button").addEventListener("click", function() {
+        $('#{{extension.name}}-modal').removeClass('is-active is-clipped');
+    });
+</script>
+{% endif %}
+{% endfor %}  
+</center>
+{% endblock %}

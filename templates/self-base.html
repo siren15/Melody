@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head> 
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bulma.css') }}" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <style>
+        html, body {
+        padding: 0%;
+        margin: 0%;
+        height: 100%;
+        background-color: #0f1616;
+        }
+        a:hover{
+        color:#f9f3f4;
+        }
+        .white-text{
+            color: #f9f3f4;
+        }
+        .darker-bg{
+            background-color: #090e0e;
+        }
+        .dark-bg{
+            background-color: #0f1616;
+        }
+    </style>
+    <title>beni2am</title>
+  </head>
+  <body>
+    <script src="{{ url_for('static', path='js/jquery.js') }}"></script>
+    <section class="section">
+        <nav class="navbar is-fixed-top has-text-white is-dark" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <!-- <a class="navbar-item" href="/melody">
+                  <img src="{{ url_for('static', path='images/melody.png') }}"> Melody
+                </a> -->
+                <a role="button is-light" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="nav_menu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="nav_menu" class="navbar-menu is-dark darker-bg">
+                <div class="navbar-start white-text">
+                    <a class="navbar-item white-text" href="/" >Home</a>
+                    <a class="navbar-item white-text" href="https://www.deviantart.com/ansubjin/gallery/all">Gallery(dA)</a>
+                    <a class="navbar-item white-text" href="https://discord.gg/gravityfalls">r/GF Discord</a>
+                    <a class="navbar-item white-text" href="/melody">Melody Bot</a>
+                    <a class="navbar-item white-text" href="https://github.com/siren15">GitHub</a>
+                </div>
+            </div>
+        </nav>
+    </section>
+    <script>
+        $(document).ready(function() {
+
+            // Check for click events on the navbar burger icon
+            $(".navbar-burger").click(function() {
+
+                // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+                $(".navbar-burger").toggleClass("is-active");
+                $(".navbar-menu").toggleClass("is-active");
+
+            });
+          });
+    </script>
+    <section class="section">
+        <div class="container is-centered">
+            {% block body %}
+            {% endblock %}
+        </div>
+    </section>
+    <footer class="footer is-dark is-fixed-bottom" style="height: 20px; background-color: transparent; color: #f9f3f4;">
+        <div class="content has-text-centered">
+          <p>
+            <strong style="color: #f9f3f4;">© 2022 beni2am</strong>
+          </p>
+        </div>
+      </footer>
+  </body>
+</html>

@@ -2,8 +2,8 @@ from fastapi import HTTPException, status
 from fastapi.requests import Request
 from extentions.touk import BeanieDocuments as db
 import os
-SESSION_SECRET = os.environ['sesh_secret']
-ALGORITHM = os.environ['sesh_algo']
+SESSION_SECRET = os.getenv('sesh_secret')
+ALGORITHM = os.getenv('sesh_algo')
 
 class UnauthorizedUser(Exception):
     def __init__(self, status_code: str, detail:str):

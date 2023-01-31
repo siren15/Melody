@@ -1,0 +1,69 @@
+{% extends 'melody-base.html' %}
+
+{% block body %}
+<div class="section">
+    <div class="image is-centered">
+        <center><img style="width: 256px;" src="{{ url_for('static', path='images/melody.png') }}"></center>
+    </div>
+</div>
+<div class="section">
+    <h1 class="title is-centered" style="color:#f9f3f4;"><center>Melody is a multi-purpose Discord bot written in Python using <a href="https://github.com/NAFTeam/NAFF">NAFF</a>, for <a href="https://discord.gg/gravityfalls">r/gravityfalls discord server</a></center></h1>
+</div>
+<div class="section" style="color:#f9f3f4;">
+    <center>
+        <h3 class="title is-centered section" style="color:#f9f3f4;">What can Melody do?</h3>
+        <div class="columns section">
+            <div class="column">
+                <div class="card">
+                    <div class="card-header-title is-centered" style="color:#f9f3f4;">
+                        Automod
+                    </div>
+                    <div class="card-content">
+                        Scam links detection. You can also set up banned nicknames and banned words.
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="card">
+                    <div class="card-header-title is-centered" style="color:#f9f3f4;">
+                        Moderation
+                    </div>
+                    <div class="card-content">
+                        A custom waring system - no need for you to worry about warning levels.
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="card">
+                    <div class="card-header-title is-centered" style="color:#f9f3f4;">
+                        Button Roles
+                    </div>
+                    <div class="card-content">
+                        Manage button roles, 3 modes(give/take, 1 role per messsage, give - can't take away).
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="card">
+                    <div class="card-header-title is-centered" style="color:#f9f3f4;">
+                        Logging
+                    </div>
+                    <div class="card-content">
+                        Logging of deleted and updated messages, mod actions and roles.
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="card">
+                    <div class="card-header-title is-centered" style="color:#f9f3f4;">
+                        Leveling
+                    </div>
+                    <div class="card-content">
+                        Role rewards up to level 1000, leaderboard, custom level card bacgrounds.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </center>
+</div>
+{% endblock %}

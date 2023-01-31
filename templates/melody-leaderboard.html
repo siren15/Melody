@@ -1,0 +1,263 @@
+{% extends 'melody-base.html' %}
+
+{% block head %}
+<link href="{{ url_for('static', path='fonts/stylesheet.css') }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', path='css/croppie.css') }}">
+<style>
+    :root{
+        --w: 478px;
+        --h: 217.5px;
+    }
+    .wrapper {
+        position: relative;
+        max-width: var(--w);
+        max-height: var(--h);
+    }
+    #BGoverlay{
+        position: absolute;
+        top: 0;
+        right: 0;
+        max-width: var(--w);
+        max-height: var(--h);
+    }
+    #avatar {
+        position: absolute;
+        top: 27.8%;
+        left: 8.8%;
+        max-width: 21%;
+    }
+    #name {
+        font-family: Everson Mono;
+        font-size: calc(15px + 0.35vw);
+        position: absolute;
+        color: #f9f3f4;
+        top: 6.5%;
+        left: 9%;
+    }
+    #stats {
+        font-family: Everson Mono;
+        line-height: 110%;
+        font-size: calc(15px + 0.35vw);
+        position: absolute;
+        color: #f9f3f4;
+        top: 28%;
+        left: 37%;
+        text-align: left;
+    }
+    #level {
+        font-family: Everson Mono;
+        font-size: calc(15px + 0.35vw);;
+        position: absolute;
+        color: #f9f3f4;
+        top: 80.5%;
+        left: 9%;
+        text-align: left;
+    }
+    #pgbar {
+        background-color: rgb(57, 159, 89);
+        position: absolute;
+        top: 85.5%;
+        left: 35%;
+        height: 6%;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% if user %}
+    {% if levelinfo %}
+        <div class="section">
+            <center>
+                <div class="image wrapper">
+                    <img id="bg" src="{{levelinfo.lc_background}}" style="border-radius: 3px;">
+                    <img id="BGoverlay" src="{{ url_for('static', path='images/overlay.png') }}">
+                    <img id="avatar" class="is-rounded" src="{{ levelinfo.avatar_url }}">
+                    <p id="name">{{levelinfo.name}}</p>
+                    <p id="stats">XP: {{levelinfo.xp}}/{{levelinfo.xp_to_next_level}}<br>Total XP: {{levelinfo.total_xp}}<br>Messages: {{levelinfo.messages}}</p>
+                    <p id="level">LVL:{{levelinfo.level}}</p>
+                    <div id="pgbar" class="progress-bar bg-success" role="progressbar" style="width: {{levelinfo.percent}}%;"></div>
+                </div>
+            </center>
+        </div>
+        <div>
+            <center>
+                <input type="file" id="imageinput" name="image" accept="image/jpeg, image/png, image/gif" style="display: None;">
+                <button id="changeBtn" class="button is-blurple ml-2 mb-2 mr-2 mt-2">Change Background</button>
+                <button id="resetButton" class="button is-blurple ml-2 mb-2 mr-2 mt-2">Reset Background</button>
+            </center>
+        </div>
+        <form id="imageform" action="{{ url_for('test_upload') }}" method="POST"></form>
+        <form id="resetForm"></form>
+        <!-- Modal -->
+        <div class="modal" id="CropModal" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <center>
+                    <div class="modal-card-head">
+                        <div class="img-container">
+                            <!-- <img id="cropimage" alt="Image"> -->
+                            <div id="cropimage"></div>
+                        </div>
+                    </div>
+                </center>
+                <div class="modal-card-foot" style="border-color: #25252a;">
+                    <center>
+                        <button type="button" class="button is-danger" id="cropCancel">Close</button>
+                        <button type="button" class="button is-success" id="crop">Upload!</button>
+                    </center>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+<div class="section">
+    <center>
+        <table class="table is-fullwidth is-discord-dark is-hoverable-dark">
+            <thead>
+                <tr>
+                    <th><div class="white-text">Rank</div></th>
+                    <th><div class="white-text">Member</div></th>
+                    <th><div class="white-text">Level</div></th>
+                    <th><div class="white-text">XP</div></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr>
+                    <th><div class="white-text">{{member.rank}}</div></th>
+                    <td><div class="image is-32x32 mr-1" style="float: left;"><img class="is-rounded" src="{{member.avatar_url}}"></img></div><div class="mt-1">{{member.username}}</div></td>
+                    <th><div class="white-text">{{member.level}}</div></th>
+                    <th><div class="white-text">{{member.xp}}</div></th>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if members %}
+            {% if members.has_other_pages %}
+            <div class="container">
+                <div class="field has-addons" style="width: fit-content;">
+                    {% if members.has_previous() %}
+                        <p class="control">
+                            <a href="?page={{ members.previous_page_number }}" class="button is-blurple"><i class="fa-solid fa-circle-arrow-left"></i></a>
+                        </p>
+                    {% else %}
+                        <p class="control">
+                            <a href="?page={{ members.previous_page_number }}" class="button is-blurple is-static disabled"><i class="fa-solid fa-circle-arrow-left"></i></a>
+                        </p>
+                    {% endif %}
+        
+                    {% for page_number in members.paginator.page_range %}
+                        {% if members.number == page_number %}
+                        <p class="control">
+                            <button class="button is-blurple is-selected">
+                                <span>{{ page_number }}</span>
+                            </button>
+                        </p>
+                        {% else %}
+                        <p class="control">
+                            <a href="?page={{ page_number }}" class="button is-blurple">{{ page_number }}</a>
+                        </p>
+                        {% endif %}
+                    {% endfor %}
+        
+                    {% if members.has_next() %}
+                        <p class="control">
+                            <a href="?page={{ members.next_page_number }}" class="button is-blurple"><i class="fa-solid fa-circle-arrow-right"></i></a>
+                        </p>
+                    {% else %}
+                        <p class="control">
+                            <a href="?page={{ members.next_page_number }}" class="button is-blurple is-static disabled"><i class="fa-solid fa-circle-arrow-right"></i></a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+        <p>Nobody from this server has levels.</p>
+        {% endif %}    
+    </center>
+</div>
+
+{% if user %}
+    {% if levelinfo %}
+
+    <div id="saveAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+                <button id="cancelbtn" class="button is-danger">Cancel</button> <button id="savebtn" type="submit" class="button is-primary">Save</button>
+            </div>
+        </center>
+    </div>
+
+    <div id="successAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">Background successfully changed!</h4>
+            </div>
+        </center>
+    </div>
+
+    <div id="errorAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">An error occured while changing the background!</h4>
+            </div>
+        </center>
+    </div>
+
+    <div id="fileSizeErrorAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">File size too large! Files can be max 8mb!</h4>
+            </div>
+        </center>
+    </div>
+
+    <div id="progressAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">Uploading!</h4>
+                <button id="cancelbtn" class="button is-danger" disabled>Cancel</button> <button id="savebtn" type="submit" class="button is-primary is-loading">Save</button>
+            </div>
+        </center>
+    </div>
+
+    <div id="resetSaveAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">Be careful! You have unsaved changes!</h4>
+                <button id="cancelbtn" class="button is-danger">Cancel</button> <button id="savebtn" type="submit" class="button is-primary">Save</button>
+            </div>
+        </center>
+    </div>
+
+    <div id="resetSuccessAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">Background was successfully reset!</h4>
+            </div>
+        </center>
+    </div>
+
+    <div id="resetErrorAlert" class="navbar is-fixed-bottom" style="background-color: transparent; display: none;">
+        <center>
+            <div class="notification is-warning ml-2 mb-2 mr-2 mt-2">
+                <h4 class="alert-heading">An error occured while resetting the background!</h4>
+            </div>
+        </center>
+    </div>
+
+    <input type="hidden" id="obgurl" value="{{levelinfo.lc_background}}">
+    <input type="hidden" id="guildID" value="{{guild_id}}">
+    <input type="hidden" id="memberID" value="{{user.id}}">
+    <input type="hidden"  id="uploadurl" value="{{ url_for('test_upload') }}">
+    <input type="hidden" id="reseturl" value="{{ url_for('lvl_bg_reset') }}">
+    <input type="hidden"  id="defaultBG" value="{{ url_for('static', path='images/bg.png') }}">
+    <input type="hidden" id="csrftoken" value="{{csrftoken}}" />
+    <script src="{{ url_for('static', path='js/croppie.js') }}"></script>
+    <script src="{{ url_for('static', path='js/cropBackground.js') }}"></script>
+    {% endif %}
+{% endif %}
+{% endblock %}

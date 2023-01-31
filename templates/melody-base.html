@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="HandheldFriendly" content="true">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bulma.css') }}" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Melody</title>
+    {% block head %}
+    {% endblock %}
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            background-color: #36393f;
+        }
+        a:hover{
+            color:#f9f3f4;
+        }
+        .card{
+            background-color: #202225;
+            color: #f9f3f4;
+        }
+        .white-text{
+            color: #f9f3f4;
+        }
+        .is-blurple{
+            background-color: #5662f6;
+            color: #f9f3f4;
+            border-color: #5662f6;
+            border-width: 2px;
+        }
+        .button.is-blurple:hover{
+            color: #f9f3f4;
+            background-color: #444dc3;
+            border-color: #444dc3;
+        }
+        .button.is-blurple.is-selected{
+            color: #f9f3f4;
+            background-color: #444dc3;
+            border-color: #444dc3;
+        }
+        .button.is-blurple.disabled{
+            color: #f9f3f4;
+            background-color: #6e79ff;
+            border-color: #6e79ff;
+        }
+        .modal-card-head{
+            background-color: #202225;
+            color: #f9f3f4;
+            border-color: #202225;
+        }
+        .modal-card-foot{
+            background-color: #202225;
+            color: #f9f3f4;
+            border-color: #202225;
+        }
+        .is-discord-dark{
+            background-color: #202225;
+            color: #f9f3f4;
+            border-radius: 10px;
+        }
+        .table.is-hoverable-dark tbody tr:not(.is-selected):hover {
+            background-color: #2f3136;
+        }
+        .ext-card{
+            background-color: #292b2f;
+            border: 5px solid #292b2f;
+            color: #f9f3f4;
+            border-radius: 10px;
+            min-width: 50px;
+            max-width: 300px;
+            height: auto;
+        }
+        .dot {
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+  </head>
+  <body>
+    <script src="{{ url_for('static', path='js/jquery.js') }}"></script>
+    <section class="section">
+        <nav class="navbar is-dark is-fixed-top" role="navigation" aria-label="main navigation" style="background-color: #202225;">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/melody">
+                  <img src="{{ url_for('static', path='images/melody.png') }}"> Melody
+                </a>
+                <a role="button is-light" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="nav_menu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <div id="nav_menu" class="navbar-menu is-dark" style="background-color: #202225;">
+                <div class="navbar-start white-text">
+                    <a class="navbar-item white-text" href="/" >
+                    Home
+                    </a>
+                    <a class="navbar-item white-text" href="/melody/docs">
+                    Docs
+                    </a>
+                    <a class="navbar-item white-text" href="https://discord.gg/gravityfalls">
+                    Discord
+                    </a>
+                    <a class="navbar-item white-text" href="https://github.com/siren15/melody">
+                    Github
+                    </a>
+                </div>
+
+                <div class="navbar-end white-text">
+                    {% if user %}
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a class="button is-blurple" href="/melody/user">Manage Servers</a>
+                        </div>
+                    </div>
+                    <a class="navbar-item white-text" href="/melody/user">
+                        <span class="image">
+                            <img class="is-rounded mr-1" src="https://cdn.discordapp.com/avatars/{{user.id}}/{{user.avatar}}.png" style="height: 28px; width: 28px">
+                        </span>
+                        <span><strong>{{user.username}}</strong>#{{user.discriminator}}</span>
+                    </a>
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a class="button is-blurple" href="/melody/logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a class="button is-blurple" href="/melody/login">Login with Discord</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </section>
+    <script>
+        $(document).ready(function() {
+
+            // Check for click events on the navbar burger icon
+            $(".navbar-burger").click(function() {
+
+                // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+                $(".navbar-burger").toggleClass("is-active");
+                $(".navbar-menu").toggleClass("is-active");
+
+            });
+          });
+    </script>
+    <section class="section">
+        <div class="container is-centered">
+            {% block body %}
+            {% endblock %}
+        </div>
+    </section>
+    <footer class="footer is-dark is-fixed-bottom" style="height: 20px; background-color: #36393f; color: #f9f3f4;">
+        <div class="content has-text-centered">
+          <p>
+            <strong style="color: #f9f3f4;">© 2022 beni2am</strong>. Melody source code is licensed <a href="https://github.com/siren15/Melody/blob/master/LICENSE">MPL-2.0</a>.
+          </p>
+        </div>
+      </footer>
+  </body>
+</html>
