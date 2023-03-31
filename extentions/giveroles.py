@@ -1,6 +1,6 @@
 import re
 
-from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check, SlashCommand
+from interactions import Client, slash_command, InteractionContext, OptionType, Permissions, Extension, Embed, check, SlashCommand
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -16,7 +16,7 @@ class GiveRoles(Extension):
     @give_cmd.subcommand(sub_cmd_name='you', sub_cmd_description="Give members a role from predefined list of roles")
     @user()
     @giveyou_name()
-    async def giveyourole(self, ctx: InteractionContext, user:OptionTypes.USER=None, giveyou_name:str=None):
+    async def giveyourole(self, ctx: InteractionContext, user:OptionType.USER=None, giveyou_name:str=None):
         if user is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
         if giveyou_name is None:
@@ -46,7 +46,7 @@ class GiveRoles(Extension):
     @giveyou_cmd.subcommand(sub_cmd_name='create', sub_cmd_description="Create giveyou's")
     @giveyou_name()
     @role()
-    async def giveyourole_create(self, ctx: InteractionContext, giveyou_name:str=None, role:OptionTypes.ROLE=None):
+    async def giveyourole_create(self, ctx: InteractionContext, giveyou_name:str=None, role:OptionType.ROLE=None):
         if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
         if role is None:
@@ -89,7 +89,7 @@ class GiveRoles(Extension):
     @giveyou_cmd.subcommand( sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild")
     async def giveyourole_list(self, ctx: InteractionContext):
         
-        from naff.ext.paginators import Paginator
+        from interactions.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))

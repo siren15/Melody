@@ -1,5 +1,4 @@
-naff[voice]==2.0.0
-naff_audio
+git+https://github.com/interactions-py/interactions.py.git@5.x
 requests
 pymongo
 beanie
@@ -11,6 +10,8 @@ tabulate
 rapidfuzz
 duckpy
 youtube-search
+ytmusicapi
+spotipy
 fastapi
 uvicorn
 oauthlib

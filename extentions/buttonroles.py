@@ -1,12 +1,11 @@
-from email import message
 import random
-from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check, listen, Button, ButtonStyles, spread_to_rows, SlashCommandChoice
-from naff.models.discord.components import ActionRow, spread_to_rows
+from interactions import Client, SlashCommand, slash_command, InteractionContext, Message, OptionType, Permissions, Extension, Embed, check, listen, Button, spread_to_rows, SlashCommandChoice, SlashContext, ChannelType
+from interactions.models.discord.components import ActionRow
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from naff.api.events.internal import Component, ButtonPressed
-from naff.models.discord.enums import ButtonStyles, ComponentTypes
+from interactions.api.events.internal import Component, ButtonPressed
+from interactions.models.discord.enums import ButtonStyle, ComponentType
 
 async def button_id_generator(ctx, channel, message):
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
@@ -22,28 +21,22 @@ class ButtonRoles(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
     
-    @slash_command(name='rolebuttons', sub_cmd_name='add', sub_cmd_description="Add role buttons to a message")
-    @bt_role_1()
-    @message_id()
-    @channel()
-    @slash_option(name='role_2', description='Select a role for a new button', opt_type=OptionTypes.ROLE, required=False)
-    @slash_option(name='role_3', description='Select a role for a new button', opt_type=OptionTypes.ROLE, required=False)
-    @slash_option(name='role_4', description='Select a role for a new button', opt_type=OptionTypes.ROLE, required=False)
-    @slash_option(name='role_5', description='Select a role for a new button', opt_type=OptionTypes.ROLE, required=False)
-    @slash_option(name="button_colour",description="Choose what colour the button will be. Default: Blurple",required=False,opt_type=OptionTypes.INTEGER,
-    choices=[SlashCommandChoice(name="Blurple", value=1),SlashCommandChoice(name="Green", value=3),SlashCommandChoice(name="Red", value=4),SlashCommandChoice(name="Gray", value=2)])
-    @slash_option(name="mode",description="Choose the mode this set of buttons will be in. Default: Click to get/remove a role",required=False,opt_type=OptionTypes.INTEGER,
+    role_buttons = SlashCommand(name='rolebuttons', description='Manage role buttons.', default_member_permissions=Permissions.ADMINISTRATOR)
+    
+    @role_buttons.subcommand(sub_cmd_name='create', sub_cmd_description="Add role buttons to a message")
+    @slash_option(name='roles', description='Roles, seperated by a comma(,)', opt_type=OptionType.STRING, required=True)
+    @slash_option(name='message_id', description='Paste in a message ID', opt_type=OptionType.STRING, required=True)
+    @slash_option(name='channel', description='Select a channel', opt_type=OptionType.CHANNEL, channel_types=[ChannelType.GUILD_TEXT], required=False)
+    @slash_option(name="button_colours", description="Choose what colour the button will be. Default: Blurple", required=False, opt_type=OptionType.INTEGER,
+    choices=[SlashCommandChoice(name="Blurple", value=1), SlashCommandChoice(name="Green", value=3), SlashCommandChoice(name="Red", value=4), SlashCommandChoice(name="Gray", value=2)])
+    @slash_option(name="mode", description="Choose the mode this set of buttons will be in. Default: Click to get/remove a role", required=False, opt_type=OptionType.INTEGER,
     choices=[SlashCommandChoice(name="Get or remove a role", value=1),SlashCommandChoice(name="Get a role, no removing", value=2),SlashCommandChoice(name="Only one role allowed", value=3)])
-    @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def add_role_buttons(self, ctx: InteractionContext, bt_role_1: OptionTypes.ROLE, message_id: OptionTypes.STRING, channel: OptionTypes.CHANNEL=None,
-    role_2: OptionTypes.ROLE=None, role_3: OptionTypes.ROLE=None, role_4: OptionTypes.ROLE=None, role_5: OptionTypes.ROLE=None, button_colour: OptionTypes.INTEGER = 1, mode: OptionTypes.INTEGER=1):
+    async def role_buttons_add(self, ctx: SlashContext, roles: str, message_id: OptionType.STRING, channel: ChannelType.GUILD_TEXT=None, button_colours: OptionType.INTEGER = 1, mode: OptionType.INTEGER=1):
         await ctx.defer()
-        #modes: 1 = react to get a role - unreact to remove the role, 2 = react to get a role - not possible to remove the role, 3 = only one role allowed from the message
-        if message_id is None:
-            return await ctx.send('You need to include the message buttons will be on.', ephemeral=True)    
+        # modes: 1 = get or remove the role, 2 = get a role - not possible to remove the role, 3 = only one role allowed from the message
         if channel is None:
             channel = ctx.channel
-        message = await channel.fetch_message(message_id)
+        message: Message = await channel.fetch_message(message_id)
         if message is not None:
             components = []
             if message.components != []:
@@ -51,91 +44,82 @@ class ButtonRoles(Extension):
                     components = components + ob.components
             documents = []
             messages = []
-            button_1_id = await button_id_generator(ctx, channel, message)
-            components.append(Button(style=button_colour,label=f"{bt_role_1.name}",custom_id=button_1_id))
-            messages.append(f"Button for role {bt_role_1.mention} was added.\nButton ID: `{button_1_id}`\nMode: {mode}")
-            documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_1_id, channelid=channel.id, msg_id=message.id, roleid=bt_role_1.id, mode=mode))
-            if role_2 is not None:
-                button_2_id = await button_id_generator(ctx, channel, message)
-                components.append(Button(style=button_colour, label=f"{role_2.name}", custom_id=button_2_id))
-                messages.append(f"Button for role {role_2.mention} was added.\nButton ID: `{button_2_id}`\nMode: {mode}")
-                documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_2_id, channelid=channel.id, msg_id=message.id, roleid=role_2.id, mode=mode))
-            if role_3 is not None:
-                button_3_id = await button_id_generator(ctx, channel, message)
-                components.append(Button(style=button_colour, label=f"{role_3.name}", custom_id=button_3_id))
-                messages.append(f"Button for role {role_3.mention} was added.\nButton ID: `{button_3_id}`\nMode: {mode}")
-                documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_3_id, channelid=channel.id, msg_id=message.id, roleid=role_3.id, mode=mode))
-            if role_4 is not None:
-                button_4_id = await button_id_generator(ctx, channel, message)
-                components.append(Button(style=button_colour, label=f"{role_4.name}", custom_id=button_4_id))
-                messages.append(f"Button for role {role_4.mention} was added.\nButton ID: `{button_4_id}`\nMode: {mode}")
-                documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_4_id, channelid=channel.id, msg_id=message.id, roleid=role_4.id, mode=mode))
-            if role_5 is not None:
-                button_5_id = await button_id_generator(ctx, channel, message)
-                components.append(Button(style=button_colour, label=f"{role_5.name}", custom_id=button_5_id))
-                messages.append(f"Button for role {role_5.mention} was added.\nButton ID: `{button_5_id}`\nMode: {mode}")
-                documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_5_id, channelid=channel.id, msg_id=message.id, roleid=role_5.id, mode=mode))
+
+            if button_colours == 1:
+                button_colour = ButtonStyle.BLURPLE
+            elif button_colours == 3:
+                button_colour = ButtonStyle.GREEN
+            elif button_colours == 4:
+                button_colour = ButtonStyle.RED
+            elif button_colours == 2:
+                button_colour = ButtonStyle.GRAY
+            
+            raw_roles_list = roles.split(',')
+            roles_ids = []
+            for r in raw_roles_list:
+                r = r.replace('<', '')
+                r = r.replace('@', '')
+                r = r.replace('!', '')
+                r = r.replace('&', '')
+                r = r.replace('>', '')
+                roles_ids.append(r)
+            for role_id in roles_ids:
+                role = ctx.guild.get_role(role_id)
+                if role is not None:
+                    button_id = await button_id_generator(ctx, channel, message)
+                    components.append(Button(style=button_colour,label=f"{role.name}",custom_id=button_id))
+                    messages.append(f"Button for role {role.mention} was added.\nButton ID: `{button_id}`\nMode: {mode}")
+                    documents.append(db.button_roles(guildid=ctx.guild_id, button_id=button_id, channelid=channel.id, msg_id=message.id, roleid=role.id, mode=mode))
+                    
             if len(components) > 25:
                 return await ctx.send("There can't be more than 25 components on one message")
-            
-            rows = []
-            button_row = []
-            for component in components:
-                if component is not None and component.type == ComponentTypes.BUTTON:
-                    button_row.append(component)
 
-                    if len(button_row) == 5:
-                        rows.append(ActionRow(*button_row))
-                        button_row = []
-
-                    continue
-
-                if button_row:
-                    rows.append(ActionRow(*button_row))
-                    button_row = []
-
-                if component is not None:
-                    if component.type == ComponentTypes.ACTION_ROW:
-                        rows.append(component)
-                    elif component.type == ComponentTypes.SELECT:
-                        rows.append(ActionRow(component))
-            if button_row:
-                rows.append(ActionRow(*button_row))
-
-            if len(rows) > 5:
-                raise ValueError("Number of rows exceeds 5.")
+            rows = spread_to_rows(*components)
 
             await db.button_roles.insert_many(documents)
             await message.edit(components=rows)
             for m in messages:
                 await ctx.send(embed=Embed(color=0xffcc50, description=m))
+        else:
+            return await ctx.send("Message not found.")
     
-    @slash_command(name='rolebuttons', sub_cmd_name='edit', sub_cmd_description="Edit a behaviour of a role button")
+    @role_buttons.subcommand(sub_cmd_name='edit', sub_cmd_description="Edit a behaviour of a role button")
     @message_id()
     @button_id()
     @channel()
-    @slash_option(name="mode",description="Choose the mode this set of buttons will be in. Default: Click to get/remove a role",required=False,opt_type=OptionTypes.INTEGER,
+    @slash_option(name="mode",description="Choose the mode this set of buttons will be in. Default: Click to get/remove a role",required=False,opt_type=OptionType.INTEGER,
     choices=[SlashCommandChoice(name="Get or remove a role", value=1),SlashCommandChoice(name="Get a role, no removing", value=2),SlashCommandChoice(name="Only one role allowed", value=3)])
     @new_role()
-    @slash_option(name="button_colour",description="Choose what colour the button will be. Default: Blurple",required=False,opt_type=OptionTypes.INTEGER,
+    @slash_option(name="button_colours",description="Choose what colour the button will be. Default: Blurple",required=False,opt_type=OptionType.INTEGER,
     choices=[SlashCommandChoice(name="Blurple", value=1),SlashCommandChoice(name="Green", value=3),SlashCommandChoice(name="Red", value=4),SlashCommandChoice(name="Gray", value=2)])
-    @slash_option(name="requirement_role",description="Choose a role. Members will be required to have this role to use the button.",required=False,opt_type=OptionTypes.ROLE)
-    @slash_option(name="ignore_role",description="Choose a role. Members with this role will be ignored.",required=False,opt_type=OptionTypes.ROLE)
-    @slash_option(name='name', description='Give the button a custom name', opt_type=OptionTypes.STRING, required=False)
-    @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def rb_edit(self, ctx: InteractionContext, message_id:OptionTypes.STRING, button_id:OptionTypes.STRING, channel:OptionTypes.CHANNEL=None, mode:OptionTypes.INTEGER=None,
-    button_colour:OptionTypes.INTEGER=None, new_role: OptionTypes.ROLE = None, requirement_role: OptionTypes.ROLE = None, ignore_role: OptionTypes.ROLE = None, name: OptionTypes.STRING=None):
+    @slash_option(name="requirement_role",description="Choose a role. Members will be required to have this role to use the button.",required=False,opt_type=OptionType.ROLE)
+    @slash_option(name="ignore_role",description="Choose a role. Members with this role will be ignored.",required=False,opt_type=OptionType.ROLE)
+    @slash_option(name='name', description='Give the button a custom name', opt_type=OptionType.STRING, required=False)
+    async def rb_edit(self, ctx: InteractionContext, message_id:OptionType.STRING, button_id:OptionType.STRING, channel:OptionType.CHANNEL=None, mode:OptionType.INTEGER=None,
+    button_colours:OptionType.INTEGER=None, new_role: OptionType.ROLE = None, requirement_role: OptionType.ROLE = None, ignore_role: OptionType.ROLE = None, name: OptionType.STRING=None):
         await ctx.defer()
-        if (mode is None) and (button_colour is None) and (new_role is None) and (requirement_role is None) and (ignore_role is None) and (name is None):
+        if button_colours == 1:
+            button_colour = ButtonStyle.BLURPLE
+            colour = 'Blurple'
+        elif button_colours == 3:
+            button_colour = ButtonStyle.GREEN
+            colour = 'Green'
+        elif button_colours == 4:
+            button_colour = ButtonStyle.RED
+            colour = 'Red'
+        elif button_colours == 2:
+            button_colour = ButtonStyle.GRAY
+            colour = 'Gray'
+        if (mode is None) and (button_colours is None) and (new_role is None) and (requirement_role is None) and (ignore_role is None) and (name is None):
             return await ctx.send('You have to change at least one option to change')
         if channel is None:
             channel = ctx.channel
         edits = ''
         message = await channel.fetch_message(message_id)
         if message is not None:
-            if (button_colour is not None) and (new_role is not None) and (name is not None):
+            if (button_colours is not None) and (new_role is not None) and (name is not None):
                 return await ctx.send("`Name`, `Button colour` and `New Role` can't be edited together")
-            if button_colour is not None:
+            if button_colours is not None:
                     if message.components != []:
                         components = []
                         for ob in message.components:
@@ -148,15 +132,7 @@ class ButtonRoles(Extension):
                                         p1, p2 = p
                         
                         message.components[p1].components[p2].style = button_colour
-                        await message.edit(components=message.components)
-                        if button_colour == 1:
-                            colour = 'Blurple'
-                        elif button_colour == 2:
-                            colour = 'Gray'
-                        elif button_colour == 3:
-                            colour = 'Green'
-                        elif button_colour == 4:
-                            colour = 'Red'
+                        await message.edit(components=message.components)    
                         edits = edits + f"New colour: {colour}\n"
             button = await db.button_roles.find_one({'guildid':ctx.guild_id, 'channelid':channel.id, 'msg_id':message.id, 'button_id':button_id})
             if mode is not None:
@@ -223,16 +199,15 @@ class ButtonRoles(Extension):
         else:
             await ctx.send('Message not found')
 
-    @slash_command(name='rolebuttons', sub_cmd_name='remove', sub_cmd_description="Edit a behaviour of a role button")
+    @role_buttons.subcommand(sub_cmd_name='remove', sub_cmd_description="Remove a role button")
     @button_id()
     @message_id()
     @channel()
-    @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def rb_remove(self, ctx: InteractionContext, message_id:OptionTypes.STRING, button_id:OptionTypes.STRING, channel:OptionTypes.CHANNEL=None):
+    async def rb_remove(self, ctx: InteractionContext, message_id:OptionType.STRING, button_id:OptionType.STRING, channel:OptionType.CHANNEL=None):
         await ctx.defer()
         if channel is None:
             channel = ctx.channel
-        message = await channel.fetch_message(message_id)
+        message: Message = await channel.fetch_message(message_id)
         if message is None:
             return await ctx.send(f"Can't find a message with that id", ephemeral=True)
         components = []
@@ -244,32 +219,7 @@ class ButtonRoles(Extension):
             if b.custom_id == button_id:
                 components.remove(b)
         
-        rows = []
-        button_row = []
-        for component in components:
-            if component is not None and component.type == ComponentTypes.BUTTON:
-                button_row.append(component)
-
-                if len(button_row) == 5:
-                    rows.append(ActionRow(*button_row))
-                    button_row = []
-
-                continue
-
-            if button_row:
-                rows.append(ActionRow(*button_row))
-                button_row = []
-
-            if component is not None:
-                if component.type == ComponentTypes.ACTION_ROW:
-                    rows.append(component)
-                elif component.type == ComponentTypes.SELECT:
-                    rows.append(ActionRow(component))
-        if button_row:
-            rows.append(ActionRow(*button_row))
-
-        if len(rows) > 5:
-            raise ValueError("Number of rows exceeds 5.")
+        rows = spread_to_rows(*components)
 
         await message.edit(components=rows)
 
@@ -277,10 +227,10 @@ class ButtonRoles(Extension):
         await button.delete()
         await ctx.send(f"Button `{button_id}` successfully deleted")
 
-    @slash_command(name='rolebuttons', sub_cmd_name='list', sub_cmd_description="List all role buttons on this server")
+    @role_buttons.subcommand(sub_cmd_name='list', sub_cmd_description="List all role buttons on this server")
     async def rb_list(self, ctx: InteractionContext):
         await ctx.defer()
-        from naff.ext.paginators import Paginator
+        from interactions.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))

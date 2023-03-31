@@ -1,8 +1,8 @@
-#https://github.com/khk4912/BGM-Discord-Bot/blob/master/commands/uptime.py
+# https://github.com/khk4912/BGM-Discord-Bot/blob/master/commands/uptime.py
 import logging
 import datetime
 
-from naff import Extension, slash_command, InteractionContext, Embed
+from interactions import Extension, slash_command, InteractionContext, Embed
 
 
 class Uptime(Extension):

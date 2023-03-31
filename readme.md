@@ -1,9 +1,9 @@
-# Melody is a multi-purpose Discord bot written in Python using [NAFF](https://github.com/NAFTeam/NAFF). Created for [r/gravityfalls discord server](https://discord.gg/gravityfalls)
+# Melody is a multi-purpose Discord bot written in Python using [interactions.py](https://github.com/interactions-py/interactions.py). Created for [r/gravityfalls discord server](https://discord.gg/gravityfalls)
 ![](https://cdn.discordapp.com/avatars/887648476387762186/ab9b45d840a51ce343c2f9cf17e1ece8.png)
 ***
 
 ## Modules
-* Automod - phishihing links detection, banned words detection
+* Automod - phishihing links detection, banned names detection
 * Moderation - warning system, temp banning, muting
 * Button Roles - manage button roles, 3 modes(give/take, 1 role per messsage, give - can't take away)
 * Role Giving - give role, creating and managing giveyous

@@ -1,7 +1,7 @@
 import asyncio
 
 from dateutil.relativedelta import *
-from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check,  Button, ButtonStyles, ActionRow, spread_to_rows
+from interactions import Client, Extension, SlashContext, StringSelectMenu, StringSelectOption, listen, Embed, Permissions, slash_command, SlashCommand, InteractionContext,  OptionType, check,  Button, ButtonStyle, ActionRow, spread_to_rows
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -10,588 +10,110 @@ class BotConfiguration(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
 
-    @slash_command(name='config', sub_cmd_name='logging', sub_cmd_description="[ADMIN]Configure what the bot logs")
-    @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def logging_settings(self, ctx:InteractionContext):
-        deleted_messages_buttons: list[ActionRow] = spread_to_rows(
-            #deleted messages
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_deleted_messages_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_deleted_messages_off'
-            )
-        )
-        edited_messages_buttons: list[ActionRow] = spread_to_rows(
-            #deleted messages
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_edited_messages_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_edited_messages_off'
-            )
-        )
-        user_joined_buttons: list[ActionRow] = spread_to_rows(
-            #user joined
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_join_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_join_off'
-            )
-        )
-        user_left_buttons: list[ActionRow] = spread_to_rows(
-            #user left
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_left_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_left_off'
-            )
-        )
-        user_kicked_buttons: list[ActionRow] = spread_to_rows(
-            #kicked
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_kicked_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_kicked_off'
-            ),
-        )
-        user_banned_buttons: list[ActionRow] = spread_to_rows(
-            #banned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_ban_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_ban_off'
-            )
-        )
-        user_unbanned_buttons: list[ActionRow] = spread_to_rows(
-            #unbaned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_unban_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_unban_off'
-            )
-        )
-        mem_timeout_buttons: list[ActionRow] = spread_to_rows(
-            #unbaned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_timeout_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_timeout_off'
-            )
-        )
-        mem_roles_buttons: list[ActionRow] = spread_to_rows(
-            #unbaned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_roles_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_roles_off'
-            )
-        )
-        mem_nick_buttons: list[ActionRow] = spread_to_rows(
-            #unbaned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_nick_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_nick_off'
-            )
-        )
-        welcome_msg_buttons: list[ActionRow] = spread_to_rows(
-            #unbaned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_welcome_msg_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_welcome_msg_off'
-            )
-        )
-        welcome_msg_card_buttons: list[ActionRow] = spread_to_rows(
-            #unbaned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_welcome_msg_card_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_welcome_msg_card_off'
-            )
-        )
-        leave_msg_buttons: list[ActionRow] = spread_to_rows(
-            #unbaned
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_leave_msg_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_leave_msg_off'
-            )
-        )
-        automod_buttons: list[ActionRow] = spread_to_rows(
-            Button(
-                style=ButtonStyles.GREEN,
-                label="On",
-                custom_id=f'{ctx.author.id}_automod_on'
-            ),
-            Button(
-                style=ButtonStyles.RED,
-                label="Off",
-                custom_id=f'{ctx.author.id}_automodg_off'
-            )
-        )
-        
-        buttons = [
-            deleted_messages_buttons,
-            edited_messages_buttons,
-            user_joined_buttons,
-            user_left_buttons,
-            user_kicked_buttons,
-            user_banned_buttons,
-            user_unbanned_buttons,
-            mem_timeout_buttons,
-            mem_roles_buttons,
-            mem_nick_buttons,
-            welcome_msg_buttons,
-            welcome_msg_card_buttons,
-            leave_msg_buttons,
-            automod_buttons
-        ]
+    config_cmd = SlashCommand(name='config', description='Configure the bot', default_member_permissions=Permissions.ADMINISTRATOR)
 
-        
+    @config_cmd.subcommand('logging', sub_cmd_description='Configure what the bot logs')
+    async def config_logging(self, ctx: InteractionContext):
+        await ctx.defer(ephemeral=True)
         events_logging = await db.prefixes.find_one({'guildid':ctx.guild_id})
-        events_log_list = events_logging.activecommands.lower()
-
-        if 'message_deleted' in events_log_list:
-            msg_del_status = 'On'
+        if events_logging.activecommands is None:
+            events_log_list = ''
         else:
-            msg_del_status = 'Off'
-        msg_de_msg = await ctx.send(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `{msg_del_status}`'), components=deleted_messages_buttons)
+            events_log_list = events_logging.activecommands.lower()
+        if 'message_deleted' in events_log_list:
+            msg_del_status = True
+        else:
+            msg_del_status = False
 
         if 'message_edited' in events_log_list:
-            msg_edit_status = 'On'
+            msg_edit_status = True
         else:
-            msg_edit_status = 'Off'
-        msg_ed_msg = await ctx.send(embed=Embed(color=0xfcab5f, description=f'Log edited messages: `{msg_edit_status}`'), components=edited_messages_buttons)
+            msg_edit_status = False
 
         if 'member_join' in events_log_list:
-            mem_join_status = 'On'
+            mem_join_status = True
         else:
-            mem_join_status = 'Off'
-        mem_jo_msg = await ctx.send(embed=Embed(color=0x4d9d54, description=f'Log members joining: `{mem_join_status}`'), components=user_joined_buttons)
+            mem_join_status = False
 
         if 'member_leave' in events_log_list:
-            mem_leave_status = 'On'
+            mem_leave_status = True
         else:
-            mem_leave_status = 'Off'
-        mem_le_msg = await ctx.send(embed=Embed(color=0xcb4c4c, description=f'Log members leaving: `{mem_leave_status}`'), components=user_left_buttons)
+            mem_leave_status = False
 
         if 'member_kick' in events_log_list:
-            mem_kick_status = 'On'
+            mem_kick_status = True
         else:
-            mem_kick_status = 'Off'
-        mem_kck_msg = await ctx.send(embed=Embed(color=0x5c7fb0, description=f'Log kicking members: `{mem_kick_status}`'), components=user_kicked_buttons)
+            mem_kick_status = False
 
         if 'member_ban' in events_log_list:
-            mem_ban_status = 'On'
+            mem_ban_status = True
         else:
-            mem_ban_status = 'Off'
-        mem_bn_msg = await ctx.send(embed=Embed(color=0x62285e, description=f'Log banning users: `{mem_ban_status}`'), components=user_banned_buttons)
+            mem_ban_status = False
         
         if 'member_unban' in events_log_list:
-            mem_unban_status = 'On'
+            mem_unban_status = True
         else:
-            mem_unban_status = 'Off'
-        mem_un_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `{mem_unban_status}`'), components=user_unbanned_buttons)
+            mem_unban_status = False
 
         if 'member_timeout' in events_log_list:
-            mem_timeout_status = 'On'
+            mem_timeout_status = True
         else:
-            mem_timeout_status = 'Off'
-        mem_ti_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log muting members: `{mem_timeout_status}`'), components=mem_timeout_buttons)
+            mem_timeout_status = False
 
         if 'member_roles' in events_log_list:
-            mem_roles_status = 'On'
+            mem_roles_status = True
         else:
-            mem_roles_status = 'Off'
-        mem_ro_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log members roles add/remove: `{mem_roles_status}`'), components=mem_roles_buttons)
+            mem_roles_status = False
 
         if 'member_nick' in events_log_list:
-            mem_nick_status = 'On'
+            mem_nick_status = True
         else:
-            mem_nick_status = 'Off'
-        mem_ni_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `{mem_nick_status}`'), components=mem_nick_buttons)
+            mem_nick_status = False
 
         if 'welcome_msg' in events_log_list:
-            welcome_msg_status = 'On'
+            welcome_msg_status = True
         else:
-            welcome_msg_status = 'Off'
-        wel_m_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Welcome message: `{welcome_msg_status}`'), components=welcome_msg_buttons)
+            welcome_msg_status = False
 
         if 'welcome_msg_card' in events_log_list:
-            welcome_msg_card_status = 'On'
+            welcome_msg_card_status = True
         else:
-            welcome_msg_card_status = 'Off'
-        wel_m_c_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Welcome message card: `{welcome_msg_card_status}`'), components=welcome_msg_card_buttons)
+            welcome_msg_card_status = False
 
         if 'leave_msg' in events_log_list:
-            leave_msg_status = 'On'
+            leave_msg_status = True
         else:
-            leave_msg_status = 'Off'
-        lea_m_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Leave message: `{leave_msg_status}`'), components=leave_msg_buttons)
+            leave_msg_status = False
 
-        if 'automod' in events_log_list:
-            automod_status = 'On'
-        else:
-            automod_status = 'Off'
-        automod_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Automod: `{automod_status}`'), components=automod_buttons)
-
-        button_messages = [
-            msg_de_msg,
-            msg_ed_msg,
-            mem_jo_msg,
-            mem_le_msg,
-            mem_kck_msg,
-            mem_bn_msg,
-            mem_un_msg,
-            mem_ti_msg,
-            mem_ro_msg,
-            mem_ni_msg,
-            wel_m_msg,
-            wel_m_c_msg,
-            lea_m_msg,
-            automod_msg
+        select_options = [
+            StringSelectOption(label="Deleted Messages", value="message_deleted", default=msg_del_status),
+            StringSelectOption(label="Edited Messages", value="message_edited", default=msg_edit_status),
+            StringSelectOption(label="Member Joined", value="member_join", default=mem_join_status),
+            StringSelectOption(label="Member Left", value="member_leave", default=mem_leave_status),
+            StringSelectOption(label="Member Kicked", value="member_kick", default=mem_kick_status),
+            StringSelectOption(label="Member Banned", value="member_ban", default=mem_ban_status),
+            StringSelectOption(label="Member Unbanned", value="member_unban", default=mem_unban_status),
+            StringSelectOption(label="Member Timeout", value="member_timeout", default=mem_timeout_status),
+            StringSelectOption(label="Member Roles", value="member_roles", default=mem_roles_status),
+            StringSelectOption(label="Member Nickname", value="member_nick", default=mem_nick_status),
+            StringSelectOption(label="Welcome Message", value="welcome_msg", default=welcome_msg_status),
+            StringSelectOption(label="Leave Message", value="leave_msg", default=leave_msg_status),
+            StringSelectOption(label="New Member Card", value="welcome_msg_card", default=welcome_msg_card_status),
         ]
 
-        if ctx.guild_id in [149167686159564800, 435038183231848449]:
-            special_welcome_msg_buttons: list[ActionRow] = spread_to_rows(
-                #unbaned
-                Button(
-                    style=ButtonStyles.GREEN,
-                    label="On",
-                    custom_id=f'{ctx.author.id}_special_welcome_msg_on'
-                ),
-                Button(
-                    style=ButtonStyles.RED,
-                    label="Off",
-                    custom_id=f'{ctx.author.id}_special_welcome_msg_off'
-                )
-            )
-            buttons = buttons + [special_welcome_msg_buttons]
-            if 'special_welcome_msg' in events_log_list:
-                s_welcome_msg_status = 'On'
-            else:
-                s_welcome_msg_status = 'Off'
-            s_wel_m_msg = await ctx.send(embed=Embed(color=0x9275b2, description=f'Special welcome message: `{s_welcome_msg_status}`'), components=special_welcome_msg_buttons)
-            button_messages = button_messages + [s_wel_m_msg]
+        select_menu = StringSelectMenu(select_options, min_values=0, max_values=13)
 
-        def buttons_check(component: Button) -> bool:
-            return (component.context.author == ctx.author)
+        message = await ctx.send('Configure logging.', components=select_menu)
 
-        timed_out = False
-        while timed_out == False:
+        while True:
             try:
-                button_used = await self.bot.wait_for_component(components=buttons, check=buttons_check, timeout=120)
+                select = await self.bot.wait_for_component(components=select_menu, timeout=120)
             except asyncio.TimeoutError:
-                await ctx.channel.delete_messages(button_messages)
-                return await ctx.send(f'{ctx.author.mention} Events config closed due to 2 minutes of inactivity')
+                await message.edit('Config closed due to 2 minutes of inactivity.', components=[])
             else:
-                bctx = button_used.context
-                events_logging = await db.prefixes.find_one({'guildid':ctx.guild_id})
-                events_log_list = events_logging.activecommands.lower()
-                if bctx.custom_id == f'{bctx.author.id}_deleted_messages_on':
-                    if 'message_deleted' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Logging of deleted messages already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' message_deleted,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_deleted_messages_off':
-                    if 'message_deleted' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Logging of deleted messages already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' message_deleted,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0xfc5f62, description=f'Log deleted messages: `Off`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_edited_messages_on':
-                    if 'message_edited' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Logging of edited messages already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' message_edited,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0xfcab5f, description=f'Log edited messages: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_edited_messages_off':
-                    if 'message_edited' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Logging of edited messages already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' message_edited,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0xfcab5f, description=f'Log edited messages: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_join_on':
-                    if 'member_join' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member join logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_join,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x4d9d54, description=f'Log members joining: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_join_off':
-                    if 'member_join' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member join logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_join,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x4d9d54, description=f'Log members joining: `Off`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_left_on':
-                    if 'member_leave' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member leave logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_leave,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_left_off':
-                    if 'member_leave' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member leave logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_leave,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0xcb4c4c, description=f'Log users leaving: `On`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_kicked_on':
-                    if 'member_kick' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member kick logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_kick,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x5c7fb0, description=f'Log kicking users: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_kicked_off':
-                    if 'member_kick' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member kick logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_kick,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x5c7fb0, description=f'Log kicking users: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_ban_on':
-                    if 'member_ban' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member ban logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_ban,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x62285e, description=f'Log banning users: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_ban_off':
-                    if 'member_ban' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member ban logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_ban,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x62285e, description=f'Log banning users: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_unban_on':
-                    if 'member_unban' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member unban logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_unban,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_unban_off':
-                    if 'member_unban' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member unban logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_unban,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log unbanning users: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_timeout_on':
-                    if 'member_timout' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member muting logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_timeout,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log muting users: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_timeout_off':
-                    if 'member_timeout' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member muting logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_timeout,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log muting users: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_roles_on':
-                    if 'member_roles' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member roles add/remove logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_roles,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members roles add/remove: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_roles_off':
-                    if 'member_roles' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member roles add/remove logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_roles,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members roles add/remove: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_nick_on':
-                    if 'member_nick' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member nickname change logs already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' member_nick,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_nick_off':
-                    if 'member_nick' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Member nickname change logs already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' member_nick,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Log members nickname change: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_on':
-                    if 'welcome_msg' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Welcome message already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' welcome_msg,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_off':
-                    if 'welcome_msg' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Welcome message already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' welcome_msg,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_card_on':
-                    if 'welcome_msg_card' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Welcome message card already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' welcome_msg_card,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message card: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_welcome_msg_card_off':
-                    if 'welcome_msg_card' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Welcome message card already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' welcome_msg_card,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Welcome message card: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_special_welcome_msg_on':
-                    if 'special_welcome_msg' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Special welcome message already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' special_welcome_msg,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Special welcome message: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_special_welcome_msg_off':
-                    if 'special_welcome_msg' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Special welcome message already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' special_welcome_msg,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Special welcome message: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_leave_msg_on':
-                    if 'leave_msg' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Leave message already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' leave_msg,'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Leave message: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_leave_msg_off':
-                    if 'leave_msg' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Leave message already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' leave_msg,', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Leave message: `Off`'))
-                
-                elif bctx.custom_id == f'{bctx.author.id}_automod_on':
-                    if 'automod' in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Automod already turned on.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands+' automod, banned_words, phishing_filter'
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Automod: `On`'))
-
-                elif bctx.custom_id == f'{bctx.author.id}_automod_off':
-                    if 'automod' not in events_log_list:
-                        await bctx.send(f'{bctx.author.mention} Automod already turned off.', ephemeral=True)
-                    else:
-                        events_logging.activecommands = events_logging.activecommands.replace(' automod, banned_words, phishing_filter', '')
-                        await events_logging.save()
-                        await bctx.edit_origin(embed=Embed(color=0x9275b2, description=f'Automod: `Off`'))
+                values = ",".join(select.ctx.values)
+                events_logging.activecommands = values
+                await events_logging.save()
 
 def setup(bot):
     BotConfiguration(bot)

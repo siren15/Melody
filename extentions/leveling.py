@@ -3,11 +3,12 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import requests
 
+import interactions
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Permissions, Embed, SlashCommand, slash_command, InteractionContext, OptionTypes, Button, ButtonStyles
-from naff.api.events.discord import MessageCreate
-from naff.models.naff.tasks import Task
-from naff.models.naff.tasks.triggers import IntervalTrigger
+from interactions import Client, Extension, SlashContext, listen, Permissions, Embed, SlashCommand, slash_command, InteractionContext, OptionType, Button, ButtonStyle
+from interactions.api.events.discord import MessageCreate
+from interactions.models.internal.tasks import Task
+from interactions.models.internal.tasks.triggers import IntervalTrigger
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -15,7 +16,7 @@ from utils.customchecks import *
 cooldown_task_ongoing = list()
 
 def find_member(ctx, userid):
-    ctx.guild.get_member(userid)
+    return ctx.guild.get_member(userid)
 
 def find_role(ctx, roleid):
     roles = [r for r in ctx.guild.roles if r.id == roleid]
@@ -36,7 +37,7 @@ class Levels(Extension):
 
     @LevelSettings.subcommand('ignored_channel', 'add', 'Add a channel to ignored channels.')
     @channel()
-    async def LevelingAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionTypes.CHANNEL=None):
+    async def LevelingAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -59,7 +60,7 @@ class Levels(Extension):
 
     @LevelSettings.subcommand('ignored_channel', 'remove', 'Remove a channel from ignored channels.')
     @channel()
-    async def LevelingRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionTypes.CHANNEL=None):
+    async def LevelingRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -82,7 +83,7 @@ class Levels(Extension):
     
     @LevelSettings.subcommand('ignored_role', 'add', 'Make a role to be ignored by leveling.')
     @role()
-    async def LevelingAddIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
+    async def LevelingAddIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -103,7 +104,7 @@ class Levels(Extension):
 
     @LevelSettings.subcommand('ignored_role', 'remove', 'Remove a role from ignored roles.')
     @role()
-    async def LevelingRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
+    async def LevelingRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -124,7 +125,7 @@ class Levels(Extension):
     
     @LevelSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by leveling.')
     @user()
-    async def LevelingAddIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
+    async def LevelingAddIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -145,7 +146,7 @@ class Levels(Extension):
 
     @LevelSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
     @user()
-    async def LevelingRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
+    async def LevelingRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -166,68 +167,76 @@ class Levels(Extension):
     
     @listen()
     async def on_xp_gain(self, event: MessageCreate):
-        message = event.message
-        user = message.author
-        if user.bot:
+        message = event.message # get message object from event
+        user = message.author # get user object from message
+        if user.bot: # if user is a bot, return
             return
         
-        settings = await db.leveling_settings.find_one({'guildid':message.guild.id})
-        if not user.has_permission(Permissions.ADMINISTRATOR):
-            if settings.ignored_users is not None:
-                if user.id in settings.ignored_users:
+        settings = await db.leveling_settings.find_one({'guildid':message.guild.id}) # get leveling settings for guild
+        if not user.has_permission(Permissions.ADMINISTRATOR): # if user is not an admin
+            if settings.ignored_users is not None: # if ignored users list is not empty
+                if user.id in settings.ignored_users: # if user is in ignored users list, return
                     return
-            if settings.ignored_roles is not None:
-                if any(role for role in user.roles if role.id in settings.ignored_roles):
+            if settings.ignored_roles is not None: # if ignored roles list is not empty
+                if any(role for role in user.roles if role.id in settings.ignored_roles): # if user has an ignored role, return
                     return
-        if settings.ignored_channels is not None:
-            if message.channel.id in settings.ignored_channels:
+        if settings.ignored_channels is not None: # if ignored channels list is not empty
+            if message.channel.id in settings.ignored_channels: # if message is in ignored channel, return
                 return
         
-        cooldown = await db.levelwait.find_one({'guildid':message.guild.id, 'user':message.author.id})
-        if cooldown:
+        cooldown = await db.levelwait.find_one({'guildid':message.guild.id, 'user':message.author.id}) # check if user is on cooldown
+        if cooldown: # if user is on cooldown, return
             return
-        await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert()
+        await db.levelwait(guildid=message.guild.id, user=message.author.id, starttime=datetime.utcnow(), endtime=(datetime.utcnow() + timedelta(seconds=60))).insert() # add user to cooldown list
         
-        member = await db.leveling.find_one({'guildid':message.guild.id, 'memberid':message.author.id})
-        if not member:
+        member = await db.leveling.find_one({'guildid':message.guild.id, 'memberid':message.author.id}) # get leveling data for user
+        if not member: # if user has no leveling data, create new data and return
             await db.leveling(guildid=message.guild.id, memberid=message.author.id, total_xp=0, level=0, xp_to_next_level=0, messages=1).insert()
             return
         
-        level_stats = await db.levelingStats.find_one( {'level':member.level})
+        level_stats = await db.levelingStats.find_one( {'level':member.level}) # get leveling stats for user's current level
 
-        if member.xp_to_next_level is None:
+        if member.xp_to_next_level is None: # if user has no xp to next level, set to 0
             xptnl = 0
         else:
             xptnl = member.xp_to_next_level
-        xp_to_give = random.randint(15, 25)
-        member.total_xp = member.total_xp+xp_to_give
-        if member.messages is None:
+        xp_to_give = random.randint(15, 25) # generate random xp to give
+        member.total_xp = member.total_xp+xp_to_give # add xp to user's total xp
+        if member.messages is None: # if user has no message count, set to 0
             member.messages = 0
-        member.messages = member.messages+1
-        xp = xptnl + xp_to_give
-
-        if xp >= level_stats.xp_to_next_level:
-            member.level = member.level+1
-            member.xp_to_next_level = 0
-            roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':member.level})
-            if roles:
-                role = message.guild.get_role(roles.roleid)
-                if (role is not None) and (role not in message.author.roles):
-                    await message.author.add_role(role, f'[Melody][LEVELUP]Added a role assoiciated with level {member.level}')
+        member.messages = member.messages+1 # increment user's message count
+        xp = xptnl + xp_to_give # calculate total xp
+        
+        if xp >= level_stats.xp_to_next_level: # if user has enough xp to level up
+            member.level = member.level+1 # increment user's level
+            member.xp_to_next_level = 0 # reset user's xp to next level
+            roles = await db.leveling_roles.find_one({'guildid':message.guild.id, 'level':member.level}) # get roles associated with user's new level
+            if roles: # if roles exist for user's new level
+                role = message.guild.get_role(roles.roleid) # get role object
+                if (role is not None) and (role not in message.author.roles): # if role exists and user does not already have role
+                    await message.author.add_role(role, f'[Melody][LEVELUP]Added a role assoiciated with level {member.level}') # add role to user and send message
         else:
-            member.xp_to_next_level = xp
-        await member.save()
+            member.xp_to_next_level = xp # set user's xp to next level to calculated value
+        await member.save() # save user's leveling data
 
+        # Find all leveling roles for the current guild that have a level requirement less than or equal to the member's level
         level_roles = db.leveling_roles.find({"guildid":message.guild.id, 'level':{'$lte':member.level}})
+        
+        # Create an empty list to store the role IDs of the leveling roles the member is eligible for
         roles = []
+        
+        # Loop through the leveling roles the member is eligible for and append their role IDs to the roles list
         async for role in level_roles:
             roles.append(role.roleid)
+        
+        # If the member is eligible for any leveling roles, loop through the role IDs and add the corresponding roles to the member's roles if they don't already have them
         if level_roles != []:
             for role_id in roles:
                 role = message.guild.get_role(role_id)
                 if role not in message.author.roles:
                     await message.author.add_role(role)
         
+        # If the member's display name is None or different from their current display name, update their display name and save the changes
         if (member.display_name is None) or (member.display_name != message.author.display_name):
             member.display_name = message.author.display_name
             await member.save()
@@ -242,12 +251,12 @@ class Levels(Extension):
                 await instance.delete()
                 cooldown_task_ongoing.remove(mem)
 
-    @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="[admin]allow's me to create leveling roles",
+    @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="allow's me to create leveling roles",
         default_member_permissions=Permissions.MANAGE_ROLES
     )
     @role()
     @role_level()
-    async def leveling_add_role(self, ctx:InteractionContext, role: OptionTypes.ROLE, role_level:str): 
+    async def leveling_add_role(self, ctx:InteractionContext, role: OptionType.ROLE, role_level:str): 
         await ctx.defer()
         if (int(role_level) < 1) or (int(role_level) > 300):
             await ctx.send('role level has to be more than 0 and less than 300')
@@ -275,7 +284,7 @@ class Levels(Extension):
     @slash_command(name='ranklist', description="leveling roles list")
     async def ranks_list(self, ctx:InteractionContext):
         await ctx.defer()
-        from naff.ext.paginators import Paginator
+        from interactions.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -332,11 +341,11 @@ class Levels(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="[admin]allow's me to remove leveling roles",
+    @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="allow's me to remove leveling roles",
         default_member_permissions=Permissions.MANAGE_ROLES
     )
     @role()
-    async def leveling_remove_role(self, ctx:InteractionContext, role: OptionTypes.ROLE=None):
+    async def leveling_remove_role(self, ctx:InteractionContext, role: OptionType.ROLE=None):
         await ctx.defer()
         if role is None:
             await ctx.send('you have to include a role')
@@ -355,51 +364,35 @@ class Levels(Extension):
 
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
-    async def newrank(self, ctx: InteractionContext, member:OptionTypes.USER=None):
-        await ctx.defer()
-        # assets: https://imgur.com/a/3Y6W7lZ
-        if member is None:
+    async def newrank(self, ctx: SlashContext, member:OptionType.USER=None):
+        await ctx.defer() # defer the response to avoid timeout
+        if member is None: # if no member parameter is provided, use the author of the command
             member = ctx.author
         
-        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id})
-        if levels is None:
+        levels = await db.leveling.find_one({'guildid':ctx.guild_id, 'memberid':member.id}) # get the leveling data for the member
+        if levels is None: # if no leveling data is found, send a message and return
             await ctx.send("You don't have any xp yet. You can start having conversations with people to gain xp.", ephemeral=True)
             return
 
-        level_stats = await db.levelingStats.find_one({'level':levels.level})
-        if (levels.display_name is None) or (levels.display_name != member.display_name):
+        level_stats = await db.levelingStats.find_one({'level':levels.level}) # get the leveling stats for the member's current level
+        if (levels.display_name is None) or (levels.display_name != member.display_name): # if the member's display name has changed, update it in the database
             levels.display_name = member.display_name
             await levels.save()
-
-        #lvl_set = await db.find_one(leveling_settings, {'guildid':ctx.guild.id})
-        #if lvl_set is None:
-            #await db.save(leveling_settings(guildid=ctx.guild.id))
-
-        #if lvl_set.multiplier is None:
-            #multiplier = 1
-        #else:
-            #multiplier = lvl_set.multiplier
         
-        def getPercent(first, second):
+        def getPercent(first, second): # helper function to calculate percentage
             return first / second * 100
-        percent = getPercent(levels.xp_to_next_level,level_stats.xp_to_next_level)
-        def findx(percentage):
+        percent = getPercent(levels.xp_to_next_level,level_stats.xp_to_next_level) # calculate the percentage of xp towards the next level
+        def findx(percentage): # helper function to calculate the progress bar width
             if percentage == 0:
                 return 1
             return 550/(100/percentage)
 
-        if member.guild_avatar is not None:
-            try:
-                avatarurl = f'{member.guild_avatar.url}.png'
-            except:
-                avatarurl = 'https://cdn.discordapp.com/embed/avatars/1.png'
+        if member.guild_avatar is not None: # get the member's avatar url
+            avatarurl = f'{member.guild_avatar.url}.png'
         else:
-            try:
-                avatarurl = f'{member.avatar.url}.png'
-            except:
-                avatarurl = 'https://cdn.discordapp.com/embed/avatars/1.png'
+            avatarurl = f'{member.avatar.url}.png'
         
-        def round(im):
+        def round(im): # helper function to round the member's avatar
             im = im.resize((210*16,210*16), resample=Image.ANTIALIAS)
             mask = Image.new("L", im.size, 0)
             draw = ImageDraw.Draw(mask)
@@ -409,10 +402,10 @@ class Levels(Extension):
             image = out.resize((210,210), resample=Image.ANTIALIAS).convert("RGBA")
             return image
 
-        IW, IH = (956, 435)
+        IW, IH = (956, 435) # set the image width and height
         aspect_ratio = IW/IH
 
-        if levels.lc_background is not None:
+        if levels.lc_background is not None: # get the background image for the level card
             try:
                 background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((0,0,IW,IH)).convert("RGBA")
             except:
@@ -420,17 +413,17 @@ class Levels(Extension):
         else:
             background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
 
-        overlay = Image.open(requests.get('https://i.imgur.com/fsuIzSv.png', stream=True).raw).convert("RGBA")
+        overlay = Image.open(requests.get('https://i.imgur.com/fsuIzSv.png', stream=True).raw).convert("RGBA") # add an overlay to the background
         background.paste(overlay, (0, 0), overlay)
 
-        pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230)).convert("RGBA")
-        pfp = round(pfp)
-        background.paste(pfp, (78, 115), pfp)
+        try:
+            pfp = Image.open(requests.get(avatarurl, stream=True).raw).resize((230,230)).convert("RGBA") # get the member's avatar image
+        except:
+            pfp = Image.open(requests.get('https://cdn.discordapp.com/embed/avatars/1.png', stream=True).raw).resize((230,230)).convert("RGBA")
+        pfp = round(pfp) # round the member's avatar
+        background.paste(pfp, (78, 115), pfp) # paste the avatar onto the background
 
-        # progress_bar = Image.open(requests.get('https://i.imgur.com/YZIuHJV.png', stream=True).raw).resize((int(findx(int(percent))), 23), resample=Image.ANTIALIAS).convert("RGBA")
-        # background.paste(progress_bar, (277, 288), progress_bar)
-        
-        def draw_progress_bar(fx):
+        def draw_progress_bar(fx): # helper function to draw the progress bar
             rad = 115
             im = Image.open(requests.get('https://i.imgur.com/sRseF8Y.png', stream=True).raw).convert('RGBA')
             im = im.resize((fx*16,30*16), resample=Image.ANTIALIAS)
@@ -447,11 +440,11 @@ class Levels(Extension):
             im = im.resize((fx,30), resample=Image.ANTIALIAS)
             return im
 
-        fx = findx(int(percent))
-        progress_bar = draw_progress_bar(int(fx))
-        background.paste(progress_bar, (330, 370), progress_bar)
+        fx = findx(int(percent)) # calculate the progress bar width
+        progress_bar = draw_progress_bar(int(fx)) # draw the progress bar
+        background.paste(progress_bar, (330, 370), progress_bar) # paste the progress bar onto the background
 
-        def rectangle_fill(im):
+        def rectangle_fill(im): # helper function to fill the background with a rectangle
             mask = Image.new("L", im.size, 0)
             draw = ImageDraw.Draw(mask)
             draw.rectangle((0,0)+im.size, fill=255)
@@ -459,35 +452,32 @@ class Levels(Extension):
             out.putalpha(mask)
             return out
 
-        background = rectangle_fill(background)
+        background = rectangle_fill(background) # fill the background with a rectangle
 
-        font = ImageFont.truetype('Everson-Mono-Bold.ttf', 45)
-        
+        font = ImageFont.truetype('Everson-Mono-Bold.ttf', 45) # set the font for the text
+
         I1 = ImageDraw.Draw(background)
 
         lvlfont = ImageFont.truetype('Everson-Mono-Bold.ttf', 45)
-        I1.text((73,352), f'LVL:{levels.level}', font=lvlfont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
-        # lvlfont_2 = ImageFont.truetype('Everson-Mono-Bold.ttf', 25)
-        # I1.text((52,360), 'Lvl', font=lvlfont_2, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        I1.text((73,352), f'LVL:{levels.level}', font=lvlfont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255)) # add the member's level to the level card
 
-        lvlmsg = f'XP: {levels.xp_to_next_level}/{level_stats.xp_to_next_level}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}'
-        I1.text((341,110), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
+        lvlmsg = f'XP: {levels.xp_to_next_level}/{level_stats.xp_to_next_level}\nTotal XP: {levels.total_xp}\nMessages: {levels.messages}' # create the level message
+        I1.text((341,110), lvlmsg, font=font, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255)) # add the level message to the level card
 
         namefont = ImageFont.truetype('Everson-Mono-Bold.ttf', 50)
         name = f'{member.display_name}'
-        if len(name) > 27:
+        if len(name) > 27: # shorten the member's name if it is too long
             name = name[:-4]
-        # tw, th = I1.textsize(name, font)
-        # position = ((IW-tw)/2,(IH-th)/14)
-        I1.text((73,28), name, font=namefont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255))
-        background.save(f'levelcard_{member.id}.png')
-        await ctx.send(file=f'levelcard_{member.id}.png')
-        os.remove(f'levelcard_{member.id}.png')
+
+        I1.text((73,28), name, font=namefont, stroke_width=2, stroke_fill=(30, 27, 26), fill=(255, 255, 255)) # add the member's name to the level card
+        background.save(f'levelcard_{member.id}.png') # save the level card as a file
+        await ctx.send(file=f"levelcard_{member.id}.png") # send the level card as a file
+        os.remove(f'levelcard_{member.id}.png') # remove the level card file
 
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
         components = Button(
-            style=ButtonStyles.URL,
+            style=ButtonStyle.URL,
             label="Click Me!",
             url=f"https://www.beni2am.space/melody/leaderboard/{ctx.guild_id}/",
         )

@@ -28,7 +28,7 @@ inputbtn.addEventListener("change", function(event) {
     return;
   };
   // cropperimage.src = URL.createObjectURL(inputimage);
-  $modal.addClass('is-active is-clipped');
+  $addClass('is-active is-clipped');
   cropOptions = {
     viewport: {
       width: 382,
@@ -70,7 +70,7 @@ $('#crop').on('click', function () {
   }).then(function(blob) {
     croppedImageURL = URL.createObjectURL(blob);
     backgroundimg.src = croppedImageURL;
-    $modal.removeClass('is-active is-clipped');
+    $removeClass('is-active is-clipped');
     $('#savebtn').on('click', function(){
       var myform = document.getElementById('imageform');
       var form = new FormData(myform);
@@ -123,7 +123,7 @@ $('#crop').on('click', function () {
 $('#cropCancel').on('click', function () {
   cropperimage.innerHTML = "";
   cropperimage.classList.remove("croppie-container");
-  $modal.removeClass('is-active is-clipped');
+  $removeClass('is-active is-clipped');
   inputimage = null;
   inputbtn.value = null;
 });

@@ -1,6 +1,6 @@
 # inspired by https://github.com/artem30801/SkyboxBot/blob/master/main.py
 from bson.int64 import Int64 as int64
-from naff import Client, Extension
+from interactions import Client, Extension
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -14,7 +14,7 @@ class Document(BeanieDocument):
 
 class violation_settings(BaseModel):
     violation_count: Optional[int64] = 0
-    violation_punishment: Optional[str] = 0
+    violation_punishment: Optional[str] = ''
     class Config:
         orm_mode = True
 
@@ -58,9 +58,9 @@ class BeanieDocuments():
         min: int64 = 15
         max: int64 = 25
         multiplier: int64 = 1
-        ignored_channels: List|int = []
-        ignored_roles: List|int = []
-        ignored_users: List|int = []
+        ignored_channels: list[int] = []
+        ignored_roles: list[int] = []
+        ignored_users: list[int] = []
 
     class leveling(Document):
         guildid: Optional[int64] = None
@@ -111,7 +111,7 @@ class BeanieDocuments():
 
     class prefixes(Document):
         guildid: Optional[int64] = None
-        mods: List = []
+        mods: list[int] = []
         activecogs: str = ""
         activecommands: str = ""
 
@@ -199,36 +199,33 @@ class BeanieDocuments():
     
     class bannedNames(Document):
         guild: int64
-        names: List|str = []
+        names: list[str] = []
         default_name:str = 'Default Name'
         violation_count: int64 = 0
-        violation_punishment: List|str = []
+        violation_punishment: list[str] = []
     
     class amConfig(Document):
         guild: int64
-        ignored_channels: List|int = list()
-        ignored_roles: List|int = list()
-        ignored_users: List|int = list()
+        active_events: list[str] = []
+        ignored_channels: list[int] = list()
+        ignored_roles: list[int] = list()
+        ignored_users: list[int] = list()
         phishing: violation_settings
-        banned_words: violation_settings
         banned_names: violation_settings
         ban_time: int64 = 0
         mute_time: int64 = 0
     
     class modmail(Document):
-        guild: int64
+        guildid: int64
         user: int64
         report_id: str
-        contents: str
-        images: List|str = []
-        anon: bool = False
-        messages:List|str = []
-        active: bool = True
+        thread_id: int64
     
     class modmail_conf(Document):
-        guild: int64
-        category_id: int64 = None
-        active_modmail_channels: List|int64 = []
+        guildid: int64
+        channelid: int64
+        logchannel: int64
+        mods: list[int] = []
     
     class dashSession(Document):
         sessionid: str
@@ -244,6 +241,12 @@ class BeanieDocuments():
                 meta_field="sessionid",
                 expire_after_seconds=7200
             )
+    
+    class sp2yt(Document):
+        guildid: int64
+        music_channels: list[int] = []
+        ignored_roles: list[int] = []
+        ignored_users: list[int] = []
 
 class BeanieDocumentsExtension(Extension):
     def __init__(self, bot: Client):
@@ -251,6 +254,7 @@ class BeanieDocumentsExtension(Extension):
 
 def setup(bot):
     BeanieDocumentsExtension(bot)
+    bot.add_model(BeanieDocuments.sp2yt)
     bot.add_model(BeanieDocuments.dashSession)
     bot.add_model(BeanieDocuments.modmail)
     bot.add_model(BeanieDocuments.modmail_conf)

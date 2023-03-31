@@ -1,18 +1,16 @@
 import asyncio
 import math
-from tabulate import tabulate as tb
 import random
 
-from naff.models.discord.timestamp import Timestamp
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Embed, Permissions, slash_command, InteractionContext,  OptionTypes, check, modal, ModalContext, SlashCommandChoice, SlashCommand
-from naff.ext.paginators import Paginator
-from naff.models.discord.base import DiscordObject
+from interactions import Client, Extension, listen, Embed, Permissions, slash_command, SlashContext, InteractionContext,  OptionType, TextStyles, Modal, ModalContext, SlashCommandChoice, SlashCommand, InputText
+from interactions.ext.paginators import Paginator
+from interactions.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
-from naff.client.errors import NotFound, BadRequest, HTTPException
+from interactions.client.errors import NotFound, BadRequest, HTTPException
 
 
 def random_string_generator():
@@ -29,7 +27,7 @@ async def user_has_perms(author, perm):
     return False
 
 def find_member(ctx, userid):
-    ctx.guild.get_member(userid)
+    return ctx.guild.get_member(userid)
 
 async def seperate_string_number(string):
     previous_character = string[0]
@@ -66,36 +64,36 @@ class Moderation(Extension):
         self.unban_task.start()
     
     @slash_command(name='modapp', description="Apply to be a moderator", scopes=[435038183231848449,149167686159564800])
-    async def modapps_modal(self, ctx:InteractionContext):
+    async def modapps_modal(self, ctx:SlashContext):
         await ctx.defer()
-        m = modal.Modal(title='Mod Application', components=[
-            modal.InputText(
+        m = Modal(title='Mod Application', components=[
+            InputText(
                 label="Age & Country (Looking for variety!)",
-                style=modal.TextStyles.SHORT,
+                style=TextStyles.SHORT,
                 custom_id=f'age_country',
                 placeholder="What is your age and what country are you from?",
                 required=True,
                 max_length=100
             ),
-            modal.InputText(
+            InputText(
                 label="Can you handle uneasy/difficult situations?",
-                style=modal.TextStyles.SHORT,
+                style=TextStyles.SHORT,
                 custom_id=f'wimp',
                 placeholder="Can you handle uncomfortable and difficult situations?",
                 required=True,
                 max_length=100
             ),
-            modal.InputText(
+            InputText(
                 label="How yould you handle this?",
-                style=modal.TextStyles.PARAGRAPH,
+                style=TextStyles.PARAGRAPH,
                 custom_id=f'situation',
                 placeholder="How would you handle the situation described in the announcement?(https://pastebin.com/raw/MSa1Gbjn)",
                 required=True,
                 max_length=1024
             ),
-            modal.InputText(
+            InputText(
                 label="Why do you want to be part of our staff?",
-                style=modal.TextStyles.PARAGRAPH,
+                style=TextStyles.PARAGRAPH,
                 custom_id=f'reason',
                 placeholder="Why do you want to be part of our staff?",
                 required=True,
@@ -107,7 +105,7 @@ class Moderation(Extension):
         try:
             modal_recived: ModalContext = await ctx.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
         except asyncio.TimeoutError:
-            return await ctx.author.send(f":x: You took longer than 10 minutes to respond to the mod application modal. Please try again.")
+            return await ctx.author.send(f":x: You took longer than 10 minutes to respond to the mod application  Please try again.")
         age_country = modal_recived.responses.get('age_country')
         wimp = modal_recived.responses.get('wimp')
         situation = modal_recived.responses.get('situation')
@@ -170,7 +168,7 @@ class Moderation(Extension):
     @user()
     @amount()
     @reason()
-    async def userpurge(self, ctx:InteractionContext, user:OptionTypes.USER=None, amount:int=0, reason:str='No reason given'):
+    async def userpurge(self, ctx:InteractionContext, user:OptionType.USER=None, amount:int=0, reason:str='No reason given'):
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -225,7 +223,7 @@ class Moderation(Extension):
     @bantime()
     @deletedays()
     @reason()
-    async def ban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
+    async def ban(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't ban yourself", ephemeral=True)
@@ -327,7 +325,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def unban(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
+    async def unban(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given'):
         await ctx.defer()
         if user == ctx.author:
             embed = Embed(description=f":x: This is not how that works buddy...",
@@ -363,7 +361,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def kick(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
+    async def kick(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given'):
         await ctx.defer()
         member = find_member(ctx, user.id)
         if member is not None:
@@ -420,7 +418,7 @@ class Moderation(Extension):
     @user()
     @mutetime()
     @reason()
-    async def mute(self, ctx:InteractionContext, user:OptionTypes.USER=None, mutetime:str=None, reason:str='No reason given'):
+    async def mute(self, ctx:InteractionContext, user:OptionType.USER=None, mutetime:str=None, reason:str='No reason given'):
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't mute yourself", ephemeral=True)
@@ -510,7 +508,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def unmute(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str='No reason given'):
+    async def unmute(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given'):
         await ctx.defer()
         member = find_member(ctx, user.id)
         if member is not None:
@@ -530,7 +528,7 @@ class Moderation(Extension):
         name="type",
         description="Warn type",
         required=True,
-        opt_type=OptionTypes.STRING,
+        opt_type=OptionType.STRING,
         choices=[
             SlashCommandChoice(name="Minor", value='Minor'),
             SlashCommandChoice(name="Major", value='Major'),
@@ -538,7 +536,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def warnadd(self, ctx:InteractionContext, type:str, user:OptionTypes.USER, reason:str=None):
+    async def warnadd(self, ctx:InteractionContext, type:str, user:OptionType.USER, reason:str=None):
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't warn yourself", ephemeral=True)
@@ -636,7 +634,7 @@ class Moderation(Extension):
     @user()
     @warnid()
     @reason()
-    async def warn_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, warnid:str=None, reason:str=None):
+    async def warn_remove(self, ctx:InteractionContext, user:OptionType.USER=None, warnid:str=None, reason:str=None):
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't remove a warn from yourself", ephemeral=True)
@@ -665,7 +663,7 @@ class Moderation(Extension):
     
     @warn.subcommand('removeall', sub_cmd_description='Remove all warns from a member.')
     @user()
-    async def warnremoveall(self, ctx:InteractionContext, user: OptionTypes.USER):
+    async def warnremoveall(self, ctx:InteractionContext, user: OptionType.USER):
         await ctx.defer()
         if ctx.author != 400713431423909889:
             await ctx.send("This command cannot be used.", ephemeral=True)
@@ -680,7 +678,7 @@ class Moderation(Extension):
         default_member_permissions=Permissions.MODERATE_MEMBERS
     )
     @user()
-    async def warn_list(self, ctx:InteractionContext, user:OptionTypes.USER):
+    async def warn_list(self, ctx:InteractionContext, user:OptionType.USER):
         await ctx.defer()
         def chunks(l, n):
             n = max(1, n)
@@ -738,7 +736,7 @@ class Moderation(Extension):
         default_member_permissions=Permissions.MODERATE_MEMBERS
     )
     @user()
-    async def strikes_list(self, ctx:InteractionContext, user:OptionTypes.USER=None):
+    async def strikes_list(self, ctx:InteractionContext, user:OptionType.USER=None):
         await ctx.defer()
         def chunks(l, n):
             n = max(1, n)
@@ -798,7 +796,7 @@ class Moderation(Extension):
     
     @slash_command('removeallstrikes', sub_cmd_description='Remove all strikes from a member.', scopes=[435038183231848449])
     @member()
-    async def strikesremoveall(self, ctx:InteractionContext, user: OptionTypes.USER):
+    async def strikesremoveall(self, ctx:InteractionContext, user: OptionType.USER):
         await ctx.defer()
         if ctx.author.id != 400713431423909889:
             await ctx.send("This command cannot be used.", ephemeral=True)
@@ -857,7 +855,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def limbo_add(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
+    async def limbo_add(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str=None):
         await ctx.defer()
         if reason is None:
             await ctx.send('You have to include a reason', ephemeral=True)
@@ -925,7 +923,7 @@ class Moderation(Extension):
     )
     @user()
     @reason()
-    async def limbo_remove(self, ctx:InteractionContext, user:OptionTypes.USER=None, reason:str=None):
+    async def limbo_remove(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str=None):
         await ctx.defer()
         if reason is None:
             await ctx.send('You have to include a reason', ephemeral=True)
@@ -972,8 +970,8 @@ class Moderation(Extension):
     #                 embed.set_footer(text=f'User ID: {message.author.id}')
     #                 await log_channel.send(embed=embed)
 
-    from naff.models.naff.tasks import Task
-    from naff.models.naff.tasks.triggers import IntervalTrigger
+    from interactions.models.internal.tasks import Task
+    from interactions.models.internal.tasks.triggers import IntervalTrigger
 
     @Task.create(IntervalTrigger(seconds=60))
     async def unban_task(self):

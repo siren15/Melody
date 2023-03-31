@@ -2,13 +2,11 @@ import asyncio
 from datetime import datetime, timezone
 import math
 from dateutil.relativedelta import relativedelta
-from naff import Client, Extension, Permissions, Embed, slash_command, InteractionContext, OptionTypes, check, ModalContext, Guild, listen, SlashCommand, modal
-from naff.models.naff.tasks import Task
-from naff.models.naff.tasks.triggers import IntervalTrigger
+from interactions import Client, Extension, Permissions, Embed, slash_command, SlashContext, OptionType, check, ModalContext, listen, SlashCommand, Modal, InputText, ShortText, ParagraphText, TextStyles, SlashContext
 from utils.slash_options import *
 from utils.customchecks import *
 from duckpy import AsyncClient
-from naff.client.const import MISSING
+from interactions.client.const import MISSING
 
 duckduckgo = AsyncClient()
 
@@ -29,7 +27,7 @@ class Basic(Extension):
     @text()
     @channel()
     @check(member_permissions(Permissions.ADMINISTRATOR))
-    async def echo(self, ctx: InteractionContext, text: str, channel:OptionTypes.CHANNEL=None):
+    async def echo(self, ctx: SlashContext, text: str, channel:OptionType.CHANNEL=None):
         if (channel is None):
             channel = ctx.channel
         await channel.send(text)
@@ -38,7 +36,7 @@ class Basic(Extension):
     
     @slash_command(name='userinfo', description="lets me see info about server members")
     @member()
-    async def userinfo(self, ctx:InteractionContext, member:OptionTypes.USER=None):
+    async def userinfo(self, ctx:SlashContext, member:OptionType.USER=None):
         
         if member is None:
             member = ctx.author
@@ -83,7 +81,7 @@ class Basic(Extension):
         await ctx.send(embed=embed)
     
     @slash_command(name='serverinfo', description="lets me see info about the server")
-    async def serverinfo(self, ctx:InteractionContext):
+    async def serverinfo(self, ctx:SlashContext):
         cdiff = relativedelta(datetime.now(tz=timezone.utc), ctx.guild.created_at.replace(tzinfo=timezone.utc))
         creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
         owner = await guild_owner(ctx)
@@ -101,7 +99,7 @@ class Basic(Extension):
         await ctx.send(embed=embed)
     
     @slash_command(name='botinfo', description="lets me see info about the bot")
-    async def botinfo(self, ctx: InteractionContext):
+    async def botinfo(self, ctx: SlashContext):
         member = ctx.guild.get_member(self.bot.user.id)
 
         if member.top_role.name != '@everyone':
@@ -142,16 +140,16 @@ class Basic(Extension):
         embed.add_field(name="Joined server on:", value=f"<t:{math.ceil(member.joined_at.timestamp())}> `{join_time} ago`", inline=False)
         embed.add_field(name=f"Roles: [{rolecount}]", value=roles, inline=False)
         embed.add_field(name="Highest role:", value=toprole, inline=False)
-        embed.add_field(name="Library:", value="[NAFF](https://naff.info/)")
+        embed.add_field(name="Library:", value="[interactions.py](https://github.com/interactions-py/interactions.py)")
         embed.add_field(name="Servers:", value=len(self.bot.user.guilds))
         embed.add_field(name="Bot Latency:", value=f"{self.bot.latency * 1000:.0f} ms")
         embed.add_field(name='GitHub: https://github.com/siren15/melody', value='‎')
-        embed.set_footer(text="Melody | powered by NAFF")
+        embed.set_footer(text="Melody | powered by i.py")
         await ctx.send(embed=embed)
     
     @slash_command(name='avatar', description="Show's you your avatar, or members, if provided")
     @member()
-    async def avatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
+    async def avatar(self, ctx:SlashContext, member:OptionType.USER=None):
         
         if member is None:
             member = ctx.author
@@ -167,7 +165,7 @@ class Basic(Extension):
 
     @slash_command(name='useravatar', description="Show's you your avatar, or users, if provided")
     @member()
-    async def useravatar(self, ctx:InteractionContext, member:OptionTypes.USER=None):
+    async def useravatar(self, ctx:SlashContext, member:OptionType.USER=None):
         
         if member is None:
             member = ctx.author
@@ -180,7 +178,7 @@ class Basic(Extension):
     
     @slash_command(name='search', description="Search with DuckDuckGo, returns the first result.")
     @text()
-    async def duckduckgosearch(self, ctx:InteractionContext, text: str):
+    async def duckduckgosearch(self, ctx:SlashContext, text: str):
         await ctx.defer()
         results = await duckduckgo.search(text)
         embed = Embed(
@@ -192,45 +190,41 @@ class Basic(Extension):
         await ctx.send(embed=embed)
     
     @slash_command(name='ping', description="Ping! Pong!")
-    async def ping(self, ctx:InteractionContext):
+    async def ping(self, ctx:SlashContext):
         
         await ctx.send(f"Pong! \nBot's latency: {self.bot.latency * 1000} ms")
     
     create_embed = SlashCommand(name='embed', description='Create and edit embeds.', default_member_permissions=Permissions.ADMINISTRATOR)
     
     @create_embed.subcommand(sub_cmd_name='create', sub_cmd_description='Create embeds')
-    async def embed(self, ctx:InteractionContext):
-        m = modal.Modal(title='Create an embed', components=[
-            modal.InputText(
+    async def embed_create(self, ctx:SlashContext):
+        components=[
+            ShortText(
                 label="Embed Title",
-                style=modal.TextStyles.SHORT,
                 custom_id=f'embed_title',
                 required=False
             ),
-            modal.InputText(
+            ParagraphText(
                 label="Embed Text",
-                style=modal.TextStyles.PARAGRAPH,
                 custom_id=f'embed_text',
                 required=False
             ),
-            modal.InputText(
+            ShortText(
                 label="Embed Image",
-                style=modal.TextStyles.SHORT,
                 custom_id=f'embed_image',
                 required=False,
                 placeholder='Image URL'
             ),
-            modal.InputText(
+            ShortText(
                 label="Embed Colour",
-                style=modal.TextStyles.SHORT,
                 custom_id=f'embed_colour',
                 required=False,
                 placeholder='Colour HEX code'
             )
-        ],
-        custom_id=f'{ctx.author.id}_embed_modal'
-        )
-        await ctx.send_modal(modal=m)
+        ]
+        m = Modal(title='Create an embed', custom_id=f'{ctx.author.id}_embed_modal')
+        m.add_components(components)
+        await ctx.send_modal(m)
         try:
             modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
         except asyncio.TimeoutError:
@@ -265,36 +259,35 @@ class Basic(Extension):
     @create_embed.subcommand(sub_cmd_name='edit', sub_cmd_description='Edit embeds')
     @embed_message_id()
     @channel()
-    async def embed_edit(self, ctx:InteractionContext, embed_message_id:str=None, channel:OptionTypes.CHANNEL=None):
+    async def embed_edit(self, ctx:SlashContext, embed_message_id:str=None, channel:OptionType.CHANNEL=None):
         if embed_message_id is None:
             await ctx.send('You have to include the embed message ID, so that I can edit the embed', ephemeral=True)
             return
         elif channel is None:
             channel = ctx.channel
-        from naff.models.discord import modal
-        m = modal.Modal(title='Create an embed', components=[
-            modal.InputText(
+        m = Modal(title='Create an embed', components=[
+            InputText(
                 label="Embed Title",
-                style=modal.TextStyles.SHORT,
+                style=TextStyles.SHORT,
                 custom_id=f'embed_title',
                 required=False
             ),
-            modal.InputText(
+            InputText(
                 label="Embed Text",
-                style=modal.TextStyles.PARAGRAPH,
+                style=TextStyles.PARAGRAPH,
                 custom_id=f'embed_text',
                 required=False
             ),
-            modal.InputText(
+            InputText(
                 label="Embed Image",
-                style=modal.TextStyles.SHORT,
+                style=TextStyles.SHORT,
                 custom_id=f'embed_image',
                 required=False,
                 placeholder='Image URL'
             ),
-            modal.InputText(
+            InputText(
                 label="Embed Colour",
-                style=modal.TextStyles.SHORT,
+                style=TextStyles.SHORT,
                 custom_id=f'embed_colour',
                 required=False,
                 placeholder='Colour HEX code'
@@ -341,8 +334,8 @@ class Basic(Extension):
 import os
 from importlib import import_module
 from inspect import isclass
-from naff import ComponentContext, Button, ButtonStyles, ActionRow, spread_to_rows, errors
-from naff.api.events.internal import Component
+from interactions import ComponentContext, Button, ButtonStyle, ActionRow, spread_to_rows, errors
+from interactions.api.events.internal import Component
 from inspect import getmembers
 
 def get_commands():
@@ -367,7 +360,7 @@ def get_commands():
     return commands
    
 class Update(Extension):
-    from naff.models.naff.checks import is_owner
+    from interactions.models.internal.checks import is_owner
     @slash_command(
         "reloader",
         description="Reloads an extension.",
@@ -384,7 +377,7 @@ class Update(Extension):
             for command in commands:
                command_buttons.append(
                 Button(
-                    style=ButtonStyles.BLURPLE,
+                    style=ButtonStyle.BLURPLE,
                     label=command[0],
                     custom_id=command[0],
                 )

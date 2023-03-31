@@ -1,4 +1,4 @@
-from naff import Client, slash_command, InteractionContext, OptionTypes, Permissions, Extension, Embed, check, listen, AutoDefer, SlashCommand
+from interactions import Client, slash_command, InteractionContext, OptionType, Permissions, Extension, Embed, check, listen, AutoDefer, SlashCommand
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -9,7 +9,7 @@ class PersistentRoles(Extension):
     persistent_roles = SlashCommand(name='persistentroles',  description='Manage persistent roles', default_member_permissions=Permissions.ADMINISTRATOR)
     @persistent_roles.subcommand(sub_cmd_name='add', sub_cmd_description="Make a role persistent")
     @role()
-    async def persistent_roles_add(self, ctx, role:OptionTypes.ROLE=None):
+    async def persistent_roles_add(self, ctx, role:OptionType.ROLE=None):
         # if role is None:
         #     return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
         if role == ctx.guild.my_role:
@@ -35,7 +35,7 @@ class PersistentRoles(Extension):
 
     @persistent_roles.subcommand(sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles")
     @role()
-    async def persistent_roles_remove(self, ctx, role:OptionTypes.ROLE=None):
+    async def persistent_roles_remove(self, ctx, role:OptionType.ROLE=None):
         if role is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
         elif role == ctx.guild.my_role:
@@ -61,7 +61,7 @@ class PersistentRoles(Extension):
     
     @persistent_roles.subcommand(sub_cmd_name='list', sub_cmd_description="List all the persistent roles")
     async def persistent_roles_list(self, ctx):
-        from naff.ext.paginators import Paginator
+        from interactions.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))

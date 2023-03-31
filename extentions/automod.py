@@ -4,18 +4,17 @@ import math
 import random
 import requests
 
-from naff.client.const import MISSING
-from naff.models.discord import modal
+from interactions.client.const import MISSING
 from rapidfuzz import fuzz, process
 from dateutil.relativedelta import *
 from datetime import datetime, timedelta
-from naff import Client, Extension, listen, Embed, Permissions, InteractionContext,  OptionTypes, ModalContext, SlashCommand
-from naff.models.discord.base import DiscordObject
+from interactions import Client, Extension, StringSelectMenu, StringSelectOption, listen, Embed, Permissions, InteractionContext, OptionType, ModalContext, SlashCommand, InputText, TextStyles, Modal
+from interactions.models.discord.base import DiscordObject
 from extentions.touk import BeanieDocuments as db, violation_settings
 from utils.slash_options import *
 from utils.customchecks import *
-from naff.api.events.discord import MemberUpdate, MemberAdd, MessageCreate, AutoModExec
-from naff.client.errors import  HTTPException
+from interactions.api.events.discord import MemberUpdate, MemberAdd, MessageCreate, AutoModExec
+from interactions.client.errors import  HTTPException
 
 def geturl(string):
     url = re.compile(r"(?:https?:\/\/(?:www\.)?)?(?P<domain>[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9()]{1,6})\b(?:[-a-z0-9()@:%_\+.~#?&//=]*)",flags=re.IGNORECASE,)
@@ -40,7 +39,7 @@ async def user_has_perms(author, perm):
 
 
 def find_member(ctx, userid):
-    ctx.guild.get_member(userid)
+    return ctx.guild.get_member(userid)
 
 
 async def seperate_string_number(string):
@@ -286,7 +285,7 @@ class AutoMod(Extension):
         if user.bot:
             return
         reason = f'[AUTOMOD]phishing link sent in {channel.name}'
-        if await is_event_active(guild, 'phishing_filter'):
+        if await is_automod_event_active(guild, 'phishing_filter'):
             settings = await db.amConfig.find_one({'guild':guild.id})
             if settings.ignored_users is not None:
                 if member.id in settings.ignored_users:
@@ -332,8 +331,8 @@ class AutoMod(Extension):
     psc = SlashCommand(name = 'phishing_links_config', description="Configure Melodys phishing links automod.", default_member_permissions=Permissions.ADMINISTRATOR)
     
     @psc.subcommand('violation_count', sub_cmd_description='How many violations before punishment.')
-    @slash_option('violations_count', 'Must be between 0-10.', OptionTypes.STRING)
-    async def phish_links_conf(self, ctx: InteractionContext, violations_count:OptionTypes.STRING=None):
+    @slash_option('violations_count', 'Must be between 0-10.', OptionType.STRING)
+    async def phish_links_conf(self, ctx: InteractionContext, violations_count:OptionType.STRING=None):
         violations_count = get_num(violations_count)
         if (int(violations_count) > 10) or (int(violations_count) < 0):
             await ctx.send(f"{violations_count} is not a valid violation count. Violation count has to be between 0-10.")
@@ -345,32 +344,119 @@ class AutoMod(Extension):
         await ctx.send(f'Violation count set to: {violations_count}')
     
     @psc.subcommand('punishments', sub_cmd_description='What punishments to use?')
-    @slash_option('warn', description='Do you wanna warn?', opt_type=OptionTypes.BOOLEAN)
-    @slash_option('mute', description='Do you wanna mute?', opt_type=OptionTypes.BOOLEAN)
-    @slash_option('ban', description='Do you wanna ban?', opt_type=OptionTypes.BOOLEAN)
-    @slash_option('kick', description='Do you wanna kick?', opt_type=OptionTypes.BOOLEAN)
-    async def phish_links_conf(self, ctx: InteractionContext, warn:OptionTypes.BOOLEAN=False, mute:OptionTypes.BOOLEAN=False, ban:OptionTypes.BOOLEAN=False, kick:OptionTypes.BOOLEAN=False):
-        punishments = []
-        if warn is True:
-            punishments.append('warn')
-        if mute is True:
-            punishments.append('mute')
-        if ban is True:
-            punishments.append('ban')
-        if kick is True:
-            punishments.append('kick')
-        settings = await db.automod_config.find_one({"guildid":ctx.guild_id})
-        punishments = ', '.join(punishments)
-        settings.phishing.violation_punishment = punishments
-        await settings.save()
-        await ctx.send(f'Violation punishments set to: {punishments}')
+    async def phish_links_conf(self, ctx: InteractionContext):
+        settings = await db.amConfig.find_one({'guildid':ctx.guild_id})
+        if settings.phishing.violation_punishment is None:
+            events_log_list = ''
+        else:
+            events_log_list = settings.phishing.violation_punishment
+
+        if 'warn' in events_log_list:
+            warn_status = True
+        else:
+            warn_status = False
+
+        if 'mute' in events_log_list:
+            mute_status = True
+        else:
+            mute_status = False
+
+        if 'kick' in events_log_list:
+            kick_status = True
+        else:
+            kick_status = False
+
+        if 'ban' in events_log_list:
+            ban_status = True
+        else:
+            ban_status = False
+        
+        select_options = [
+            StringSelectOption(label="Warn", value="warn", default=warn_status),
+            StringSelectOption(label="Mute", value="mute", default=mute_status),
+            StringSelectOption(label="Kick", value="kick", default=kick_status),
+            StringSelectOption(label="Ban", value="ban", default=ban_status)
+        ]
+
+        select_menu = StringSelectMenu(select_options, min_values=0, max_values=2)
+
+        message = await ctx.send('Configure to what automod reacts to:', components=select_menu)
+
+        while True:
+            try:
+                select = await self.bot.wait_for_component(components=select_menu, timeout=120)
+            except asyncio.TimeoutError:
+                await message.edit('Config closed due to 2 minutes of inactivity.', components=[])
+            else:
+                values = ','.join(select.ctx.values)
+                settings.phishing.violation_punishment = values
+                await settings.save()
 
     @listen()
     async def onNameChange_banned_name_exact(self, event: MemberUpdate):
         member =  event.after
-        old_name =  event.before.display_name
-        new_name = event.after.display_name
-        if old_name != new_name:
+        if await is_automod_event_active(event.guild, 'banned_names'):
+            old_name =  event.before.display_name
+            new_name = event.after.display_name
+            if old_name != new_name:
+                settings = await db.amConfig.find_one({'guild':event.guild.id})
+                if settings.ignored_users is not None:
+                    if member.id in settings.ignored_users:
+                        return
+                if settings.ignored_roles is not None:
+                    if any(role for role in member.roles if role.id in settings.ignored_roles):
+                        return
+                if member.has_permission(Permissions.ADMINISTRATOR) == True:
+                    return
+                bn = await db.bannedNames.find_one({'guild':event.guild.id})
+                if bn is None:
+                    await db.bannedNames(guild=event.guild.id).insert()
+                banned_names = bn.names
+                new_name_result = process.extract(new_name, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
+                names = [t[0] for t in new_name_result if t[1] >= 90]
+                username_result = process.extract(member.username, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
+                usernames = [t[0] for t in username_result if t[1] >= 90]
+                if names != []:
+                    name = ' '.join(names)
+                    reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
+                    if usernames == []:
+                        await member.edit_nickname(member.username, reason)
+                    else:
+                        await member.edit_nickname(bn.default_name, reason)
+                    embed = Embed(description=reason,
+                                            color=0xffcc50)
+                    embed.set_thumbnail(url=member.avatar.url)
+                    embed.add_field(name="Old Name", value=old_name)
+                    embed.add_field(name="New Name", value=new_name)
+                    
+                    channelid = await db.logs.find_one({"guild_id":member.guild.id})
+                    log_channel = member.guild.get_channel(channelid.channel_id)
+                    try:
+                        await member.send(f"Your name or part of your name were flagged in banned names in `{event.guild.name}` server.\nI've flagged `{name}` in `{new_name}`")
+                        await log_channel.send(f'I DMed {member}', embed=embed)
+                    except Exception:
+                        await log_channel.send(f"Couldn't DM {member}", embed=embed)
+                    
+                    violation_count = await db.strikes.find({'guildid':event.guild.id, 'user':member.id, 'action':"Automod Log (Banned Name)", 'automod':True}).count()
+                    if settings.banned_names.violation_count is not None:
+                        if violation_count > settings.banned_names.violation_count:
+                            if 'warn' in settings.banned_names.violation_punishment:
+                                await automod_warn(event, log_channel, reason)
+                            
+                            if 'mute' in settings.banned_names.violation_punishment:
+                                await automod_mute(event, settings, reason)
+                                
+                            if 'kick' in settings.banned_names.violation_punishment:
+                                await event.guild.kick(member, reason)
+                    
+                            if 'ban' in settings.banned_names.violation_punishment:
+                                await automod_ban(event, settings, reason)
+    
+    @listen()
+    async def onMemAdd_banned_name_exact(self, event: MemberAdd):
+        member =  event.member
+        if await is_automod_event_active(event.guild, 'banned_names'):
+            new_name = member.display_name
             settings = await db.amConfig.find_one({'guild':event.guild.id})
             if settings.ignored_users is not None:
                 if member.id in settings.ignored_users:
@@ -386,20 +472,13 @@ class AutoMod(Extension):
             banned_names = bn.names
             new_name_result = process.extract(new_name, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
             names = [t[0] for t in new_name_result if t[1] >= 90]
-            username_result = process.extract(member.username, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
-            usernames = [t[0] for t in username_result if t[1] >= 90]
             if names != []:
                 name = ' '.join(names)
                 reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
-                if usernames == []:
-                    await member.edit_nickname(member.username, reason)
-                else:
-                    await member.edit_nickname(bn.default_name, reason)
+                await member.edit_nickname(bn.default_name, reason)
                 embed = Embed(description=reason,
                                         color=0xffcc50)
                 embed.set_thumbnail(url=member.avatar.url)
-                embed.add_field(name="Old Name", value=old_name)
-                embed.add_field(name="New Name", value=new_name)
                 
                 channelid = await db.logs.find_one({"guild_id":member.guild.id})
                 log_channel = member.guild.get_channel(channelid.channel_id)
@@ -424,56 +503,6 @@ class AutoMod(Extension):
                         if 'ban' in settings.banned_names.violation_punishment:
                             await automod_ban(event, settings, reason)
     
-    @listen()
-    async def onMemAdd_banned_name_exact(self, event: MemberAdd):
-        member =  event.member
-        new_name = member.display_name
-        settings = await db.amConfig.find_one({'guild':event.guild.id})
-        if settings.ignored_users is not None:
-            if member.id in settings.ignored_users:
-                return
-        if settings.ignored_roles is not None:
-            if any(role for role in member.roles if role.id in settings.ignored_roles):
-                return
-        if member.has_permission(Permissions.ADMINISTRATOR) == True:
-            return
-        bn = await db.bannedNames.find_one({'guild':event.guild.id})
-        if bn is None:
-            await db.bannedNames(guild=event.guild.id).insert()
-        banned_names = bn.names
-        new_name_result = process.extract(new_name, banned_names, scorer=fuzz.token_sort_ratio, limit=1)
-        names = [t[0] for t in new_name_result if t[1] >= 90]
-        if names != []:
-            name = ' '.join(names)
-            reason = f'Automod detected a banned name {name} in {new_name} for {member}({member.id})'
-            await member.edit_nickname(bn.default_name, reason)
-            embed = Embed(description=reason,
-                                    color=0xffcc50)
-            embed.set_thumbnail(url=member.avatar.url)
-            
-            channelid = await db.logs.find_one({"guild_id":member.guild.id})
-            log_channel = member.guild.get_channel(channelid.channel_id)
-            try:
-                await member.send(f"Your name or part of your name were flagged in banned names in `{event.guild.name}` server.\nI've flagged `{name}` in `{new_name}`")
-                await log_channel.send(f'I DMed {member}', embed=embed)
-            except Exception:
-                await log_channel.send(f"Couldn't DM {member}", embed=embed)
-            
-            violation_count = await db.strikes.find({'guildid':event.guild.id, 'user':member.id, 'action':"Automod Log (Banned Name)", 'automod':True}).count()
-            if settings.banned_names.violation_count is not None:
-                if violation_count > settings.banned_names.violation_count:
-                    if 'warn' in settings.banned_names.violation_punishment:
-                        await automod_warn(event, log_channel, reason)
-                    
-                    if 'mute' in settings.banned_names.violation_punishment:
-                        await automod_mute(event, settings, reason)
-                        
-                    if 'kick' in settings.banned_names.violation_punishment:
-                        await event.guild.kick(member, reason)
-            
-                    if 'ban' in settings.banned_names.violation_punishment:
-                        await automod_ban(event, settings, reason)
-    
     BannedNames = SlashCommand(name='banned_names', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage banned names.')
 
     @BannedNames.subcommand('manage')
@@ -484,10 +513,6 @@ class AutoMod(Extension):
             bw_vc_pf = MISSING
         else:
             bw_vc_pf = settings.banned_names.violation_count
-        if settings.banned_names.violation_punishment is None:
-            bw_vp_pf = MISSING
-        else:
-            bw_vp_pf = settings.banned_names.violation_punishment
 
         if bn is None:
             exact_prefill = MISSING
@@ -501,18 +526,18 @@ class AutoMod(Extension):
                 defname_prefill = MISSING
             else:
                 defname_prefill = bn.default_name
-        m = modal.Modal(title='Configure the automatic moderation', components=[
-            modal.InputText(
+        m = Modal(title='Configure the automatic moderation', components=[
+            InputText(
                 label="Banned Names",
-                style=modal.TextStyles.PARAGRAPH,
+                style=TextStyles.PARAGRAPH,
                 custom_id=f'exact_match',
                 placeholder='Words, seperated by a comma(,). They should have minimum 3 characters.',
                 value=exact_prefill,
                 required=False
             ),
-            modal.InputText(
+            InputText(
                 label="Fallback Name",
-                style=modal.TextStyles.SHORT,
+                style=TextStyles.SHORT,
                 custom_id=f'defname',
                 placeholder="One name that will be act as a fallback",
                 value=defname_prefill,
@@ -520,20 +545,12 @@ class AutoMod(Extension):
                 max_length=32,
                 min_length=2
             ),
-            modal.InputText(
+            InputText(
                 label="Violation Count",
-                style=modal.TextStyles.SHORT,
+                style=TextStyles.SHORT,
                 custom_id=f'bw_vc',
                 placeholder="Must be between 0-10.",
                 value=bw_vc_pf,
-                required=False
-            ),
-            modal.InputText(
-                label="Punishments",
-                style=modal.TextStyles.SHORT,
-                custom_id=f'bw_vp',
-                placeholder="warn, mute, kick, ban",
-                value=bw_vp_pf,
                 required=False
             )
         ],custom_id=f'{ctx.author.id}_automod_config_modal')
@@ -542,7 +559,7 @@ class AutoMod(Extension):
         try:
             modal_recived: ModalContext = await self.bot.wait_for_modal(modal=m, author=ctx.author.id, timeout=600)
         except asyncio.TimeoutError:
-            return await modal_recived.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond to this modal.", ephemeral=True)
+            return await modal_recived.send(f":x: Uh oh, {ctx.author.mention}! You took longer than 10 minutes to respond to this ", ephemeral=True)
         
         em_words = modal_recived.responses.get('exact_match')
         defName = modal_recived.responses.get('defname')
@@ -552,12 +569,8 @@ class AutoMod(Extension):
             bw_vc_response = None
         elif (get_num(bw_vc_response) > 10) or (get_num(bw_vc_response) < 0):
             await modal_recived.send(f"{bw_vc_response} is not a valid violation count. Violation count has to be between 0-10.")
-        bw_vp_response = modal_recived.responses.get('bw_vp')
-        if bw_vp_response == '':
-            bw_vp_response = None
         
         settings.banned_names.violation_count = get_num(bw_vc_response)
-        settings.banned_names.violation_punishment = bw_vp_response
         await settings.save()
 
         if bn is None:
@@ -568,14 +581,50 @@ class AutoMod(Extension):
             await bn.save()
         
         embed=Embed(color=0xffcc50,
-        description=f'**Current banned names:**\n{em_words}\n**Violation count:** {bw_vc_response}\n**Punishments:** {bw_vp_response}')
+        description=f'**Current banned names:**\n{em_words}\n**Violation count:** {bw_vc_response}')
         await modal_recived.send(embed=embed)
     
     AutoModSettings = SlashCommand(name='automod', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage the automod.')
 
+    @AutoModSettings.subcommand(sub_cmd_name='listen_to_events', sub_cmd_description='Activate parts of the automod')
+    async def am_events(self, ctx: InteractionContext):
+        await ctx.defer(ephemeral=True)
+        events = await db.amConfig.find_one({'guildid':ctx.guild_id})
+        if events.active_events is None:
+            events_log_list = []
+        else:
+            events_log_list = events.active_events
+        if 'banned_names' in events_log_list:
+            bn_status = True
+        else:
+            bn_status = False
+
+        if 'phishing_filter' in events_log_list:
+            pf_status = True
+        else:
+            pf_status = False
+        
+        select_options = [
+            StringSelectOption(label="Banned Names", value="banned_names", default=bn_status),
+            StringSelectOption(label="phishing_filter", value="phishing_filter", default=pf_status),
+        ]
+
+        select_menu = StringSelectMenu(select_options, min_values=0, max_values=2)
+
+        message = await ctx.send('Configure to what automod reacts to:', components=select_menu)
+
+        while True:
+            try:
+                select = await self.bot.wait_for_component(components=select_menu, timeout=120)
+            except asyncio.TimeoutError:
+                await message.edit('Config closed due to 2 minutes of inactivity.', components=[])
+            else:
+                events.active_events = select.ctx.values
+                await events.save()
+
     @AutoModSettings.subcommand(sub_cmd_name='ban_mute_times', sub_cmd_description='Define a ban and mute times.')
     @bantime()
-    @slash_option(name="mutetime", description="mute time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionTypes.STRING, required=False)
+    @slash_option(name="mutetime", description="mute time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionType.STRING, required=False)
     async def bmtimes(self, ctx:InteractionContext, bantime:str=None, mutetime:str=None):
         if bantime is not None:
             bt = await bm_time_to_sec(ctx, bantime)
@@ -593,7 +642,7 @@ class AutoMod(Extension):
 
     @AutoModSettings.subcommand('ignored_channel', 'add', 'Add a channel to ignored channels.')
     @channel()
-    async def AutomodAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionTypes.CHANNEL=None):
+    async def AutomodAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -616,7 +665,7 @@ class AutoMod(Extension):
 
     @AutoModSettings.subcommand('ignored_channel', 'remove', 'Remove a channel from ignored channels.')
     @channel()
-    async def AutomodRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionTypes.CHANNEL=None):
+    async def AutomodRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -639,7 +688,7 @@ class AutoMod(Extension):
     
     @AutoModSettings.subcommand('ignored_role', 'add', 'Make a role to be ignored by automod.')
     @role()
-    async def AutomodAddIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
+    async def AutomodAddIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
         if settings is None:
@@ -660,7 +709,7 @@ class AutoMod(Extension):
 
     @AutoModSettings.subcommand('ignored_role', 'remove', 'Remove a role from ignored roles.')
     @role()
-    async def AutomodRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionTypes.ROLE):
+    async def AutomodRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
         if settings is None:
@@ -681,7 +730,7 @@ class AutoMod(Extension):
     
     @AutoModSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by automod.')
     @user()
-    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
+    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
         if settings is None:
@@ -702,7 +751,7 @@ class AutoMod(Extension):
 
     @AutoModSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
     @user()
-    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionTypes.USER):
+    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
         await ctx.defer(ephemeral=True)
         settings = await db.amConfig.find_one({"guild":ctx.guild.id})
         if settings is None:
@@ -722,8 +771,8 @@ class AutoMod(Extension):
         await ctx.send(embed=embed, ephemeral=True)
     
     @AutoModSettings.subcommand('violation_count', sub_cmd_description='How many violations before punishment.')
-    @slash_option('violations_count', 'Must be between 0-10.', OptionTypes.STRING)
-    async def bw_conf(self, ctx: InteractionContext, violations_count:OptionTypes.STRING=None):
+    @slash_option('violations_count', 'Must be between 0-10.', OptionType.STRING)
+    async def bw_conf(self, ctx: InteractionContext, violations_count:OptionType.STRING=None):
         violations_count = get_num(violations_count)
         if (int(violations_count) > 10) or (int(violations_count) < 0):
             await ctx.send(f"{violations_count} is not a valid violation count. Violation count has to be between 0-10.")
@@ -734,26 +783,54 @@ class AutoMod(Extension):
         await settings.save()
         await ctx.send(f'Violation count set to: {violations_count}')
     
-    @AutoModSettings.subcommand('punishments', sub_cmd_description='What punishments to use?')
-    @slash_option('warn', description='Do you wanna warn?', opt_type=OptionTypes.BOOLEAN)
-    @slash_option('mute', description='Do you wanna mute?', opt_type=OptionTypes.BOOLEAN)
-    @slash_option('ban', description='Do you wanna ban?', opt_type=OptionTypes.BOOLEAN)
-    @slash_option('kick', description='Do you wanna kick?', opt_type=OptionTypes.BOOLEAN)
-    async def bw_conf(self, ctx: InteractionContext, warn:OptionTypes.BOOLEAN=False, mute:OptionTypes.BOOLEAN=False, ban:OptionTypes.BOOLEAN=False, kick:OptionTypes.BOOLEAN=False):
-        punishments = []
-        if warn is True:
-            punishments.append('warn')
-        if mute is True:
-            punishments.append('mute')
-        if ban is True:
-            punishments.append('ban')
-        if kick is True:
-            punishments.append('kick')
-        settings = await db.automod_config.find_one({"guildid":ctx.guild_id})
-        punishments = ', '.join(punishments)
-        settings.banned_words.violation_punishment = punishments
-        await settings.save()
-        await ctx.send(f'Violation punishments set to: {punishments}')
+    @BannedNames.subcommand('punishments', sub_cmd_description='What punishments to use?')
+    async def bw_conf(self, ctx: InteractionContext):
+        settings = await db.amConfig.find_one({'guildid':ctx.guild_id})
+        if settings.banned_names.violation_punishment is None:
+            events_log_list = ''
+        else:
+            events_log_list = settings.banned_names.violation_punishment
+
+        if 'warn' in events_log_list:
+            warn_status = True
+        else:
+            warn_status = False
+
+        if 'mute' in events_log_list:
+            mute_status = True
+        else:
+            mute_status = False
+
+        if 'kick' in events_log_list:
+            kick_status = True
+        else:
+            kick_status = False
+
+        if 'ban' in events_log_list:
+            ban_status = True
+        else:
+            ban_status = False
+        
+        select_options = [
+            StringSelectOption(label="Warn", value="warn", default=warn_status),
+            StringSelectOption(label="Mute", value="mute", default=mute_status),
+            StringSelectOption(label="Kick", value="kick", default=kick_status),
+            StringSelectOption(label="Ban", value="ban", default=ban_status)
+        ]
+
+        select_menu = StringSelectMenu(select_options, min_values=0, max_values=2)
+
+        message = await ctx.send('Configure to what automod reacts to:', components=select_menu)
+
+        while True:
+            try:
+                select = await self.bot.wait_for_component(components=select_menu, timeout=120)
+            except asyncio.TimeoutError:
+                await message.edit('Config closed due to 2 minutes of inactivity.', components=[])
+            else:
+                values = ','.join(select.ctx.values)
+                settings.banned_names.violation_punishment = values
+                await settings.save()
 
 def setup(bot):
     AutoMod(bot)

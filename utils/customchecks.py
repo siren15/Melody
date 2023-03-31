@@ -1,12 +1,12 @@
-from naff.client.errors import *
+from interactions.client.errors import *
 import re
 from typing import Awaitable, Callable, Union
-from naff import Permissions
-from naff.models.discord.snowflake import Snowflake_Type, to_snowflake
-from naff.models.naff.context import Context
+from interactions import Permissions
+from interactions.models.discord.snowflake import Snowflake_Type, to_snowflake
+from interactions.models.internal.context import BaseContext
 from extentions.touk import BeanieDocuments as db
 
-TYPE_CHECK_FUNCTION = Callable[[Context], Awaitable[bool]]
+TYPE_CHECK_FUNCTION = Callable[[BaseContext], Awaitable[bool]]
 
 class MissingPermissions(CommandException):
     """User is missing permissions"""
@@ -52,7 +52,7 @@ def member_permissions(*permissions: Permissions) -> TYPE_CHECK_FUNCTION:
     Args:
         *permissions: The Permission(s) to check for
     """
-    async def check(ctx: Context) -> bool:
+    async def check(ctx: BaseContext) -> bool:
         if ctx.guild is None:
             return False
         if any(ctx.author.has_permission(p) for p in permissions):
@@ -65,7 +65,7 @@ def role_lock() -> TYPE_CHECK_FUNCTION:
     Check if member has a role assigned to the command in the DB
 
     """
-    async def check(ctx: Context) -> bool:
+    async def check(ctx: BaseContext) -> bool:
         # await ctx.defer()
         if ctx.author.has_permission(Permissions.ADMINISTRATOR) == True:
             return True
@@ -116,6 +116,15 @@ async def is_event_active(guild, event: str):
         commands = await db.prefixes.find_one({"guildid":guild.id})
         if event.lower() not in commands.activecommands.lower():
             return False#raise EventNotActivatedInGuild(f'{event} not activated for {guild}')
+        return True
+
+async def is_automod_event_active(guild, event: str):
+    if guild is not None:
+        events = await db.amConfig.find_one({"guild":guild.id})
+        if events.active_events is None:
+            return False
+        if event not in events.active_events:
+            return False
         return True
 
 async def is_user_blacklisted_e(message):

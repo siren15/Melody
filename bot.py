@@ -5,22 +5,25 @@ import asyncio
 import motor
 
 from beanie import init_beanie
-from naff import Client, Intents, listen, Embed, InteractionContext, AutoDefer
+from interactions import Client, Intents, listen, Embed, InteractionContext, AutoDefer, PermissionOverwrite
+from interactions.client import utils
 from utils.customchecks import *
 from extentions.touk import BeanieDocuments as db, violation_settings
-from naff.api.events.discord import GuildLeft, GuildJoin
+from interactions.api.events.discord import GuildLeft, GuildJoin
 from dotenv import load_dotenv
 load_dotenv()
 database_url = os.getenv('database_url')
+# database_url = os.getenv('mongodb://localhost:27017')
 
 # import logging
-# import naff
+# import interactions
 # logging.basicConfig()
-# cls_log = logging.getLogger(naff.const.logger_name)
+# cls_log = logging.getLogger(interactions.const.logger_name)
 # cls_log.setLevel(logging.DEBUG)
 
 intents = Intents.ALL
 ad = AutoDefer(enabled=True, time_until_defer=1)
+
 
 class CustomClient(Client):
     def __init__(self):
@@ -35,6 +38,7 @@ class CustomClient(Client):
         )
         self.db: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
         self.models = list()
+        self.spotify = None
 
     async def startup(self):
         for filename in os.listdir('./extentions'):
@@ -43,8 +47,8 @@ class CustomClient(Client):
                 print(f'grew {filename[:-3]}')
         self.db = motor.motor_asyncio.AsyncIOMotorClient(database_url)
         await init_beanie(database=self.db.giffany, document_models=self.models)
-        await self.astart(os.getenv('bot_token'))
-        # await self.astart(os.getenv('amelody_token'))
+        # await self.astart(os.getenv('bot_token'))
+        await self.astart(os.getenv('amelody_token'))
     
     @listen()
     async def on_ready(self):
@@ -55,7 +59,7 @@ class CustomClient(Client):
 
     @listen()
     async def on_guild_join(self, event:GuildJoin):
-        #add guild to database
+        # add guild to database
         if await db.prefixes.find_one({'guildid':event.guild.id}) is None:
             await db.prefixes(guildid=event.guild.id, mods=[]).insert()
             guild = self.get_guild(435038183231848449)
@@ -66,9 +70,23 @@ class CustomClient(Client):
             await db.automod_config(guildid=event.guild.id, banned_words=violations, phishing=violations).insert()
         if await db.leveling_settings.find_one({'guildid':event.guild.id}) is None:
             await db.leveling_settings(guildid=event.guild.id, min=15, max=25, multiplier=1, ignored_channels=[], ignored_roles=[], ignored_users=[]).insert()
+        if await db.modmail_conf.find_one({'guildid':event.guild.id}) is None:
+            everyone_role_po = PermissionOverwrite(id=event.guild.id, type=0).for_target(utils.find(lambda r: r.name == '@everyone', event.guild.roles))
+            everyone_role_po.add_denies(Permissions.VIEW_CHANNEL, Permissions.READ_MESSAGE_HISTORY)
+            melody_po = PermissionOverwrite(id=event.guild.id, type=0).for_target(self.user)
+            melody_po.add_allows(Permissions.VIEW_CHANNEL, Permissions.READ_MESSAGE_HISTORY, Permissions.USE_PRIVATE_THREADS, Permissions.MANAGE_THREADS)
+            modmail_channel = utils.find(lambda m: m.name == 'modmail', event.guild.channels)
+            if modmail_channel is None:
+                modmail_channel = await event.guild.create_text_channel(name='modmail', permission_overwrites=[everyone_role_po, melody_po])
+            modmail_log_channel = utils.find(lambda m: m.name == 'modmail-log', event.guild.channels)
+            if modmail_log_channel is None:
+                modmail_log_channel = await event.guild.create_text_channel(name='modmail-log', permission_overwrites=[everyone_role_po, melody_po])
+            await db.modmail_conf(guildid=event.guild.id, channelid=modmail_channel.id, logchannel=modmail_log_channel.id).insert()
     
     @listen()
     async def on_guild_leave(self, event:  GuildLeft):
+        if event.guild.id == 149167686159564800:
+            return
         for document in self.models:
             async for entry in document.find({'guildid': event.guild_id}):
                 await entry.delete()
@@ -126,11 +144,11 @@ class CustomClient(Client):
             embed = Embed(description=f":x: An error occured while trying to execute `{ctx.invoked_name}` command: ```{error}```",
                           color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
-            if ctx.guild_id != 435038183231848449:
-                guild = self.get_guild(435038183231848449)
-                channel = guild.get_channel(932661537729024132)
-                invite = await ctx.channel.create_invite(reason=f'[AUTOMOD]invite created due to error occuring')
-                await channel.send(f"<@400713431423909889> An error occured while {ctx.author}({ctx.author.id}) tryied to execute `{ctx.invoked_name}` command in {ctx.channel.name} from `{ctx.guild.name}`: ```{error}```\n{invite}")
+            # if ctx.guild_id != 435038183231848449:
+            #     guild = self.get_guild(435038183231848449)
+            #     channel = guild.get_channel(932661537729024132)
+            #     invite = await ctx.channel.create_invite(reason=f'[AUTOMOD]invite created due to error occuring')
+            #     await channel.send(f"<@400713431423909889> An error occured while {ctx.author}({ctx.author.id}) tried to execute `{ctx.invoked_name}` command in {ctx.channel.name} from `{ctx.guild.name}`: ```{error}```\n{invite}")
         
     def add_model(self, model):
         self.models.append(model)

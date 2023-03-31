@@ -5318,7 +5318,7 @@ button.dropdown-item.is-active {
   z-index: 40;
 }
 
-.modal.is-active {
+.is-active {
   display: flex;
 }
 

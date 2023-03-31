@@ -4,7 +4,7 @@ import asyncio
 
 from utils.catbox import CatBox as catbox
 from datetime import datetime, timezone
-from naff import Client, Extension, slash_command, InteractionContext, OptionTypes, Embed, Button, ButtonStyles, ActionRow, spread_to_rows, check, AutocompleteContext
+from interactions import Client, Extension, slash_command, InteractionContext, OptionType, Embed, Button, ButtonStyle, ActionRow, spread_to_rows, check, AutocompleteContext
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -16,7 +16,7 @@ def geturl(string):
     return [x[0] for x in url]
 
 def find_member(ctx, userid):
-    ctx.guild.get_member(userid)
+    return ctx.guild.get_member(userid)
 
 class Tags(Extension):
     def __init__(self, bot: Client):
@@ -49,7 +49,8 @@ class Tags(Extension):
             await tags.save()
     
     @t.autocomplete('tagname')
-    async def t_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def t_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         tags = db.tag.find({"guild_id":ctx.guild_id})
         tagnames = [tag.names async for tag in tags]
@@ -87,10 +88,10 @@ class Tags(Extension):
             await tags.save()
 
     @slash_command(name='tag', sub_cmd_name='create', sub_cmd_description="allow's me to store tags")
-    @slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionTypes.STRING, required=True, autocomplete=False)
+    @slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionType.STRING, required=True, autocomplete=False)
     @content()
     @attachment()
-    async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
+    async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionType.ATTACHMENT=None):
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -239,7 +240,7 @@ class Tags(Extension):
     @tagname()
     @content()
     @attachment()
-    async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionTypes.ATTACHMENT=None):
+    async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionType.ATTACHMENT=None):
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -354,28 +355,27 @@ class Tags(Extension):
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
             return
-
-        if tag_to_view.owner_id is not None:
-            tag_owner = ctx.guild.get_member(tag_to_view.owner_id)
-            if tag_owner is None:
-                tag_owner = tag_to_view.owner_id
-
+        
+        if tag_to_view.owner_id is None:
+            owner_id = tag_to_view.author_id
         else:
-            tag_owner = 'UNKNOWN'
+            owner_id = tag_to_view.owner_id
 
-        current_owner = 'Current owner'
-        last_owner = tag_owner
-
-        in_guild = find_member(ctx, tag_to_view.owner_id)
-        if in_guild is None:
+        tag_owner = ctx.guild.get_member(owner_id)         
+        if tag_owner is None:
+            tag_owner = tag_to_view.owner_id
             current_owner = 'Currently Orphaned'
             last_owner = f'Last owner: {tag_owner}'
+        else:
+            current_owner = 'Current owner'
+            last_owner = tag_owner
+        
         
         total_uses = tag_to_view.no_of_times_used
-        uses = total_uses
-
         if total_uses is None:
             uses = 'UNKNOWN'
+        else:
+            uses = total_uses
 
         creation_date = tag_to_view.creation_date
         if creation_date is None:
@@ -402,7 +402,7 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
     async def tag_list(self, ctx:InteractionContext):
         await ctx.defer()
-        from naff.ext.paginators import Paginator
+        from interactions.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -470,21 +470,30 @@ class Tags(Extension):
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
             return
-        if (tag_to_claim.owner_id == ctx.author.id):
+        if tag_to_claim.owner_id is None:
+            current_owner = tag_to_claim.author_id
+        else:
+            current_owner = tag_to_claim.owner_id
+        if (current_owner == ctx.author.id):
             embed = Embed(description=f":x: You can't claim a tag you already own",
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
             return
-        if (tag_to_claim.author_id == ctx.author.id) and (tag_to_claim.owner_id != ctx.author.id):
-            stealer = ctx.guild.get_member(tag_to_claim.owner_id)
-            embed = Embed(description=f"{ctx.author.mention} You took back your tag {tag_to_claim.names} from {stealer.mention}",
+        if (tag_to_claim.author_id == ctx.author.id) and (current_owner != ctx.author.id):
+            mf = ctx.guild.get_member(current_owner)
+            if mf is None:
+                thief = current_owner
+            else:
+                thief = mf.mention
+
+            embed = Embed(description=f"{ctx.author.mention} You took back your tag {tag_to_claim.names} from {thief}",
                         color=0xffcc50)
             await ctx.send(embed=embed)
-            tag_to_claim.owner_id = ctx.author.id
+            current_owner = ctx.author.id
             await tag_to_claim.save()
             return
 
-        if ctx.guild.get_member(tag_to_claim.owner_id) is None:
+        if ctx.guild.get_member(current_owner) is None:
             tag_to_claim.owner_id = ctx.author.id
             await tag_to_claim.save()
             embed = Embed(description=f"{ctx.author.mention} You are now owner of {tag_to_claim.names}",
@@ -498,7 +507,7 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='gift', sub_cmd_description="gift your tags")
     @tagname()
     @member()
-    async def tag_gift(self, ctx:InteractionContext, tagname:str=None, member:OptionTypes.USER=None):
+    async def tag_gift(self, ctx:InteractionContext, tagname:str=None, member:OptionType.USER=None):
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -529,12 +538,12 @@ class Tags(Extension):
         cancel_button_id = f'{ctx.author.id}_accept_tag_gift_button'
         accept_button: list[ActionRow] = spread_to_rows(
             Button(
-                style=ButtonStyles.GREEN,
+                style=ButtonStyle.GREEN,
                 label="GIMME!",
                 custom_id=aceept_button_id
             ),
             Button(
-                style=ButtonStyles.RED,
+                style=ButtonStyle.RED,
                 label="Cancel!",
                 custom_id=cancel_button_id
             )
@@ -570,7 +579,8 @@ class Tags(Extension):
                 await ctx.send(f"{reaction.context.author.mention} Only owners can cancel gifting!", ephemeral=True)
 
     @tag.autocomplete('tagname')
-    async def tag_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def tag_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
@@ -580,7 +590,8 @@ class Tags(Extension):
         await ctx.send(choices=choices)
     
     @tag_admin_delete.autocomplete('tagname')
-    async def tag_admin_delete_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def tag_admin_delete_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
@@ -590,7 +601,8 @@ class Tags(Extension):
         await ctx.send(choices=choices)
     
     @tag_claim.autocomplete('tagname')
-    async def tag_claim_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def tag_claim_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
@@ -600,7 +612,8 @@ class Tags(Extension):
         await ctx.send(choices=choices)
     
     @tag_gift.autocomplete('tagname')
-    async def tag_gift_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def tag_gift_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
@@ -610,7 +623,8 @@ class Tags(Extension):
         await ctx.send(choices=choices)
     
     @tag_info.autocomplete('tagname')
-    async def tag_info_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def tag_info_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
@@ -620,7 +634,8 @@ class Tags(Extension):
         await ctx.send(choices=choices)
     
     @tag_edit.autocomplete('tagname')
-    async def tag_edit_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def tag_edit_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
@@ -630,7 +645,8 @@ class Tags(Extension):
         await ctx.send(choices=choices)
     
     @tag_delete.autocomplete('tagname')
-    async def tag_delete_autocomplete(self, ctx: AutocompleteContext, tagname: str):
+    async def tag_delete_autocomplete(self, ctx: AutocompleteContext):
+        tagname = ctx.input_text
         choices = []
         regx = {'$regex':f'{re.escape(tagname)}', '$options':'igm'}
         tags = db.tag.find({"guild_id":ctx.guild_id, 'names': regx}).limit(25)
