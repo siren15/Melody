@@ -38,6 +38,12 @@ class Levels(Extension):
     @LevelSettings.subcommand('ignored_channel', 'add', 'Add a channel to ignored channels.')
     @channel()
     async def LevelingAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+        """/leveling_config ignored_channel add
+        Description:
+            Add a channel to ignored channels by leveling
+        Args:
+            channel (OptionType.CHANNEL, optional): Channel to add, defaults to channel command is executed in
+        """
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -61,6 +67,12 @@ class Levels(Extension):
     @LevelSettings.subcommand('ignored_channel', 'remove', 'Remove a channel from ignored channels.')
     @channel()
     async def LevelingRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+        """/leveling_config ignored_channel remove
+        Description:
+            Remove a channel from ignored channels by leveling
+        Args:
+            channel (OptionType.CHANNEL, optional): Channel to remove, defaults to channel command is executed in
+        """
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -84,6 +96,12 @@ class Levels(Extension):
     @LevelSettings.subcommand('ignored_role', 'add', 'Make a role to be ignored by leveling.')
     @role()
     async def LevelingAddIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+        """/leveling_config ignored_role add
+        Description:
+            Add a role to be ignored by leveling
+        Args:
+            role (OptionType.ROLE): Role to add
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -105,6 +123,12 @@ class Levels(Extension):
     @LevelSettings.subcommand('ignored_role', 'remove', 'Remove a role from ignored roles.')
     @role()
     async def LevelingRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+        """/leveling_config ignored_role remove
+        Description:
+            Remove a role from ignored by leveling
+        Args:
+            role (OptionType.ROLE): Role to remove
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -126,6 +150,12 @@ class Levels(Extension):
     @LevelSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by leveling.')
     @user()
     async def LevelingAddIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+        """/leveling_config ignored_member add
+        Description:
+            Make a member to be ignored by leveling.
+        Args:
+            user (OptionType.USER): User to add
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -147,6 +177,13 @@ class Levels(Extension):
     @LevelSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
     @user()
     async def LevelingRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+        """/leveling_config ignored_member remove
+        Description:
+            Remove a member from ignored members for leveling
+
+        Args:
+            user (OptionType.USER): User to ignore
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.leveling_settings.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -251,15 +288,23 @@ class Levels(Extension):
                 await instance.delete()
                 cooldown_task_ongoing.remove(mem)
 
-    @slash_command(name='leveling', sub_cmd_name='addrole', sub_cmd_description="allow's me to create leveling roles",
-        default_member_permissions=Permissions.MANAGE_ROLES
-    )
+    leveling = SlashCommand(name='leveling', description='add/remove leveling roles', default_member_permissions=Permissions.MANAGE_ROLES)
+
+    @leveling.subcommand(sub_cmd_name='addrole', sub_cmd_description="allow's me to create leveling roles")
     @role()
     @role_level()
-    async def leveling_add_role(self, ctx:InteractionContext, role: OptionType.ROLE, role_level:str): 
+    async def leveling_add_role(self, ctx:InteractionContext, role: OptionType.ROLE, role_level:str):
+        """/leveling addrole
+        Description:
+            Create level roles
+
+        Args:
+            role (OptionType.ROLE): Role
+            role_level (str): Role level number, has to be more than 0 and less than 1000
+        """
         await ctx.defer()
-        if (int(role_level) < 1) or (int(role_level) > 300):
-            await ctx.send('role level has to be more than 0 and less than 300')
+        if (int(role_level) < 1) or (int(role_level) > 1000):
+            await ctx.send('role level has to be more than 0 and less than 1000')
             return
 
         check = await db.leveling_roles.find_one({'guildid':ctx.guild_id, 'roleid':role.id})
@@ -283,6 +328,10 @@ class Levels(Extension):
     
     @slash_command(name='ranklist', description="leveling roles list")
     async def ranks_list(self, ctx:InteractionContext):
+        """/ranklist
+        Description:
+            List leveling roles
+        """
         await ctx.defer()
         from interactions.ext.paginators import Paginator
         def chunks(l, n):
@@ -341,11 +390,14 @@ class Levels(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='leveling', sub_cmd_name='removerole', sub_cmd_description="allow's me to remove leveling roles",
-        default_member_permissions=Permissions.MANAGE_ROLES
-    )
+    @leveling.subcommand(sub_cmd_name='removerole', sub_cmd_description="allow's me to remove leveling roles")
     @role()
     async def leveling_remove_role(self, ctx:InteractionContext, role: OptionType.ROLE=None):
+        """/leveling removerole
+
+        Args:
+            role (OptionType.ROLE, optional): Role to remove from leveling.
+        """
         await ctx.defer()
         if role is None:
             await ctx.send('you have to include a role')
@@ -365,6 +417,13 @@ class Levels(Extension):
     @slash_command(name='rank', description='check your leveling statistics')
     @member()
     async def newrank(self, ctx: SlashContext, member:OptionType.USER=None):
+        """/rank
+        Description:
+            Generates leveling info card
+
+        Args:
+            member (OptionType.USER, optional): Member, defaults to member executing the command
+        """
         await ctx.defer() # defer the response to avoid timeout
         if member is None: # if no member parameter is provided, use the author of the command
             member = ctx.author
@@ -476,6 +535,10 @@ class Levels(Extension):
 
     @slash_command(name='leaderboard', description='check the servers leveling leaderboard')
     async def leaderboard(self, ctx: InteractionContext):
+        """/leaderboard
+        Description:
+            Sends a button to the leaderboard for the server the command is executed in.
+        """
         components = Button(
             style=ButtonStyle.URL,
             label="Click Me!",

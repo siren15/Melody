@@ -64,6 +64,16 @@ class SpotifyToYoutube(Extension):
     @slash_command(name='sp2yt', description='Translate Spotify links to YouTube Music links')
     @slash_option(name='url', description='Spotify URL to translate', opt_type=OptionType.STRING, required=True)
     async def sp2yt(self, ctx:SlashContext, url: str):
+        """/sp2yt
+        Description:
+            The sp2yt function takes a Spotify URL and converts it to a YouTube Music URL.
+            It does this by first checking if the url is valid, then checks if it's either an album or song.
+            If it's an album, we search for the album on YTMusic and get its playlist ID. We then send that playlist ID as a link to the user in chat.
+            If it's not an album but instead is a song, we search for that song on YTMusic and get its videoId (the unique identifier of each video). We then send that videoId as a link to the user in chat
+        
+        Args:
+            url: The spotify URL
+        """
         settings = await db.sp2yt.find_one({'guildid':ctx.guild.id})
         if settings is None:
             return await db.sp2yt(guildid=ctx.guild.id).insert()
@@ -91,7 +101,14 @@ class SpotifyToYoutube(Extension):
 
     @sp2yt_manage.subcommand('music_channel', 'add', 'Add a channel to music channels.')
     @channel()
-    async def AutomodAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+    async def add_music_channel(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+        """/sp2yt_manage music_channel add
+        Description:
+            Add a channel to the list of music channels. The bot will listen to spotify links in these channels.
+        
+        Args:
+            channel (OptionType.CHANNEL): Specify the channel you want to add to the music channels list
+        """
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -115,7 +132,15 @@ class SpotifyToYoutube(Extension):
 
     @sp2yt_manage.subcommand('music_channel', 'remove', 'Remove a channel from music channels.')
     @channel()
-    async def AutomodRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+    async def remove_music_channel(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+        """/sp2yt_manage music_channel remove
+        description:
+            Remove a channel from the list of music channels.
+            If no channel is specified, it will remove the current channel.
+        
+        Args:
+            channel (OptionType.CHANNEL): Specify the channel that is being removed from the music channels list
+        """
         await ctx.defer(ephemeral=True)
         if channel is None:
             channel = ctx.channel
@@ -138,7 +163,14 @@ class SpotifyToYoutube(Extension):
     
     @sp2yt_manage.subcommand('ignored_role', 'add', 'Make a role to be ignored in music channels.')
     @role()
-    async def AutomodAddIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+    async def MusicAddIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+        """/sp2yt_manage ignored_role add
+        Description:
+            Add a role to the list of roles ignored in music channels.
+            
+        Args:
+            role (OptionType.ROLE): Get the role that is being ignored
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.sp2yt.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -159,7 +191,13 @@ class SpotifyToYoutube(Extension):
 
     @sp2yt_manage.subcommand('ignored_role', 'remove', 'Remove a role from being ignored in music channels.')
     @role()
-    async def AutomodRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+    async def MusicRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+        """/sp2yt_manage ignored_role remove
+        Remove a role from the list of roles that are ignored in music channels.
+        
+        Args:
+            role (OptionType.ROLE): Role that is gonna be ignored
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.sp2yt.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -180,7 +218,15 @@ class SpotifyToYoutube(Extension):
     
     @sp2yt_manage.subcommand('ignored_member', 'add', 'Make a member to be ignored in music channels.')
     @user()
-    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+    async def MusicAddIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+        """/sp2yt_manage ignored_member add
+        Description:
+            Add a user to the list of ignored users in music channels.
+            This means that they will not be able to use any commands in music channels.
+        
+        Args:
+            user (OptionType.USER): User to add to the ignored list
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.sp2yt.find_one({"guildid":ctx.guild.id})
         if settings is None:
@@ -202,7 +248,15 @@ class SpotifyToYoutube(Extension):
 
     @sp2yt_manage.subcommand('ignored_member', 'remove', 'Remove a member from being ignored in music channels.')
     @user()
-    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+    async def MusicRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+        """/sp2yt_manage ignored_member remove
+        Description:
+            Remove a user from the ignored list for music channels.
+            
+        
+        Args:
+            user (OptionType.USER): Specify the user to be removed from the ignored list
+        """
         await ctx.defer(ephemeral=True)
         settings = await db.sp2yt.find_one({"guildid":ctx.guild.id})
         if settings is None:

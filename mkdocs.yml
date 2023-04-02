@@ -1,0 +1,43 @@
+site_name: Melody
+theme:
+  name: material
+  logo: https://cdn.discordapp.com/avatars/887648476387762186/ab9b45d840a51ce343c2f9cf17e1ece8.png
+  favicon: https://cdn.discordapp.com/avatars/887648476387762186/ab9b45d840a51ce343c2f9cf17e1ece8.png
+  palette: 
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: discord-light
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: discord-dark
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - extra.css
+  
+extra:
+  homepage: https://www.beni2am.space/melody
+plugins:
+- search
+- mkdocstrings:
+      #    custom_templates: docs/templates
+      enable_inventory: true
+      handlers:
+        python:
+          selection:
+            inherited_members: true
+            filters:
+              - "!^_"
+          rendering:
+            members_order: source
+            show_bases: True
+            show_root_toc_entry: False
+            group_by_category: False
+            heading_level: 3
+            show_if_no_docstring: False

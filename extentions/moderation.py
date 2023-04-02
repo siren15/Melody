@@ -125,12 +125,20 @@ class Moderation(Extension):
         await modal_recived.send(f"Your mod application has been sent to the staff team.", ephemeral=True)
 
 
-    @slash_command(name='delete', description="[MOD]allows me to delete messages, max: 700",
+    @slash_command(name='delete', description="Allows you to delete messages, max: 700",
         default_member_permissions=Permissions.MANAGE_MESSAGES
     )
     @amount()
     @reason()
     async def delete_messages(self, ctx:InteractionContext, amount:int=0, reason:str='MISSING'):
+        """/delete
+        Description:
+            Allows you to delete messages, max: 700
+
+        Args:
+            amount (int, optional): Amount of messages to delete, max 700
+            reason (str, optional): Reason
+        """
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -162,13 +170,21 @@ class Moderation(Extension):
         embed.set_footer(text=f"Actioned by: {ctx.author}|{ctx.author.id}")
         await ctx.send(embed=embed)
     
-    @slash_command(name='userpurge', description="[MOD]allows me to purge users messages",
+    @slash_command(name='userpurge', description="Allows you to purge users messages",
         default_member_permissions=Permissions.MANAGE_MESSAGES
     )
     @user()
     @amount()
     @reason()
     async def userpurge(self, ctx:InteractionContext, user:OptionType.USER=None, amount:int=0, reason:str='No reason given'):
+        """/userpurge
+        Description:
+            Allows you to purge users messages
+        Args:
+            user (OptionType.USER, optional): User
+            amount (int, optional): Amount of messages to purge, per channel, max 300
+            reason (str, optional): Reason
+        """
         def chunks(l, n):
             n = max(1, n)
             return (l[i:i+n] for i in range(0, len(l), n))
@@ -216,7 +232,7 @@ class Moderation(Extension):
         embed.set_footer(text=f"Actioned by: {ctx.author}|{ctx.author.id}")
         await ctx.send(embed=embed)
     
-    @slash_command(name='ban', description="[MOD]allows me to ban users from the server",
+    @slash_command(name='ban', description="Allows you to ban users from the server",
         default_member_permissions=Permissions.BAN_MEMBERS
     )
     @user()
@@ -224,6 +240,16 @@ class Moderation(Extension):
     @deletedays()
     @reason()
     async def ban(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given', bantime:str=None, deletedays:int=0):
+        """/ban
+        Description:
+            Ban a user from the server. 
+        
+        Args:
+            user: User
+            reason: Set the reason for the ban
+            bantime: Optionally specify ban time Examples: `10 S`, `10 M`, `10 H`, `10 D`. It can't be shorter than 1 hour and longer than 3 years
+            deletedays: Delete the last x days of messages from that user. You can choose from 0 to 7.
+        """
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't ban yourself", ephemeral=True)
@@ -320,12 +346,20 @@ class Moderation(Extension):
         else:
             await ctx.send(f'{user} already banned')
     
-    @slash_command(name='unban', description="[MOD]allows me to unban users from the server",
+    @slash_command(name='unban', description="Allows you to unban users from the server",
         default_member_permissions=Permissions.BAN_MEMBERS
     )
     @user()
     @reason()
     async def unban(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given'):
+        """/unban
+        Description:
+            Unban a user from the server.
+        
+        Args:
+            user: User to unban
+            reason: Specify the reason for the unban
+        """
         await ctx.defer()
         if user == ctx.author:
             embed = Embed(description=f":x: This is not how that works buddy...",
@@ -362,6 +396,15 @@ class Moderation(Extension):
     @user()
     @reason()
     async def kick(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given'):
+        """/kick
+        Description:
+            The kick function kicks a user from the server.
+            
+        
+        Args:
+            user: User to kick
+            reason: Specify the reason for the kick
+        """
         await ctx.defer()
         member = find_member(ctx, user.id)
         if member is not None:
@@ -412,13 +455,22 @@ class Moderation(Extension):
         else:
             raise UserNotFound()
     
-    @slash_command(name='mute', description="[MOD]allows me to mute users",
+    @slash_command(name='mute', description="Allows you to mute users",
         default_member_permissions=Permissions.MODERATE_MEMBERS
     )
     @user()
     @mutetime()
     @reason()
     async def mute(self, ctx:InteractionContext, user:OptionType.USER=None, mutetime:str=None, reason:str='No reason given'):
+        """/mute
+        Description:
+            Mutes a user for a specified amount of time. Mute time can't be shorter than 10 seconds and longer than 28 days.
+                
+        Args:
+            user: User that you want to mute
+            mutetime: Specify the time, Examples: `10 S`, `10 M`, `10 H`, `10 D`
+            reason: Specify the reason for muting a user
+        """
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't mute yourself", ephemeral=True)
@@ -509,6 +561,15 @@ class Moderation(Extension):
     @user()
     @reason()
     async def unmute(self, ctx:InteractionContext, user:OptionType.USER=None, reason:str='No reason given'):
+        """/unmute
+        Description:
+            Unmute a user.
+            
+        
+        Args:
+            user: User
+            reason: Set the reason for unmuting a user
+        """
         await ctx.defer()
         member = find_member(ctx, user.id)
         if member is not None:
@@ -537,6 +598,15 @@ class Moderation(Extension):
     @user()
     @reason()
     async def warnadd(self, ctx:InteractionContext, type:str, user:OptionType.USER, reason:str=None):
+        """/warn add
+        Description:
+            Gives user a warning, depending on type it gives them a warn role, It also sends them a warn DM if available.
+        
+        Args:
+            type: Specify the type of warning, either major or minor
+            user: User
+            reason: Reason for the warning
+        """
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't warn yourself", ephemeral=True)
@@ -635,6 +705,15 @@ class Moderation(Extension):
     @warnid()
     @reason()
     async def warn_remove(self, ctx:InteractionContext, user:OptionType.USER=None, warnid:str=None, reason:str=None):
+        """/warn remove
+        Description:
+            Remove a warn from a user.
+        
+        Args:
+            user: User to remove a warn from
+            warnid: warnID
+            reason: Specify the reason for removing the warn
+        """
         await ctx.defer()
         if user is ctx.author:
             await ctx.send("You can't remove a warn from yourself", ephemeral=True)
@@ -664,6 +743,13 @@ class Moderation(Extension):
     @warn.subcommand('removeall', sub_cmd_description='Remove all warns from a member.')
     @user()
     async def warnremoveall(self, ctx:InteractionContext, user: OptionType.USER):
+        """/warn removeall
+        Description:
+            Removes all warns from a user.
+            
+        Args:
+            user: The user that you want to remove all warns from
+        """
         await ctx.defer()
         if ctx.author != 400713431423909889:
             await ctx.send("This command cannot be used.", ephemeral=True)
@@ -674,11 +760,18 @@ class Moderation(Extension):
         await db.strikes.find({'guildid':ctx.guild_id, 'user':user.id, 'action':'Warn'}).delete_many()
         await ctx.send(f'All warns removed from {user}')
 
-    @slash_command(name='warnings', description="[MOD]shows you a users warn list",
+    @slash_command(name='warnings', description="shows you a users warn list",
         default_member_permissions=Permissions.MODERATE_MEMBERS
     )
     @user()
     async def warn_list(self, ctx:InteractionContext, user:OptionType.USER):
+        """/warnings
+        Description:
+            Display a list of warnings for a user.
+        
+        Args:
+            user: User
+        """
         await ctx.defer()
         def chunks(l, n):
             n = max(1, n)
@@ -732,11 +825,18 @@ class Moderation(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command(name='strikes', description="[MOD]shows you a users strike list",
+    @slash_command(name='strikes', description="shows you a users strike list",
         default_member_permissions=Permissions.MODERATE_MEMBERS
     )
     @user()
     async def strikes_list(self, ctx:InteractionContext, user:OptionType.USER=None):
+        """/strikes
+        Description:
+            List all strikes for a user.
+        
+        Args:
+            user: Specify that the user parameter is an optional parameter
+        """
         await ctx.defer()
         def chunks(l, n):
             n = max(1, n)
@@ -794,9 +894,17 @@ class Moderation(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command('removeallstrikes', sub_cmd_description='Remove all strikes from a member.', scopes=[435038183231848449])
+    @slash_command('removeallstrikes', sub_cmd_description='Remove all strikes from a member.')
     @member()
     async def strikesremoveall(self, ctx:InteractionContext, user: OptionType.USER):
+        """/removeallstrikes
+        Description:
+            Remove all strikes from a user.
+        
+        Args:
+            user: Specify the user that is being removed from the database
+        """
+        
         await ctx.defer()
         if ctx.author.id != 400713431423909889:
             await ctx.send("This command cannot be used.", ephemeral=True)
@@ -805,11 +913,18 @@ class Moderation(Extension):
         await db.strikes.find({'guildid':ctx.guild_id, 'user':user.id}).delete_many()
         await ctx.send(f'All strikes removed from {user}')
     
-    @slash_command(name='strike', description="[MOD]look at a strike info",
+    @slash_command(name='strike', description="look at a strike info",
         default_member_permissions=Permissions.MODERATE_MEMBERS,
     )
     @warnid()
     async def strike_info(self, ctx:InteractionContext, warnid:str=None):
+        """/strike
+        Description:
+            Display information about a specific strike.
+        
+        Args:
+            warnid: WarnID
+        """
         await ctx.defer()
         s = await db.strikes.find_one({'guildid':ctx.guild_id, 'strikeid':warnid})
         if s is None:
@@ -827,12 +942,23 @@ class Moderation(Extension):
             color=0xffcc50)
         await ctx.send(embed=embed)
     
-    @slash_command(name='reason', description="[MOD]allows me to modify reasons of strikes",
+    @slash_command(name='reason', description="allows me to modify reasons of strikes",
         default_member_permissions=Permissions.MODERATE_MEMBERS,
     )
     @warnid()
     @reason()
     async def strike_reason(self, ctx:InteractionContext, warnid:str=None, reason:str=None):
+        """/reason
+        Description:
+            Allows a user to change the reason of a strike.
+            This is useful if the original reason was not clear enough or if it was changed by mistake.
+            The function takes in two arguments: ctx and warnid, with an optional third argument being reason.
+            If no reason is provided, then the user will be prompted to provide one.
+        
+        Args:
+            warnid: warnID
+            reason: Set the reason for the strike
+        """
         await ctx.defer()
         if reason is None:
             await ctx.send("You have to include a reason", ephemeral=True)

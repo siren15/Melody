@@ -17,6 +17,14 @@ class GiveRoles(Extension):
     @user()
     @giveyou_name()
     async def giveyourole(self, ctx: InteractionContext, user:OptionType.USER=None, giveyou_name:str=None):
+        """/giveyou
+        Description:
+            Give members a role from predefined list of roles
+
+        Args:
+            user (OptionType.USER, optional): User to give or remove role from
+            giveyou_name (str, optional): Name of the giveyou.
+        """
         if user is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
         if giveyou_name is None:
@@ -47,6 +55,13 @@ class GiveRoles(Extension):
     @giveyou_name()
     @role()
     async def giveyourole_create(self, ctx: InteractionContext, giveyou_name:str=None, role:OptionType.ROLE=None):
+        """/giveyou create
+        Description:
+            Create a giveyou role.
+        Args:
+            giveyou_name (str, optional): Name of the giveyou.
+            role (OptionType.ROLE, optional): Role associated with the giveyou.
+        """
         if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
         if role is None:
@@ -73,6 +88,13 @@ class GiveRoles(Extension):
     @giveyou_cmd.subcommand(sub_cmd_name='delete', sub_cmd_description="Delete giveyou's")
     @giveyou_name()
     async def giveyourole_delete(self, ctx: InteractionContext, giveyou_name:str=None):
+        """/giveyou delete
+        Description:
+            Delete a giveyou
+
+        Args:
+            giveyou_name (str, optional): Name of the giveyou to delete.
+        """
         if giveyou_name is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a giveyou name"), ephemeral=True)
 
@@ -88,7 +110,10 @@ class GiveRoles(Extension):
     
     @giveyou_cmd.subcommand( sub_cmd_name='list', sub_cmd_description="Lists all giveyous for guild")
     async def giveyourole_list(self, ctx: InteractionContext):
-        
+        """/giveyou list
+        Description:
+            List all giveyous
+        """
         from interactions.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)
@@ -150,6 +175,13 @@ class GiveRoles(Extension):
     @members()
     @roles()
     async def give_role(self, ctx: InteractionContext, members:str=None, roles:str=None):
+        """/give role
+        Description:
+            Add/remove users to a role or roles
+        Args:
+            members (str, optional): Members IDs or @member, seperated by a comma `,`
+            roles (str, optional): Roles IDs or @role, seperated by a comma `,`
+        """
         if members is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a user"), ephemeral=True)
         if roles is None:

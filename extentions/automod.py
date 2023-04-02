@@ -328,12 +328,20 @@ class AutoMod(Extension):
                                     if 'ban' in settings.phishing.violation_punishment:
                                         await automod_ban(event, settings, reason)
     
-    psc = SlashCommand(name = 'phishing_links_config', description="Configure Melodys phishing links automod.", default_member_permissions=Permissions.ADMINISTRATOR)
+    psc = SlashCommand(name = 'phishing_links', description="Configure Melodys phishing links automod.", default_member_permissions=Permissions.ADMINISTRATOR)
     
     @psc.subcommand('violation_count', sub_cmd_description='How many violations before punishment.')
-    @slash_option('violations_count', 'Must be between 0-10.', OptionType.STRING)
-    async def phish_links_conf(self, ctx: InteractionContext, violations_count:OptionType.STRING=None):
-        violations_count = get_num(violations_count)
+    @slash_option('violations_count', 'Must be between 0-10.', OptionType.INTEGER)
+    async def phishing_links_violation_count(self, ctx: InteractionContext, violations_count:int=0):
+        """
+        /phishing_links violation_count
+        Description:
+            Configure how many violations are needed before Melody gives out a punishment.
+
+        Args:
+            violations_count: Must be between 0-10
+        """
+        # violations_count = get_num(violations_count)
         if (int(violations_count) > 10) or (int(violations_count) < 0):
             await ctx.send(f"{violations_count} is not a valid violation count. Violation count has to be between 0-10.")
         if violations_count is None:
@@ -344,7 +352,14 @@ class AutoMod(Extension):
         await ctx.send(f'Violation count set to: {violations_count}')
     
     @psc.subcommand('punishments', sub_cmd_description='What punishments to use?')
-    async def phish_links_conf(self, ctx: InteractionContext):
+    async def phishing_links_punishments(self, ctx: InteractionContext):
+        """
+        /phishing_links punishments
+        Description:
+            Configure what punishments will Melody give out.
+        Usage:
+            There are no parameters in this command, you just have to use it, and it will send you a configuration selection menu. Selections are automatically saved. Config time limit is 2 minutes.
+        """
         settings = await db.amConfig.find_one({'guildid':ctx.guild_id})
         if settings.phishing.violation_punishment is None:
             events_log_list = ''
@@ -506,7 +521,14 @@ class AutoMod(Extension):
     BannedNames = SlashCommand(name='banned_names', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage banned names.')
 
     @BannedNames.subcommand('manage')
-    async def manage_banned_names(self, ctx:InteractionContext):
+    async def banned_names_manage(self, ctx:InteractionContext):
+        """
+        /banned_names manage
+        Description:
+            Manage banned names.
+        Usage:
+            Use the command to get a muodal menu for configuration. Config will be saved on modal submit. Config time limit is 10 minutes.
+        """
         bn = await db.bannedNames.find_one({'guild':ctx.guild.id})
         settings = await db.amConfig.find_one({"guild":ctx.guild_id})
         if settings.banned_names.violation_count is None:
@@ -584,207 +606,15 @@ class AutoMod(Extension):
         description=f'**Current banned names:**\n{em_words}\n**Violation count:** {bw_vc_response}')
         await modal_recived.send(embed=embed)
     
-    AutoModSettings = SlashCommand(name='automod', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage the automod.')
-
-    @AutoModSettings.subcommand(sub_cmd_name='listen_to_events', sub_cmd_description='Activate parts of the automod')
-    async def am_events(self, ctx: InteractionContext):
-        await ctx.defer(ephemeral=True)
-        events = await db.amConfig.find_one({'guildid':ctx.guild_id})
-        if events.active_events is None:
-            events_log_list = []
-        else:
-            events_log_list = events.active_events
-        if 'banned_names' in events_log_list:
-            bn_status = True
-        else:
-            bn_status = False
-
-        if 'phishing_filter' in events_log_list:
-            pf_status = True
-        else:
-            pf_status = False
-        
-        select_options = [
-            StringSelectOption(label="Banned Names", value="banned_names", default=bn_status),
-            StringSelectOption(label="phishing_filter", value="phishing_filter", default=pf_status),
-        ]
-
-        select_menu = StringSelectMenu(select_options, min_values=0, max_values=2)
-
-        message = await ctx.send('Configure to what automod reacts to:', components=select_menu)
-
-        while True:
-            try:
-                select = await self.bot.wait_for_component(components=select_menu, timeout=120)
-            except asyncio.TimeoutError:
-                await message.edit('Config closed due to 2 minutes of inactivity.', components=[])
-            else:
-                events.active_events = select.ctx.values
-                await events.save()
-
-    @AutoModSettings.subcommand(sub_cmd_name='ban_mute_times', sub_cmd_description='Define a ban and mute times.')
-    @bantime()
-    @slash_option(name="mutetime", description="mute time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionType.STRING, required=False)
-    async def bmtimes(self, ctx:InteractionContext, bantime:str=None, mutetime:str=None):
-        if bantime is not None:
-            bt = await bm_time_to_sec(ctx, bantime)
-        else:
-            bt = bantime
-        if mutetime is not None:
-            mt = await bm_time_to_sec(ctx, mutetime)
-        else:
-            mt = mutetime
-        settings = await db.automod_config.find_one({"guildid":ctx.guild_id})
-        settings.ban_time = bt
-        settings.mute_time = mt
-        await settings.save()
-        await ctx.send(f'Ban time: {bantime}\nMute time: {mutetime}')
-
-    @AutoModSettings.subcommand('ignored_channel', 'add', 'Add a channel to ignored channels.')
-    @channel()
-    async def AutomodAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
-        await ctx.defer(ephemeral=True)
-        if channel is None:
-            channel = ctx.channel
-        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
-        if settings is None:
-            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
-        ignored_channels = settings.ignored_channels
-        if ignored_channels is None:
-            ignored_channels = list()
-        if channel.id in ignored_channels:
-            await ctx.send(f'{channel.mention} is already ignored.', ephemeral=True)
-        ignored_channels.append(channel.id)
-        await settings.save()
-        channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
-        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
-        channel_mentions = ' '.join(channel_mentions)
-        embed = Embed(description=f"Channel {channel.mention} set to be ignored.")
-        embed.add_field('Ignored Channels', channel_mentions)
-        await ctx.send(embed=embed, ephemeral=True)
-
-    @AutoModSettings.subcommand('ignored_channel', 'remove', 'Remove a channel from ignored channels.')
-    @channel()
-    async def AutomodRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
-        await ctx.defer(ephemeral=True)
-        if channel is None:
-            channel = ctx.channel
-        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
-        if settings is None:
-            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
-        ignored_channels = settings.ignored_channels
-        if ignored_channels is None:
-            ignored_channels = list()
-        if channel.id not in ignored_channels:
-            await ctx.send(f'{channel.mention} is not being ignored by automod.', ephemeral=True)
-        ignored_channels.remove(channel.id)
-        await settings.save()
-        channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
-        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
-        channel_mentions = ' '.join(channel_mentions)
-        embed = Embed(description=f"Channel {channel.mention} removed from ignored channels.")
-        embed.add_field('Ignored Channels', channel_mentions)
-        await ctx.send(embed=embed, ephemeral=True)
-    
-    @AutoModSettings.subcommand('ignored_role', 'add', 'Make a role to be ignored by automod.')
-    @role()
-    async def AutomodAddIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
-        await ctx.defer(ephemeral=True)
-        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
-        if settings is None:
-            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
-        ignored_roles = settings.ignored_roles
-        if ignored_roles is None:
-            ignored_roles = list()
-        if role.id in ignored_roles:
-            await ctx.send(f'{role.mention} is already ignored.', ephemeral=True)
-        ignored_roles.append(role.id)
-        await settings.save()
-        role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
-        role_mentions = [r.mention for r in role_mentions if r is not None]
-        role_mentions = ' '.join(role_mentions)
-        embed = Embed(description=f"Role {role.mention} was added to roles ignored by automod.")
-        embed.add_field('Ignored Roles', role_mentions)
-        await ctx.send(embed=embed, ephemeral=True)
-
-    @AutoModSettings.subcommand('ignored_role', 'remove', 'Remove a role from ignored roles.')
-    @role()
-    async def AutomodRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
-        await ctx.defer(ephemeral=True)
-        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
-        if settings is None:
-            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
-        ignored_roles = settings.ignored_roles
-        if ignored_roles is None:
-            ignored_roles = list()
-        if role.id not in ignored_roles:
-            await ctx.send(f'{role.mention} is not being ignored by automod.', ephemeral=True)
-        ignored_roles.remove(role.id)
-        await settings.save()
-        role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
-        role_mentions = [r.mention for r in role_mentions if r is not None]
-        role_mentions = ' '.join(role_mentions)
-        embed = Embed(description=f"Role {role.mention} was removed from roles ignored by automod.")
-        embed.add_field('Ignored Roles', role_mentions)
-        await ctx.send(embed=embed, ephemeral=True)
-    
-    @AutoModSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by automod.')
-    @user()
-    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
-        await ctx.defer(ephemeral=True)
-        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
-        if settings is None:
-            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
-        ignored_users = settings.ignored_users
-        if ignored_users is None:
-            ignored_users = list()
-        if user.id in ignored_users:
-            await ctx.send(f'{user}|{user.id} is already ignored.', ephemeral=True)
-        ignored_users.append(user.id)
-        await settings.save()
-        users = [ctx.guild.get_member(id) for id in ignored_users]
-        users = [f'{r}({r.id})' for r in users if r is not None]
-        users = ' '.join(users)
-        embed = Embed(description=f"Member {user}({user.id}) was added to members ignored by automod.")
-        embed.add_field('Ignored Members', users)
-        await ctx.send(embed=embed, ephemeral=True)
-
-    @AutoModSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
-    @user()
-    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
-        await ctx.defer(ephemeral=True)
-        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
-        if settings is None:
-           await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
-        ignored_users = settings.ignored_users
-        if ignored_users is None:
-            ignored_users = list()
-        if user.id not in ignored_users:
-            await ctx.send(f'{user}|{user.id} is not being ignored by automod.', ephemeral=True)
-        ignored_users.remove(user.id)
-        await settings.save()
-        users = [ctx.guild.get_member(id) for id in ignored_users]
-        users = [f'{r}({r.id})' for r in users if r is not None]
-        users = ' '.join(users)
-        embed = Embed(description=f"Member {user}({user.id}) was removed from members ignored by automod.")
-        embed.add_field('Ignored Members', users)
-        await ctx.send(embed=embed, ephemeral=True)
-    
-    @AutoModSettings.subcommand('violation_count', sub_cmd_description='How many violations before punishment.')
-    @slash_option('violations_count', 'Must be between 0-10.', OptionType.STRING)
-    async def bw_conf(self, ctx: InteractionContext, violations_count:OptionType.STRING=None):
-        violations_count = get_num(violations_count)
-        if (int(violations_count) > 10) or (int(violations_count) < 0):
-            await ctx.send(f"{violations_count} is not a valid violation count. Violation count has to be between 0-10.")
-        if violations_count is None:
-            violations_count = 0
-        settings = await db.automod_config.find_one({"guildid":ctx.guild_id})
-        settings.banned_words.violation_count = int(violations_count)
-        await settings.save()
-        await ctx.send(f'Violation count set to: {violations_count}')
-    
     @BannedNames.subcommand('punishments', sub_cmd_description='What punishments to use?')
-    async def bw_conf(self, ctx: InteractionContext):
+    async def banned_names_punishments(self, ctx: InteractionContext):
+        """
+        /banned_names punishments
+        Description:
+            Configure what punishments will Melody give out.
+        Usage:
+            There are no parameters in this command, you just have to use it, and it will send you a configuration selection menu. Selections are automatically saved. Config time limit is 2 minutes.
+        """
         settings = await db.amConfig.find_one({'guildid':ctx.guild_id})
         if settings.banned_names.violation_punishment is None:
             events_log_list = ''
@@ -831,6 +661,256 @@ class AutoMod(Extension):
                 values = ','.join(select.ctx.values)
                 settings.banned_names.violation_punishment = values
                 await settings.save()
+    
+    AutoModSettings = SlashCommand(name='automod', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage the automod.')
+
+    @AutoModSettings.subcommand(sub_cmd_name='listen_to_events', sub_cmd_description='Activate parts of the automod')
+    async def automod_events(self, ctx: InteractionContext):
+        """
+        /automod listen_to_events
+        Description:
+            Configure what AutoMod events will Melody listen to in the server.
+        Usage:
+            There are no parameters in this command, you just have to use it, and it will send you a configuration selection menu. Selections are automatically saved. Config time limit is 2 minutes.
+        """
+        await ctx.defer(ephemeral=True)
+        events = await db.amConfig.find_one({'guildid':ctx.guild_id})
+        if events.active_events is None:
+            events_log_list = []
+        else:
+            events_log_list = events.active_events
+        if 'banned_names' in events_log_list:
+            bn_status = True
+        else:
+            bn_status = False
+
+        if 'phishing_filter' in events_log_list:
+            pf_status = True
+        else:
+            pf_status = False
+        
+        select_options = [
+            StringSelectOption(label="Banned Names", value="banned_names", default=bn_status),
+            StringSelectOption(label="phishing_filter", value="phishing_filter", default=pf_status),
+        ]
+
+        select_menu = StringSelectMenu(select_options, min_values=0, max_values=2)
+
+        message = await ctx.send('Configure to what automod reacts to:', components=select_menu)
+
+        while True:
+            try:
+                select = await self.bot.wait_for_component(components=select_menu, timeout=120)
+            except asyncio.TimeoutError:
+                await message.edit('Config closed due to 2 minutes of inactivity.', components=[])
+            else:
+                events.active_events = select.ctx.values
+                await events.save()
+
+    @AutoModSettings.subcommand(sub_cmd_name='ban_mute_times', sub_cmd_description='Define a ban and mute times.')
+    @slash_option(name="bantime", description="tempban time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionType.INTEGER, required=False)
+    @slash_option(name="mutetime", description="mute time, examples: 10 S, 10 M, 10 H, 10 D", opt_type=OptionType.INTEGER, required=False)
+    async def automod_ban_mute_times(self, ctx:InteractionContext, bantime:int=0, mutetime:int=0):
+        """
+        /automod ban_mute_times
+        Description:
+            Configure the temp ban and mute times Melody will use in automod.
+
+        Args:
+            bantime (int, optional): tempban time, examples: 10 S, 10 M, 10 H, 10 D" Defaults to 0.
+            mutetime (int, optional): mute time, examples: 10 S, 10 M, 10 H, 10 D Defaults to 0.
+        """
+        if bantime is not None:
+            bt = await bm_time_to_sec(ctx, bantime)
+        else:
+            bt = bantime
+        if mutetime is not None:
+            mt = await bm_time_to_sec(ctx, mutetime)
+        else:
+            mt = mutetime
+        settings = await db.automod_config.find_one({"guildid":ctx.guild_id})
+        settings.ban_time = bt
+        settings.mute_time = mt
+        await settings.save()
+        await ctx.send(f'Ban time: {bantime}\nMute time: {mutetime}')
+
+    @AutoModSettings.subcommand('ignored_channel', 'add', 'Add a channel to ignored channels.')
+    @channel()
+    async def AutomodAddIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+        """
+        /automod ignored_channel add
+        Description:
+            Add a channel to channels ignored by AutoMod.
+
+        Args:
+            channel (OptionType.CHANNEL, optional): The channel you want to add. Defaults to channel you're executing the command from.
+        """
+        await ctx.defer(ephemeral=True)
+        if channel is None:
+            channel = ctx.channel
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
+        ignored_channels = settings.ignored_channels
+        if ignored_channels is None:
+            ignored_channels = list()
+        if channel.id in ignored_channels:
+            await ctx.send(f'{channel.mention} is already ignored.', ephemeral=True)
+        ignored_channels.append(channel.id)
+        await settings.save()
+        channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
+        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
+        channel_mentions = ' '.join(channel_mentions)
+        embed = Embed(description=f"Channel {channel.mention} set to be ignored.")
+        embed.add_field('Ignored Channels', channel_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+
+    @AutoModSettings.subcommand('ignored_channel', 'remove', 'Remove a channel from ignored channels.')
+    @channel()
+    async def AutomodRemoveIgnoredChannels(self, ctx:InteractionContext, channel: OptionType.CHANNEL=None):
+        """
+        /automod ignored_channel remove
+        Description:
+            Remove a channel from channels ignored by AutoMod.
+
+        Args:
+            channel (OptionType.CHANNEL, optional): The channel you want to remove. Defaults to channel you're executing the command from.
+        """
+        await ctx.defer(ephemeral=True)
+        if channel is None:
+            channel = ctx.channel
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
+        ignored_channels = settings.ignored_channels
+        if ignored_channels is None:
+            ignored_channels = list()
+        if channel.id not in ignored_channels:
+            await ctx.send(f'{channel.mention} is not being ignored by automod.', ephemeral=True)
+        ignored_channels.remove(channel.id)
+        await settings.save()
+        channel_mentions = [ctx.guild.get_channel(id) for id in ignored_channels]
+        channel_mentions = [ch.mention for ch in channel_mentions if ch is not None]
+        channel_mentions = ' '.join(channel_mentions)
+        embed = Embed(description=f"Channel {channel.mention} removed from ignored channels.")
+        embed.add_field('Ignored Channels', channel_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+    
+    @AutoModSettings.subcommand('ignored_role', 'add', 'Make a role to be ignored by automod.')
+    @role()
+    async def AutomodAddIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+        """
+        /automod ignored_role add
+        Description:
+            Add a role to roles ignored by AutoMod.
+
+        Args:
+            role (OptionType.ROLE): The role you want to add.
+        """
+        await ctx.defer(ephemeral=True)
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
+        ignored_roles = settings.ignored_roles
+        if ignored_roles is None:
+            ignored_roles = list()
+        if role.id in ignored_roles:
+            await ctx.send(f'{role.mention} is already ignored.', ephemeral=True)
+        ignored_roles.append(role.id)
+        await settings.save()
+        role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
+        role_mentions = [r.mention for r in role_mentions if r is not None]
+        role_mentions = ' '.join(role_mentions)
+        embed = Embed(description=f"Role {role.mention} was added to roles ignored by automod.")
+        embed.add_field('Ignored Roles', role_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+
+    @AutoModSettings.subcommand('ignored_role', 'remove', 'Remove a role from ignored roles.')
+    @role()
+    async def AutomodRemoveIgnoredRoles(self, ctx:InteractionContext, role: OptionType.ROLE):
+        """
+        /automod ignored_role remove
+        Description:
+            Remove a role from roles ignored by AutoMod.
+
+        Args:
+            role (OptionType.ROLE): The role you want to remove.
+        """
+        await ctx.defer(ephemeral=True)
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
+        ignored_roles = settings.ignored_roles
+        if ignored_roles is None:
+            ignored_roles = list()
+        if role.id not in ignored_roles:
+            await ctx.send(f'{role.mention} is not being ignored by automod.', ephemeral=True)
+        ignored_roles.remove(role.id)
+        await settings.save()
+        role_mentions = [ctx.guild.get_role(id) for id in ignored_roles]
+        role_mentions = [r.mention for r in role_mentions if r is not None]
+        role_mentions = ' '.join(role_mentions)
+        embed = Embed(description=f"Role {role.mention} was removed from roles ignored by automod.")
+        embed.add_field('Ignored Roles', role_mentions)
+        await ctx.send(embed=embed, ephemeral=True)
+    
+    @AutoModSettings.subcommand('ignored_member', 'add', 'Make a member to be ignored by automod.')
+    @user()
+    async def AutomodAddIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+        """
+        /automod ignored_member add
+        Description:
+            Add a member to members ignored by AutoMod.
+
+        Args:
+            user (OptionType.USER): member to be ignored by automod
+        """
+        await ctx.defer(ephemeral=True)
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+            await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
+        ignored_users = settings.ignored_users
+        if ignored_users is None:
+            ignored_users = list()
+        if user.id in ignored_users:
+            await ctx.send(f'{user}|{user.id} is already ignored.', ephemeral=True)
+        ignored_users.append(user.id)
+        await settings.save()
+        users = [ctx.guild.get_member(id) for id in ignored_users]
+        users = [f'{r}({r.id})' for r in users if r is not None]
+        users = ' '.join(users)
+        embed = Embed(description=f"Member {user}({user.id}) was added to members ignored by automod.")
+        embed.add_field('Ignored Members', users)
+        await ctx.send(embed=embed, ephemeral=True)
+
+    @AutoModSettings.subcommand('ignored_member', 'remove', 'Remove a member from ignored members.')
+    @user()
+    async def AutomodRemoveIgnoredMember(self, ctx:InteractionContext, user: OptionType.USER):
+        """
+        /automod ignored_member remove
+        Description:
+            Remove a member from members ignored by AutoMod.
+
+        Args:
+            user (OptionType.USER): member to be removed from ignored members by automod
+        """
+        await ctx.defer(ephemeral=True)
+        settings = await db.amConfig.find_one({"guild":ctx.guild.id})
+        if settings is None:
+           await db.amConfig(guild=ctx.guild.id, phishing=violation_settings, banned_words=violation_settings, banned_names=violation_settings).insert()
+        ignored_users = settings.ignored_users
+        if ignored_users is None:
+            ignored_users = list()
+        if user.id not in ignored_users:
+            await ctx.send(f'{user}|{user.id} is not being ignored by automod.', ephemeral=True)
+        ignored_users.remove(user.id)
+        await settings.save()
+        users = [ctx.guild.get_member(id) for id in ignored_users]
+        users = [f'{r}({r.id})' for r in users if r is not None]
+        users = ' '.join(users)
+        embed = Embed(description=f"Member {user}({user.id}) was removed from members ignored by automod.")
+        embed.add_field('Ignored Members', users)
+        await ctx.send(embed=embed, ephemeral=True)
 
 def setup(bot):
     AutoMod(bot)

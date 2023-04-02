@@ -32,6 +32,17 @@ class ButtonRoles(Extension):
     @slash_option(name="mode", description="Choose the mode this set of buttons will be in. Default: Click to get/remove a role", required=False, opt_type=OptionType.INTEGER,
     choices=[SlashCommandChoice(name="Get or remove a role", value=1),SlashCommandChoice(name="Get a role, no removing", value=2),SlashCommandChoice(name="Only one role allowed", value=3)])
     async def role_buttons_add(self, ctx: SlashContext, roles: str, message_id: OptionType.STRING, channel: ChannelType.GUILD_TEXT=None, button_colours: OptionType.INTEGER = 1, mode: OptionType.INTEGER=1):
+        """/rolebuttons create
+        Description:
+            Add role buttons to a message.
+
+        Args:
+            roles (str): Role IDs or @roles, sperated by comma `,` | the roles you want to create role buttons from. There can't be more than 25 roles/buttons on one message.
+            message_id (OptionType.STRING): Message ID you want the role buttons on, it has to be a message sent by Melody.
+            channel (ChannelType.GUILD_TEXT, optional): Channel the message is in. Defaults to channel command is executed in.
+            button_colours (OptionType.INTEGER, optional): The colour you want the buttons to be. Defaults to Blurple.
+            mode (OptionType.INTEGER, optional): Mode you want buttons to be in. Defaults to 1. Modes: 1 = get or remove the role, 2 = get a role - not possible to remove the role, 3 = only one role allowed from the message
+        """
         await ctx.defer()
         # modes: 1 = get or remove the role, 2 = get a role - not possible to remove the role, 3 = only one role allowed from the message
         if channel is None:
@@ -83,7 +94,7 @@ class ButtonRoles(Extension):
         else:
             return await ctx.send("Message not found.")
     
-    @role_buttons.subcommand(sub_cmd_name='edit', sub_cmd_description="Edit a behaviour of a role button")
+    @role_buttons.subcommand(sub_cmd_name='edit', sub_cmd_description="Edit the behaviour of a role button")
     @message_id()
     @button_id()
     @channel()
@@ -95,8 +106,23 @@ class ButtonRoles(Extension):
     @slash_option(name="requirement_role",description="Choose a role. Members will be required to have this role to use the button.",required=False,opt_type=OptionType.ROLE)
     @slash_option(name="ignore_role",description="Choose a role. Members with this role will be ignored.",required=False,opt_type=OptionType.ROLE)
     @slash_option(name='name', description='Give the button a custom name', opt_type=OptionType.STRING, required=False)
-    async def rb_edit(self, ctx: InteractionContext, message_id:OptionType.STRING, button_id:OptionType.STRING, channel:OptionType.CHANNEL=None, mode:OptionType.INTEGER=None,
+    async def role_buttons_edit(self, ctx: InteractionContext, message_id:OptionType.STRING, button_id:OptionType.STRING, channel:OptionType.CHANNEL=None, mode:OptionType.INTEGER=None,
     button_colours:OptionType.INTEGER=None, new_role: OptionType.ROLE = None, requirement_role: OptionType.ROLE = None, ignore_role: OptionType.ROLE = None, name: OptionType.STRING=None):
+        """/rolebuttons edit
+        Description:
+            Edit the behaviour of a role button. `Name`, `Button colour` and `New Role` can't be edited together.
+
+        Args:
+            message_id (OptionType.STRING): Message ID the role button is on.
+            button_id (OptionType.STRING): Button ID of the button you want to modify.
+            channel (OptionType.CHANNEL, optional): Channel the message is in. Defaults to channel command is executed in.
+            mode (OptionType.INTEGER, optional): Mode you want buttons to be in. Modes: 1 = get or remove the role, 2 = get a role - not possible to remove the role, 3 = only one role allowed from the message
+            button_colours (OptionType.INTEGER, optional): _description_. The colour you want the buttons to be.
+            new_role (OptionType.ROLE, optional): The new role you want on the button.
+            requirement_role (OptionType.ROLE, optional): Choose a role. Members will be required to have this role to use the button.
+            ignore_role (OptionType.ROLE, optional): Choose a role. Members with this role will be ignored.
+            name (OptionType.STRING, optional): Change the button name.
+        """
         await ctx.defer()
         if button_colours == 1:
             button_colour = ButtonStyle.BLURPLE
@@ -203,7 +229,16 @@ class ButtonRoles(Extension):
     @button_id()
     @message_id()
     @channel()
-    async def rb_remove(self, ctx: InteractionContext, message_id:OptionType.STRING, button_id:OptionType.STRING, channel:OptionType.CHANNEL=None):
+    async def role_buttons_remove(self, ctx: InteractionContext, message_id:OptionType.STRING, button_id:OptionType.STRING, channel:OptionType.CHANNEL=None):
+        """/rolebuttons remove
+        Description:
+            Delete a role button from a message.
+
+        Args:
+            message_id (OptionType.STRING): Message ID the button is on.
+            button_id (OptionType.STRING): The button ID, of the button you want to delete.
+            channel (OptionType.CHANNEL, optional): Channel the message is in. Defaults to channel command is executed in.
+        """
         await ctx.defer()
         if channel is None:
             channel = ctx.channel
@@ -228,7 +263,12 @@ class ButtonRoles(Extension):
         await ctx.send(f"Button `{button_id}` successfully deleted")
 
     @role_buttons.subcommand(sub_cmd_name='list', sub_cmd_description="List all role buttons on this server")
-    async def rb_list(self, ctx: InteractionContext):
+    async def role_buttons_list(self, ctx: InteractionContext):
+        """/rolebuttons list
+
+        Description:
+            List all the role buttons, and their info.
+        """
         await ctx.defer()
         from interactions.ext.paginators import Paginator
         def chunks(l, n):

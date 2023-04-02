@@ -6,10 +6,19 @@ from utils.customchecks import *
 class PersistentRoles(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
+
     persistent_roles = SlashCommand(name='persistentroles',  description='Manage persistent roles', default_member_permissions=Permissions.ADMINISTRATOR)
+
     @persistent_roles.subcommand(sub_cmd_name='add', sub_cmd_description="Make a role persistent")
     @role()
     async def persistent_roles_add(self, ctx, role:OptionType.ROLE=None):
+        """/persistentroles add
+        Description:
+            Add a role to the persistent roles list. This means that when a user leaves and rejoins, they will be given this role again.
+        
+        Args:
+            role: Role
+        """
         # if role is None:
         #     return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
         if role == ctx.guild.my_role:
@@ -36,6 +45,13 @@ class PersistentRoles(Extension):
     @persistent_roles.subcommand(sub_cmd_name='remove', sub_cmd_description="Remove role from persistent roles")
     @role()
     async def persistent_roles_remove(self, ctx, role:OptionType.ROLE=None):
+        """/persistentroles remove
+        Description:
+            Removes a role from the persistent roles list.
+        
+        Args:
+            role: Get the role object from the user's input
+        """
         if role is None:
             return await ctx.send(embed=Embed(color=0xDD2222, description=":x: Please provide a role"), ephemeral=True)
         elif role == ctx.guild.my_role:
@@ -61,6 +77,10 @@ class PersistentRoles(Extension):
     
     @persistent_roles.subcommand(sub_cmd_name='list', sub_cmd_description="List all the persistent roles")
     async def persistent_roles_list(self, ctx):
+        """/persistentroles list
+        Description:
+            Display a list of all persistent roles for the guild.
+        """
         from interactions.ext.paginators import Paginator
         def chunks(l, n):
             n = max(1, n)

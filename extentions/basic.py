@@ -23,21 +23,37 @@ class Basic(Extension):
     def __init__(self, bot: Client):
         self.bot = bot
 
-    @slash_command("echo", description="echo your messages")
+    @slash_command("echo", description="Echo your messages")
     @text()
     @channel()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def echo(self, ctx: SlashContext, text: str, channel:OptionType.CHANNEL=None):
+        """
+        /echo
+        Description:
+            Echo your messages.
+
+        Args:
+            text (str): Text to echo.
+            channel (OptionType.CHANNEL, optional): Channel to echo in, defaults to channel you're executing the command from.
+        """
         if (channel is None):
             channel = ctx.channel
         await channel.send(text)
         message = await ctx.send(f'{ctx.author.mention} message `{text}` in {channel.mention} echoed!', ephemeral=True)
         #await channel.delete_message(message, 'message for echo command')
     
-    @slash_command(name='userinfo', description="lets me see info about server members")
+    @slash_command(name='userinfo', description="Lets you see info about server members")
     @member()
     async def userinfo(self, ctx:SlashContext, member:OptionType.USER=None):
-        
+        """
+        /userinfo
+        Description:
+            Lets you see info about server members.
+
+        Args:
+            member (OptionType.USER, optional): Member to fetch info about. Defaults to the member executing the command.
+        """
         if member is None:
             member = ctx.author
 
@@ -80,8 +96,13 @@ class Basic(Extension):
         embed.add_field(name="Highest role:", value=toprole, inline=False)
         await ctx.send(embed=embed)
     
-    @slash_command(name='serverinfo', description="lets me see info about the server")
+    @slash_command(name='serverinfo', description="Lets you see info about the server")
     async def serverinfo(self, ctx:SlashContext):
+        """
+        /serverinfo
+        Description:
+            Lets you see info about the server
+        """
         cdiff = relativedelta(datetime.now(tz=timezone.utc), ctx.guild.created_at.replace(tzinfo=timezone.utc))
         creation_time = f"{cdiff.years} Y, {cdiff.months} M, {cdiff.days} D"
         owner = await guild_owner(ctx)
@@ -98,8 +119,13 @@ class Basic(Extension):
         embed.add_field(name='ID', value=f'{ctx.guild_id}', inline=True)
         await ctx.send(embed=embed)
     
-    @slash_command(name='botinfo', description="lets me see info about the bot")
+    @slash_command(name='botinfo', description="Lets you see info about the bot")
     async def botinfo(self, ctx: SlashContext):
+        """
+        /botinfo
+        Description:
+            Lets you see info about the bot
+        """
         member = ctx.guild.get_member(self.bot.user.id)
 
         if member.top_role.name != '@everyone':
@@ -150,7 +176,13 @@ class Basic(Extension):
     @slash_command(name='avatar', description="Show's you your avatar, or members, if provided")
     @member()
     async def avatar(self, ctx:SlashContext, member:OptionType.USER=None):
-        
+        """/avatar
+        Description:
+            Show's you your avatar, or members, if provided
+
+        Args:
+            member (OptionType.USER, optional): Member to fetch avatar from. Defaults to member executing the command.
+        """
         if member is None:
             member = ctx.author
         
@@ -179,6 +211,14 @@ class Basic(Extension):
     @slash_command(name='search', description="Search with DuckDuckGo, returns the first result.")
     @text()
     async def duckduckgosearch(self, ctx:SlashContext, text: str):
+        """/search
+
+        Description:
+            Search with DuckDuckGo, returns the first result.
+
+        Args:
+            text (str): Search query
+        """
         await ctx.defer()
         results = await duckduckgo.search(text)
         embed = Embed(
@@ -191,13 +231,20 @@ class Basic(Extension):
     
     @slash_command(name='ping', description="Ping! Pong!")
     async def ping(self, ctx:SlashContext):
-        
+        """/ping
+        Description:
+            Get the bot's latency
+        """
         await ctx.send(f"Pong! \nBot's latency: {self.bot.latency * 1000} ms")
     
     create_embed = SlashCommand(name='embed', description='Create and edit embeds.', default_member_permissions=Permissions.ADMINISTRATOR)
     
     @create_embed.subcommand(sub_cmd_name='create', sub_cmd_description='Create embeds')
     async def embed_create(self, ctx:SlashContext):
+        """/embed create
+        Description:
+            Create embeds. After execution it will show you a modal popup, where you can write your embed. Limit 10 minutes for creation.
+        """
         components=[
             ShortText(
                 label="Embed Title",
@@ -260,6 +307,15 @@ class Basic(Extension):
     @embed_message_id()
     @channel()
     async def embed_edit(self, ctx:SlashContext, embed_message_id:str=None, channel:OptionType.CHANNEL=None):
+        """/embed edit
+
+        Description:
+            Edit embeds. After execution it will show you a modal popup, where you can write your embed. Limit 10 minutes for editing.
+
+        Args:
+            embed_message_id (str, optional): ID of the message the embed is on.
+            channel (OptionType.CHANNEL, optional): Channel the message is in. Defaults to the channel the command is executed in.
+        """
         if embed_message_id is None:
             await ctx.send('You have to include the embed message ID, so that I can edit the embed', ephemeral=True)
             return

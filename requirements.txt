@@ -25,3 +25,6 @@ django
 starsessions==1.2.3
 python-dotenv
 gunicorn
+mkdocs
+mkdocs-material
+mkdocstring[python]

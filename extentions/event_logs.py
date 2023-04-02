@@ -58,6 +58,13 @@ class EventLogs(Extension):
     )
     @channel()
     async def logchannel(self, ctx: InteractionContext, channel:OptionType.CHANNEL=None):
+        """/logchannel
+        Description:
+            set up a logging channel
+
+        Args:
+            channel (OptionType.CHANNEL, optional): CHannel to send log messages in.
+        """
         if channel is None:
             channel = ctx.channel
         
@@ -80,6 +87,14 @@ class EventLogs(Extension):
     @welcome_message_text()
     @channel()
     async def welcome_message_cmd(self, ctx: InteractionContext, welcome_message_text:OptionType.STRING=None, channel:OptionType.CHANNEL=None):
+        """/welcomemessage
+        Description:
+            set up a welcome message and channel
+
+        Args:
+            welcome_message_text (OptionType.STRING, optional): Welcome message text.
+            channel (OptionType.CHANNEL, optional): Welcome message channel.
+        """
         if (channel is None) and (welcome_message_text is None):
             embed = Embed(
                 description=":x: Please provide a channel or welcome message",
@@ -123,6 +138,14 @@ class EventLogs(Extension):
     @leave_message_text()
     @channel()
     async def leave_message_cmd(self, ctx: InteractionContext, leave_message_text:OptionType.STRING=None, channel:OptionType.CHANNEL=None):
+        """/leavemessage
+        Description:
+            set up a leave message and channel
+
+        Args:
+            leave_message_text (OptionType.STRING, optional): Leave message text.
+            channel (OptionType.CHANNEL, optional): Leave message channel.
+        """
         if (channel is None) and (leave_message_text is None):
             embed = Embed(
                 description=":x: Please provide a channel or leave message",

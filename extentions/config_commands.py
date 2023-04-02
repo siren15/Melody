@@ -14,6 +14,10 @@ class BotConfiguration(Extension):
 
     @config_cmd.subcommand('logging', sub_cmd_description='Configure what the bot logs')
     async def config_logging(self, ctx: InteractionContext):
+        """/config logging
+        Description:
+            Configure what the bot logs. On command execution it will send a select menu with options to choose from, automatically saves on selecting an option. Time limit 2 minutes.
+        """
         await ctx.defer(ephemeral=True)
         events_logging = await db.prefixes.find_one({'guildid':ctx.guild_id})
         if events_logging.activecommands is None:

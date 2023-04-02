@@ -64,6 +64,13 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
     @tagname()
     async def tag(self, ctx:InteractionContext, tagname:str):
+        """/tag recall
+        Description:
+            Send the content of a tag.
+        
+        Args:
+            tagname: the tag name
+        """
         await ctx.defer()
         tags = await db.tag.find_one({"names":tagname, "guild_id":ctx.guild_id})
         if tags is None:
@@ -92,6 +99,15 @@ class Tags(Extension):
     @content()
     @attachment()
     async def tag_create(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionType.ATTACHMENT=None):
+        """/tag create
+        Description:
+            Create tags.
+
+        Args:
+            tagname: The tag's name
+            content: The content of the tag
+            attachment: The attachment from the message
+        """
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -175,6 +191,13 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='delete', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
     async def tag_delete(self, ctx:InteractionContext, tagname:str=None):
+        """/tag delete
+        Description:
+            Delete tags.
+
+        Args:
+            tagname: The tag's name
+        """
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -208,6 +231,13 @@ class Tags(Extension):
     @tagname()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def tag_admin_delete(self, ctx:InteractionContext, tagname:str=None):
+        """/tag admindelete
+        Description:
+            Delete any tags. Requires admin permission.
+
+        Args:
+            tagname: The tag's name
+        """
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -241,6 +271,15 @@ class Tags(Extension):
     @content()
     @attachment()
     async def tag_edit(self, ctx:InteractionContext, tagname:str=None, content:str=None, attachment:OptionType.ATTACHMENT=None):
+        """/tag edit
+        Description:
+            Edit tags.
+
+        Args:
+            tagname: The tag's name
+            content: The content of the tag
+            attachment: The attachment from the message
+        """
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -341,6 +380,13 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
     @tagname()
     async def tag_info(self, ctx:InteractionContext, tagname:str=None):
+        """/tag info
+        Description:
+            See info about tags
+
+        Args:
+            tagname: The tag's name
+        """
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -401,6 +447,10 @@ class Tags(Extension):
     
     @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
     async def tag_list(self, ctx:InteractionContext):
+        """/tag list
+        Description:
+            Lists all tags
+        """
         await ctx.defer()
         from interactions.ext.paginators import Paginator
         def chunks(l, n):
@@ -456,6 +506,13 @@ class Tags(Extension):
     @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
     @tagname()
     async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
+        """/tag claim
+        Description:
+            Claim orphaned tags
+
+        Args:
+            tagname: The tag's name
+        """
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
@@ -508,6 +565,14 @@ class Tags(Extension):
     @tagname()
     @member()
     async def tag_gift(self, ctx:InteractionContext, tagname:str=None, member:OptionType.USER=None):
+        """/tag gift
+        Description:
+            Gidt tags you own
+
+        Args:
+            tagname: The tag's name
+            member: Member to gift to
+        """
         await ctx.defer()
         if tagname is None:
             embed = Embed(description=f":x: You must include tag's name",
