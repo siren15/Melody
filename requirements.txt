@@ -27,4 +27,4 @@ python-dotenv
 gunicorn
 mkdocs
 mkdocs-material
-mkdocstring[python]
+mkdocstrings[python]
