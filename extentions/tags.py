@@ -4,7 +4,7 @@ import asyncio
 
 from utils.catbox import CatBox as catbox
 from datetime import datetime, timezone
-from interactions import Client, Extension, slash_command, InteractionContext, OptionType, Embed, Button, ButtonStyle, ActionRow, spread_to_rows, check, AutocompleteContext
+from interactions import Client, Extension, SlashCommand, slash_command, InteractionContext, OptionType, Embed, Button, ButtonStyle, ActionRow, spread_to_rows, check, AutocompleteContext
 from extentions.touk import BeanieDocuments as db
 from utils.slash_options import *
 from utils.customchecks import *
@@ -61,7 +61,9 @@ class Tags(Extension):
             choices = [{'name':f'{name}', 'value':f'{name}'} for name in tagnames[:25]]
         await ctx.send(choices=choices)
 
-    @slash_command(name='tag', sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
+    tag = SlashCommand(name='tag', description='manage tags')
+
+    @tag.subcommand(sub_cmd_name='recall', sub_cmd_description="allow's me to recall tags")
     @tagname()
     async def tag(self, ctx:InteractionContext, tagname:str):
         """/tag recall
@@ -94,7 +96,7 @@ class Tags(Extension):
             tags.no_of_times_used = uses + 1
             await tags.save()
 
-    @slash_command(name='tag', sub_cmd_name='create', sub_cmd_description="allow's me to store tags")
+    @tag.subcommand(sub_cmd_name='create', sub_cmd_description="allow's me to store tags")
     @slash_option(name='tagname', description='Type a name of a tag', opt_type=OptionType.STRING, required=True, autocomplete=False)
     @content()
     @attachment()
@@ -188,7 +190,7 @@ class Tags(Extension):
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
     
-    @slash_command(name='tag', sub_cmd_name='delete', sub_cmd_description="allow's me to delete tags that you own")
+    @tag.subcommand(sub_cmd_name='delete', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
     async def tag_delete(self, ctx:InteractionContext, tagname:str=None):
         """/tag delete
@@ -227,7 +229,7 @@ class Tags(Extension):
         await ctx.send(embed=embed)
         await tag_to_delete.delete()
     
-    @slash_command(name='tag', sub_cmd_name='admindelete', sub_cmd_description="[ADMIN ONLY]allow's me to delete any tag")
+    @tag.subcommand(sub_cmd_name='admindelete', sub_cmd_description="[ADMIN ONLY]allow's me to delete any tag")
     @tagname()
     @check(member_permissions(Permissions.ADMINISTRATOR))
     async def tag_admin_delete(self, ctx:InteractionContext, tagname:str=None):
@@ -266,7 +268,7 @@ class Tags(Extension):
         await ctx.send(embed=embed)
         await tag_to_delete.delete()
 
-    @slash_command(name='tag', sub_cmd_name='edit', sub_cmd_description="allow's me to delete tags that you own")
+    @tag.subcommand(sub_cmd_name='edit', sub_cmd_description="allow's me to delete tags that you own")
     @tagname()
     @content()
     @attachment()
@@ -377,7 +379,7 @@ class Tags(Extension):
                                 color=0xffcc50)
                     return await ctx.send(embed=embed)
     
-    @slash_command(name='tag', sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
+    @tag.subcommand(sub_cmd_name='info', sub_cmd_description="allow's me to see information about a tag")
     @tagname()
     async def tag_info(self, ctx:InteractionContext, tagname:str=None):
         """/tag info
@@ -445,7 +447,7 @@ class Tags(Extension):
         embed.add_field(name="Content", value=content)
         await ctx.send(embed=embed)
     
-    @slash_command(name='tag', sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
+    @tag.subcommand(sub_cmd_name='list', sub_cmd_description="allow's me to see all tags for this server")
     async def tag_list(self, ctx:InteractionContext):
         """/tag list
         Description:
@@ -503,7 +505,7 @@ class Tags(Extension):
         await paginator.send(ctx)
                 
     
-    @slash_command(name='tag', sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
+    @tag.subcommand(sub_cmd_name='claim', sub_cmd_description="claim orphaned tags")
     @tagname()
     async def tag_claim(self, ctx:InteractionContext, tagname:str=None):
         """/tag claim
@@ -561,7 +563,7 @@ class Tags(Extension):
                         color=0xDD2222)
             await ctx.send(embed=embed, ephemeral=True)
 
-    @slash_command(name='tag', sub_cmd_name='gift', sub_cmd_description="gift your tags")
+    @tag.subcommand(sub_cmd_name='gift', sub_cmd_description="gift your tags")
     @tagname()
     @member()
     async def tag_gift(self, ctx:InteractionContext, tagname:str=None, member:OptionType.USER=None):

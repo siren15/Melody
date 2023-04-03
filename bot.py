@@ -47,8 +47,10 @@ class CustomClient(Client):
                 print(f'grew {filename[:-3]}')
         self.db = motor.motor_asyncio.AsyncIOMotorClient(database_url)
         await init_beanie(database=self.db.giffany, document_models=self.models)
-        # await self.astart(os.getenv('bot_token'))
-        await self.astart(os.getenv('amelody_token'))
+        if __name__ == "__main__":
+            await self.astart(os.getenv('amelody_token'))
+        else:
+            await self.astart(os.getenv('bot_token'))
     
     @listen()
     async def on_ready(self):
@@ -70,18 +72,18 @@ class CustomClient(Client):
             await db.automod_config(guildid=event.guild.id, banned_words=violations, phishing=violations).insert()
         if await db.leveling_settings.find_one({'guildid':event.guild.id}) is None:
             await db.leveling_settings(guildid=event.guild.id, min=15, max=25, multiplier=1, ignored_channels=[], ignored_roles=[], ignored_users=[]).insert()
-        if await db.modmail_conf.find_one({'guildid':event.guild.id}) is None:
-            everyone_role_po = PermissionOverwrite(id=event.guild.id, type=0).for_target(utils.find(lambda r: r.name == '@everyone', event.guild.roles))
-            everyone_role_po.add_denies(Permissions.VIEW_CHANNEL, Permissions.READ_MESSAGE_HISTORY)
-            melody_po = PermissionOverwrite(id=event.guild.id, type=0).for_target(self.user)
-            melody_po.add_allows(Permissions.VIEW_CHANNEL, Permissions.READ_MESSAGE_HISTORY, Permissions.USE_PRIVATE_THREADS, Permissions.MANAGE_THREADS)
-            modmail_channel = utils.find(lambda m: m.name == 'modmail', event.guild.channels)
-            if modmail_channel is None:
-                modmail_channel = await event.guild.create_text_channel(name='modmail', permission_overwrites=[everyone_role_po, melody_po])
-            modmail_log_channel = utils.find(lambda m: m.name == 'modmail-log', event.guild.channels)
-            if modmail_log_channel is None:
-                modmail_log_channel = await event.guild.create_text_channel(name='modmail-log', permission_overwrites=[everyone_role_po, melody_po])
-            await db.modmail_conf(guildid=event.guild.id, channelid=modmail_channel.id, logchannel=modmail_log_channel.id).insert()
+        # if await db.modmail_conf.find_one({'guildid':event.guild.id}) is None:
+        #     everyone_role_po = PermissionOverwrite(id=event.guild.id, type=0).for_target(utils.find(lambda r: r.name == '@everyone', event.guild.roles))
+        #     everyone_role_po.add_denies(Permissions.VIEW_CHANNEL, Permissions.READ_MESSAGE_HISTORY)
+        #     melody_po = PermissionOverwrite(id=event.guild.id, type=0).for_target(self.user)
+        #     melody_po.add_allows(Permissions.VIEW_CHANNEL, Permissions.READ_MESSAGE_HISTORY, Permissions.USE_PRIVATE_THREADS, Permissions.MANAGE_THREADS)
+            # modmail_channel = utils.find(lambda m: m.name == 'modmail', event.guild.channels)
+            # if modmail_channel is None:
+            #     modmail_channel = await event.guild.create_text_channel(name='modmail', permission_overwrites=[everyone_role_po, melody_po])
+            # modmail_log_channel = utils.find(lambda m: m.name == 'modmail-log', event.guild.channels)
+            # if modmail_log_channel is None:
+            #     modmail_log_channel = await event.guild.create_text_channel(name='modmail-log', permission_overwrites=[everyone_role_po, melody_po])
+            # await db.modmail_conf(guildid=event.guild.id, channelid=modmail_channel.id, logchannel=modmail_log_channel.id).insert()
     
     @listen()
     async def on_guild_leave(self, event:  GuildLeft):

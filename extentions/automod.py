@@ -520,7 +520,7 @@ class AutoMod(Extension):
     
     BannedNames = SlashCommand(name='banned_names', default_member_permissions=Permissions.ADMINISTRATOR, description='Manage banned names.')
 
-    @BannedNames.subcommand('manage')
+    @BannedNames.subcommand(sub_cmd_name='manage', sub_cmd_description='Manage banned names')
     async def banned_names_manage(self, ctx:InteractionContext):
         """
         /banned_names manage

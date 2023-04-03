@@ -117,7 +117,7 @@ async def melody(request: Request):
 async def get_authorization_code(request: Request):
     """OAuth2 flow, step 1: have the user log into Discord to obtain an authorization code grant"""
     redirect_uri = request.url_for('auth')
-    return await oauth.discord.authorize_redirect(request, redirect_uri)
+    return await oauth.discord.authorize_redirect(request, str(redirect_uri))
 
 @app.get('/melody/oauth2/redirect')
 async def auth(request: Request):

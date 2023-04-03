@@ -468,9 +468,9 @@ class Levels(Extension):
             try:
                 background = Image.open(requests.get(f'{levels.lc_background}', stream=True).raw).crop((0,0,IW,IH)).convert("RGBA")
             except:
-                background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
+                background = Image.open(requests.get('https://i.imgur.com/4yzKbQo.png', stream=True).raw).convert("RGBA")
         else:
-            background = Image.open(requests.get('https://i.imgur.com/ExfggOL.png', stream=True).raw).convert("RGBA")
+            background = Image.open(requests.get('https://i.imgur.com/4yzKbQo.png', stream=True).raw).convert("RGBA")
 
         overlay = Image.open(requests.get('https://i.imgur.com/fsuIzSv.png', stream=True).raw).convert("RGBA") # add an overlay to the background
         background.paste(overlay, (0, 0), overlay)

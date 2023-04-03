@@ -894,7 +894,7 @@ class Moderation(Extension):
             show_select_menu=False)
         await paginator.send(ctx)
     
-    @slash_command('removeallstrikes', sub_cmd_description='Remove all strikes from a member.')
+    @slash_command('removeallstrikes', description='Remove all strikes from a member.')
     @member()
     async def strikesremoveall(self, ctx:InteractionContext, user: OptionType.USER):
         """/removeallstrikes
