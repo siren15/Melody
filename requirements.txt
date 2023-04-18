@@ -1,4 +1,4 @@
-git+https://github.com/interactions-py/interactions.py.git@5.x
+discord-py-interactions
 requests
 pymongo
 beanie

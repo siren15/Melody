@@ -176,61 +176,28 @@ class Moderation(Extension):
     @user()
     @amount()
     @reason()
-    async def userpurge(self, ctx:InteractionContext, user:OptionType.USER=None, amount:int=0, reason:str='No reason given'):
+    async def userpurge(self, ctx: SlashContext, user: OptionType.USER = None, amount: int = None, reason: str = None):
         """/userpurge
-        Description:
-            Allows you to purge users messages
-        Args:
-            user (OptionType.USER, optional): User
-            amount (int, optional): Amount of messages to purge, per channel, max 300
-            reason (str, optional): Reason
-        """
-        def chunks(l, n):
-            n = max(1, n)
-            return (l[i:i+n] for i in range(0, len(l), n))
-        await ctx.defer()
-        if user is ctx.author:
-            await ctx.send("You can't purge yourself", ephemeral=True)
+         Description:
+             Allows you to purge users messages
+         Args:
+             user (OptionType.USER, optional): User
+             amount (int, optional): Amount of messages to purge, max 300
+             reason (str, optional): Reason
+         """
+        if amount is None:
+            await ctx.send("Please provide the amount of messages to purge.")
             return
-        member = find_member(ctx, user.id)
-        if member is not None:
-            if member.has_permission(Permissions.ADMINISTRATOR) == True:
-                await ctx.send("You can't purge an admin", ephemeral=True)
-                return
-            elif member.has_permission(Permissions.BAN_MEMBERS) == True:
-                await ctx.send("You can't purge users with ban perms", ephemeral=True)
-                return
-            elif member.has_permission(Permissions.MANAGE_MESSAGES) == True:
-                await ctx.send("You can't purge users with manage messages perms", ephemeral=True)
-                return
-        if (amount < 2) or (amount > 300):
-            embed = Embed(description=f":x: Amount can't be less than 2 or more than 300",
-                        color=0xDD2222)
-            await ctx.send(embed=embed)
+        if amount > 300:
+            await ctx.send("The maximum amount of messages to purge is 300.")
             return
-
-        for channel in ctx.guild.channels:
-            messages = await channel.fetch_messages(limit=(amount+1))
-            messages.pop(0)
-            new_msgs = []
-            old_msgs = []
-            for message in messages:
-                twa = datetime.now() - timedelta(weeks=2)
-                cat = await seperate_string_number(str(message.created_at))
-                ca = datetime.fromtimestamp(int(cat[3]))
-                if ca > twa:
-                    new_msgs.append(message)
-                elif ca < twa:
-                    old_msgs.append(message)
-            for new_msgs in chunks(new_msgs, 100):
-                await ctx.channel.delete_messages(new_msgs, reason)
-            for msg in old_msgs:
-                await msg.delete()
-        embed = Embed(description=f"I've purged {len(new_msgs)+len(old_msgs)} messages from {user}\nReason: {reason}",
-                            timestamp=datetime.utcnow(),
-                            color=0xffcc50)
-        embed.set_footer(text=f"Actioned by: {ctx.author}|{ctx.author.id}")
-        await ctx.send(embed=embed)
+        if user is None:
+            await ctx.send("Please provide a user to purge messages from.")
+            return
+        if reason is None:
+            reason = "No reason provided."
+        await ctx.channel.purge(deletion_limit=amount, predicate=lambda m: m.author == user)
+        await ctx.send(f"Purged {amount} messages from {user.mention} for reason: {reason}.")
     
     @slash_command(name='ban', description="Allows you to ban users from the server",
         default_member_permissions=Permissions.BAN_MEMBERS
@@ -477,7 +444,6 @@ class Moderation(Extension):
             return
         member = find_member(ctx, user.id)
         if member is not None:
-            
             if member.has_permission(Permissions.ADMINISTRATOR) == True:
                 await ctx.send("You can't mute an admin", ephemeral=True)
                 return
