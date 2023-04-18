@@ -1,0 +1,160 @@
+[data-md-color-scheme="discord-dark"] {
+  /* Background color shades */
+  --md-default-bg-color: #36393fc2;
+  --md-code-bg-color: #2f3136;
+
+  /* Foreground color shades */
+  --md-default-fg-color: #dcddde;
+  --md-default-fg-color--light: #72767d;
+  --md-code-fg-color: #b9bbbe;
+
+  /* Code highlighting color shades */
+  --md-code-hl-color: rgba(250, 214, 78, 0.5);
+  --md-code-hl-number-color: #8e8e8e;
+  --md-code-hl-special-color: #f04747;
+  --md-code-hl-function-color: #78dce8;
+  --md-code-hl-constant-color: #d19a66;
+  --md-code-hl-keyword-color: #c586c0;
+  --md-code-hl-string-color: #98c379;
+  --md-code-hl-name-color: var(--md-code-fg-color);
+  --md-code-hl-operator-color: var(--md-default-fg-color--light);
+  --md-code-hl-punctuation-color: var(--md-default-fg-color--light);
+  --md-code-hl-comment-color: var(--md-default-fg-color--light);
+  --md-code-hl-generic-color: var(--md-default-fg-color--light);
+  --md-code-hl-variable-color: var(--md-default-fg-color--light);
+
+  /* Typeset color shades */
+  --md-typeset-color: var(--md-default-fg-color);
+
+  /* Typeset `a` color shades */
+  --md-typeset-a-color: #7289da;
+
+  /* Typeset `mark` color shades */
+  --md-typeset-mark-color: hsla(48, 100%, 50%, 0.2);
+
+  /* Typeset `del` and `ins` color shades */
+  --md-typeset-del-color: hsla(0, 0%, 100%, 0.15);
+  --md-typeset-ins-color: hsla(120, 100%, 50%, 0.15);
+
+  /* Typeset `kbd` color shades */
+  --md-typeset-kbd-color: hsla(0, 0%, 100%, 1);
+  --md-typeset-kbd-accent-color: hsla(0, 0%, 0%, 1);
+  --md-typeset-kbd-border-color: hsla(0, 0%, 50%, 1);
+
+  /* Typeset `table` color shades */
+  --md-typeset-table-color: #36393f;
+  --md-typeset-table-color--light: #40444b;
+
+  /* Admonition color shades */
+  --md-admonition-fg-color: var(--md-default-fg-color);
+  --md-admonition-bg-color: #40444b;
+
+  /* Warning color shades */
+  --md-warning-fg-color: #000000;
+  --md-warning-bg-color: #faa61a;
+
+  /* Footer color shades */
+  --md-footer-fg-color: #dcddde;
+  --md-footer-fg-color--light: #72767d;
+  --md-footer-fg-color--lighter: #4f545c;
+  --md-footer-bg-color: #2f3136;
+  --md-footer-bg-color--dark: #40444b;
+
+  /* Shadow depth 1 */
+  --md-shadow-z1: 0 2px 4px hsla(0, 0%, 0%, 0.1), 0 0 1px hsla(0, 0%, 0%, 0.2);
+
+  /* Shadow depth 2 */
+  --md-shadow-z2: 0 2px 4px hsla(0, 0%, 0%, 0.2), 0 0 1px hsla(0, 0%, 0%, 0.35);
+}
+[data-md-color-scheme="discord-light"] {
+  /* Primary color shades */
+  --md-primary-fg-color:               #5865f2;
+  --md-primary-fg-color--light:        #939edc;
+  --md-primary-fg-color--dark:         #373c49;
+  --md-primary-bg-color:               #fff;
+  --md-primary-bg-color--light:        rgba(255, 255, 255, 0.7);
+
+  /* Accent color shades */
+  --md-accent-fg-color:                #5865f2;
+  --md-accent-fg-color--transparent:   rgba(88, 101, 242, 0.1);
+  --md-accent-bg-color:                #fff;
+  --md-accent-bg-color--light:         rgba(255, 255, 255, 0.7);
+
+  /* Default color shades */
+  --md-default-fg-color:               #2c2f33;
+  --md-default-fg-color--light:        #99aab5;
+  --md-default-fg-color--lighter:      #dcddde;
+  --md-default-fg-color--lightest:     #f2f3f5;
+  --md-default-bg-color:               #fff;
+  --md-default-bg-color--light:        rgba(255, 255, 255, 0.7);
+  --md-default-bg-color--lighter:      rgba(255, 255, 255, 0.3);
+  --md-default-bg-color--lightest:     rgba(255, 255, 255, 0.12);
+
+  /* Code color shades */
+  --md-code-fg-color:                  #23272a;
+  --md-code-bg-color:                  #f6f7f8;
+
+  /* Code highlighting color shades */
+  --md-code-hl-color:                  rgba(250, 214, 78, 0.5);
+  --md-code-hl-number-color:           #22863a;
+  --md-code-hl-special-color:          #ca4545;
+  --md-code-hl-function-color:         #006a71;
+  --md-code-hl-constant-color:         #4b4ae2;
+  --md-code-hl-keyword-color:          #005cc5;
+  --md-code-hl-string-color:           #032f62;
+  --md-code-hl-name-color:             var(--md-code-fg-color);
+  --md-code-hl-operator-color:         var(--md-default-fg-color--light);
+  --md-code-hl-punctuation-color:      var(--md-default-fg-color--light);
+  --md-code-hl-comment-color:          var(--md-default-fg-color--light);
+  --md-code-hl-generic-color:          var(--md-default-fg-color--light);
+  --md-code-hl-variable-color:         var(--md-default-fg-color--light);
+
+  /* Typeset color shades */
+  --md-typeset-color:                  var(--md-default-fg-color);
+
+  /* Typeset `a` color shades */
+  --md-typeset-a-color:                #5865f2;
+
+  /* Typeset `mark` color shades */
+  --md-typeset-mark-color:             hsla(#{hex2hsl($clr-yellow-a200)}, 0.5);
+
+  /* Typeset `del` and `ins` color shades */
+  --md-typeset-del-color:              hsla(6, 90%, 60%, 0.15);
+  --md-typeset-ins-color:              hsla(150, 90%, 44%, 0.15);
+
+  /* Typeset `kbd` color shades */
+  --md-typeset-kbd-color:              hsla(0, 0%, 10%, 1);
+  --md-typeset-kbd-accent-color:       hsla(0, 0%, 100%, 1);
+  --md-typeset-kbd-border-color:       hsla(0, 0%, 72%, 1);
+
+  /* Typeset `table` color shades */
+  --md-typeset-table-color:            hsla(0, 0%, 100%, 1);
+  --md-typeset-table-color--light:     hsla(0, 0%, 100%, 0.9);
+
+  /* Admonition color shades */
+  --md-admonition-fg-color:            var(--md-default-fg-color);
+  --md-admonition-bg-color:            var(--md-default-bg-color);
+
+  /* Warning color shades */
+  --md-warning-fg-color:              hsla(0, 0%, 100%, 1);
+  --md-warning-bg-color:              hsla(60, 100%, 80%, 1);
+
+  /* Footer color shades */
+  --md-footer-fg-color:                hsla(0, 0%, 10%, 1);
+  --md-footer-fg-color--light:         hsla(0, 0%, 50%, 1);
+  --md-footer-fg-color--lighter:       hsla(0, 0%, 70%, 1);
+  --md-footer-bg-color:                hsla(0, 0%, 100%, 1);
+  --md-footer-bg-color--dark:          hsla(0, 0%, 80%, 1);
+
+  /* Shadow depth 1 */
+  --md-shadow-z1:
+    0 #{px2rem(2px)} #{px2rem(4px)} hsla(0, 0%, 0%, 0.1),
+    0 0              #{px2rem(1px)}  hsla(0, 0%, 0%, 0.2);
+
+  /* Shadow depth 2 */
+  --md-shadow-z2:
+    0 #{px2rem(2px)} #{px2rem(4px)} hsla(0, 0%, 0%, 0.2),
+    0 0              #{px2rem(1px)}  hsla(0, 0%, 0%, 0.35);
+}
+
+  
