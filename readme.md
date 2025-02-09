@@ -1,4 +1,4 @@
-# Melody is a multi-purpose Discord bot written in Python using [NAFF](https://github.com/NAFTeam/NAFF). Created for [r/gravityfalls discord server](https://discord.gg/gravityfalls)
+# Melody is a multi-purpose Discord bot written in Python using [interactions.py](https://interactions-py.github.io/interactions.py/). Created for [Gravity Falls Central](https://discord.gg/gravityfalls)
 ![](https://cdn.discordapp.com/avatars/887648476387762186/ab9b45d840a51ce343c2f9cf17e1ece8.png)
 ***
 
